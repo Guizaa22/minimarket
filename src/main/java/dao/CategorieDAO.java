@@ -133,22 +133,71 @@ public class CategorieDAO {
      * @param categorie La catégorie à mettre à jour
      * @return true si la mise à jour réussit, false sinon
      */
+    /**
+     * Met à jour une catégorie et propage le nouveau nom aux produits.
+     *
+     * La colonne dénormalisée {@code produits.categorie} doit suivre le renommage :
+     * sans cela les produits gardent l'ancien libellé et se retrouvent classés sous
+     * deux noms selon la requête utilisée. Pour le tabac, cela casse également la
+     * détection « tabac » / « frak cigarette », qui repose sur ce libellé.
+     *
+     * Les deux écritures sont faites dans une seule transaction.
+     */
     public boolean update(Categorie categorie) {
-        String sql = "UPDATE categories SET nom = ?, description = ? WHERE id = ?";
-        
-        try (Connection conn = DBConnector.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
-            stmt.setString(1, categorie.getNom());
-            stmt.setString(2, categorie.getDescription());
-            stmt.setInt(3, categorie.getId());
-            
-            return stmt.executeUpdate() > 0;
+        String sqlCategorie = "UPDATE categories SET nom = ?, description = ? WHERE id = ?";
+        String sqlProduits  = "UPDATE produits SET categorie = ? WHERE category_id = ?";
+
+        Connection conn = null;
+        try {
+            conn = DBConnector.getConnection();
+            conn.setAutoCommit(false);
+
+            int misAJour;
+            try (PreparedStatement stmt = conn.prepareStatement(sqlCategorie)) {
+                stmt.setString(1, categorie.getNom());
+                stmt.setString(2, categorie.getDescription());
+                stmt.setInt(3, categorie.getId());
+                misAJour = stmt.executeUpdate();
+            }
+
+            if (misAJour == 0) {
+                conn.rollback();
+                return false;
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement(sqlProduits)) {
+                stmt.setString(1, categorie.getNom());
+                stmt.setInt(2, categorie.getId());
+                int produits = stmt.executeUpdate();
+                if (produits > 0) {
+                    System.out.println("✓ " + produits + " produit(s) reclassé(s) sous « "
+                            + categorie.getNom() + " »");
+                }
+            }
+
+            conn.commit();
+            return true;
+
         } catch (SQLException e) {
             System.err.println("Erreur lors de la mise à jour de catégorie: " + e.getMessage());
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    System.err.println("Erreur lors du rollback: " + ex.getMessage());
+                }
+            }
+            return false;
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException e) {
+                    System.err.println("Erreur lors de la libération de la connexion: " + e.getMessage());
+                }
+            }
         }
-        
-        return false;
     }
     
     /**
@@ -156,19 +205,41 @@ public class CategorieDAO {
      * @param id L'ID de la catégorie à supprimer
      * @return true si la suppression réussit, false sinon
      */
-    public boolean delete(int id) {
-        String sql = "DELETE FROM categories WHERE id = ?";
-        
-        try (Connection conn = DBConnector.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
-            stmt.setInt(1, id);
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            System.err.println("Erreur lors de la suppression de catégorie: " + e.getMessage());
+    /**
+     * Supprime une catégorie, à condition qu'aucun produit ne l'utilise.
+     *
+     * La contrainte de la base est {@code ON DELETE SET NULL} : sans ce contrôle,
+     * la suppression réussissait en silence et laissait les produits avec un
+     * {@code category_id} vide mais l'ancien libellé dans la colonne texte. Ils
+     * réapparaissaient alors sous une catégorie fantôme, impossible à retrouver
+     * dans le référentiel.
+     *
+     * @return true si la catégorie a été supprimée
+     * @throws SQLException si des produits l'utilisent encore, avec leur nombre
+     */
+    public boolean delete(int id) throws SQLException {
+        String sqlCompte = "SELECT COUNT(*) FROM produits WHERE category_id = ?";
+        String sqlDelete = "DELETE FROM categories WHERE id = ?";
+
+        try (Connection conn = DBConnector.getConnection()) {
+
+            try (PreparedStatement stmt = conn.prepareStatement(sqlCompte)) {
+                stmt.setInt(1, id);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next() && rs.getInt(1) > 0) {
+                        int nb = rs.getInt(1);
+                        throw new SQLException("Impossible de supprimer cette catégorie : "
+                                + nb + " produit(s) l'utilisent encore. "
+                                + "Reclassez-les avant de la supprimer.");
+                    }
+                }
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement(sqlDelete)) {
+                stmt.setInt(1, id);
+                return stmt.executeUpdate() > 0;
+            }
         }
-        
-        return false;
     }
     
     /**

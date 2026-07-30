@@ -14,7 +14,21 @@ import model.Produit;
  * DAO pour les opérations CRUD sur la table Produits
  */
 public class ProduitDAO {
-    
+
+    /**
+     * Projection commune des produits.
+     *
+     * La catégorie affichée provient de la table {@code categories} lorsqu'un
+     * {@code category_id} est renseigné, et retombe sur l'ancienne colonne texte
+     * sinon. Toutes les lectures doivent passer par là : sans cela, une méthode
+     * renvoyant la colonne brute et une autre la valeur résolue classent le même
+     * produit différemment.
+     */
+    private static final String SELECT_PRODUIT =
+            "SELECT p.*, COALESCE(c.nom, p.categorie) AS categorie_affiche "
+          + "FROM produits p LEFT JOIN categories c ON c.id = p.category_id";
+
+
     /**
      * Récupère tous les produits
      * @return Liste de tous les produits
@@ -68,8 +82,13 @@ public class ProduitDAO {
      * @return Le produit trouvé, null sinon
      */
     public Produit findById(int id) {
-        String sql = "SELECT * FROM produits WHERE id = ?";
-        
+        // La catégorie est résolue via la table categories, comme dans findAll().
+        // Avec un simple "SELECT *", cette méthode renvoyait la colonne texte brute :
+        // après le renommage d'une catégorie, la caisse (qui passe par findById)
+        // classait le produit autrement que la liste des produits, ce qui faussait
+        // la logique tabac / frak cigarette lors de l'encaissement.
+        String sql = SELECT_PRODUIT + " WHERE p.id = ?";
+
         // La connexion vient d'un pool : elle doit être rendue après usage.
         try (Connection conn = DBConnector.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -93,7 +112,7 @@ public class ProduitDAO {
      * @return Le produit trouvé, null sinon
      */
     public Produit findByCodeBarre(String codeBarre) {
-        String sql = "SELECT * FROM produits WHERE code_barre = ?";
+        String sql = SELECT_PRODUIT + " WHERE p.code_barre = ?";
         
         try (Connection conn = DBConnector.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -117,7 +136,7 @@ public class ProduitDAO {
      * @return Le produit trouvé, null sinon
      */
     public Produit findByNomExact(String nom) {
-        String sql = "SELECT * FROM produits WHERE nom = ?";
+        String sql = SELECT_PRODUIT + " WHERE p.nom = ?";
         
         try (Connection conn = DBConnector.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -605,65 +624,61 @@ public class ProduitDAO {
     }
     
     /**
-     * Mappe un ResultSet vers un objet Produit
-     */
-    /**
-     * Récupère toutes les catégories distinctes (méthode de compatibilité)
-     * Utilise la table categories si disponible, sinon la colonne categorie
-     * @return Liste des noms de catégories
+     * Récupère le nom de toutes les catégories.
+     *
+     * La table {@code categories} fait référence : une catégorie qui vient d'être
+     * créée doit apparaître immédiatement, même si aucun produit ne lui est encore
+     * rattaché. L'ancienne version partait des produits
+     * ({@code categories INNER JOIN produits}), si bien qu'une catégorie vide
+     * restait invisible côté caisse tant qu'on ne lui avait pas ajouté un produit.
+     *
+     * Les valeurs de l'ancienne colonne texte {@code produits.categorie} sont
+     * ajoutées ensuite, pour les produits importés dont la catégorie n'a pas
+     * d'équivalent dans la table.
+     *
+     * @return Liste triée des noms de catégories
      */
     public List<String> findAllCategories() {
-        List<String> categories = new ArrayList<>();
-        java.util.Set<String> categoriesSet = new java.util.HashSet<>(); // Pour éviter les doublons
-        
-        // Essayer d'abord avec la table categories (si elle existe)
-        try {
-            String sql = "SELECT DISTINCT c.nom FROM categories c " +
-                         "INNER JOIN produits p ON p.category_id = c.id " +
-                         "ORDER BY c.nom";
-            try (Connection conn = DBConnector.getConnection();
-                 Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
-                
-                while (rs.next()) {
-                    String cat = rs.getString("nom");
-                    if (cat != null && !cat.trim().isEmpty()) {
-                        categoriesSet.add(cat.trim());
-                    }
+        java.util.Set<String> noms = new java.util.LinkedHashSet<>();
+
+        // 1. Référentiel : toutes les catégories déclarées, y compris les vides.
+        String sqlCategories = "SELECT nom FROM categories ORDER BY nom";
+        try (Connection conn = DBConnector.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sqlCategories)) {
+
+            while (rs.next()) {
+                String nom = rs.getString("nom");
+                if (nom != null && !nom.isBlank()) {
+                    noms.add(nom.trim());
                 }
             }
         } catch (SQLException e) {
-            // Table categories n'existe pas ou category_id n'existe pas - c'est normal
-            System.out.println("Table categories non disponible, utilisation de la colonne categorie: " + e.getMessage());
+            System.err.println("Lecture de la table categories impossible : " + e.getMessage());
         }
-        
-        // Toujours récupérer aussi depuis la colonne categorie (pour compatibilité)
-        try {
-            String sql = "SELECT DISTINCT TRIM(categorie) AS categorie FROM produits " +
-                         "WHERE categorie IS NOT NULL AND TRIM(categorie) != '' " +
-                         "ORDER BY categorie";
-            
-            try (Connection conn = DBConnector.getConnection();
-                 Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
-                
-                while (rs.next()) {
-                    String categorie = rs.getString("categorie");
-                    if (categorie != null && !categorie.trim().isEmpty()) {
-                        categoriesSet.add(categorie.trim());
-                    }
+
+        // 2. Rattrapage : catégories présentes uniquement dans la colonne texte.
+        String sqlTexte = "SELECT DISTINCT TRIM(categorie) AS categorie FROM produits "
+                        + "WHERE categorie IS NOT NULL AND TRIM(categorie) <> '' "
+                        + "ORDER BY 1";
+        try (Connection conn = DBConnector.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sqlTexte)) {
+
+            while (rs.next()) {
+                String nom = rs.getString("categorie");
+                if (nom != null && !nom.isBlank()) {
+                    noms.add(nom.trim());
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des catégories depuis colonne categorie: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Lecture des catégories depuis produits impossible : " + e.getMessage());
         }
-        
-        // Convertir le Set en List triée
-        categories.addAll(categoriesSet);
-        java.util.Collections.sort(categories);
-        
-        System.out.println("✓ " + categories.size() + " catégorie(s) trouvée(s): " + categories);
+
+        List<String> categories = new ArrayList<>(noms);
+        categories.sort(String.CASE_INSENSITIVE_ORDER);
+
+        System.out.println("✓ " + categories.size() + " catégorie(s) : " + categories);
         return categories;
     }
     
@@ -712,7 +727,7 @@ public class ProduitDAO {
         
         // Si aucune méthode avec JOIN n'a fonctionné, utiliser l'ancienne méthode avec juste la colonne categorie
         // Recherche insensible à la casse et avec trim
-        String sql = "SELECT *, categorie AS categorie_affiche FROM produits WHERE LOWER(TRIM(categorie)) = LOWER(?) ORDER BY nom";
+        String sql = SELECT_PRODUIT + " WHERE LOWER(TRIM(COALESCE(c.nom, p.categorie))) = LOWER(?) ORDER BY p.nom";
             
             try (Connection conn = DBConnector.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -734,27 +749,36 @@ public class ProduitDAO {
     }
     
     /**
-     * Récupère les produits d'une catégorie (par ID de catégorie)
+     * Récupère les produits d'une catégorie (par ID de catégorie).
+     *
+     * Renvoie tous les produits, y compris ceux à stock nul, comme
+     * {@link #findByCategorie(String)}. Cette méthode filtrait auparavant sur
+     * {@code quantite_stock > 0} : une même catégorie affichait donc un contenu
+     * différent selon qu'on l'ouvrait par son nom ou par son identifiant, et les
+     * produits en rupture disparaissaient de l'inventaire sans explication.
+     *
      * @param categoryId L'ID de la catégorie
      * @return Liste des produits de la catégorie
      */
     public List<Produit> findByCategoryId(int categoryId) {
         List<Produit> produits = new ArrayList<>();
-        String sql = "SELECT *, categorie AS categorie_affiche FROM produits WHERE category_id = ? AND quantite_stock > 0 ORDER BY nom";
-        
+        String sql = "SELECT p.*, COALESCE(c.nom, p.categorie) AS categorie_affiche "
+                   + "FROM produits p LEFT JOIN categories c ON c.id = p.category_id "
+                   + "WHERE p.category_id = ? ORDER BY p.nom";
+
         try (Connection conn = DBConnector.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
+
             stmt.setInt(1, categoryId);
-            ResultSet rs = stmt.executeQuery();
-            
-            while (rs.next()) {
-                produits.add(mapResultSetToProduit(rs));
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    produits.add(mapResultSetToProduit(rs));
+                }
             }
         } catch (SQLException e) {
             System.err.println("Erreur lors de la récupération des produits par category_id: " + e.getMessage());
         }
-        
+
         return produits;
     }
     

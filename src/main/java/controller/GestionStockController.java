@@ -736,6 +736,13 @@ public class GestionStockController {
                 return false;
             }
 
+            // Contrôle de cohérence : seules les valeurs négatives étaient
+            // rejetées, si bien qu'une faute de frappe sur le prix de vente
+            // passait sans un mot et faussait ensuite tout le chiffre d'affaires.
+            if (!confirmerPrixInhabituel(prixAchat, prixVente)) {
+                return false;
+            }
+
         } catch (NumberFormatException e) {
             showAlert(Alert.AlertType.WARNING, "Format invalide",
                     "Veuillez entrer des valeurs numériques valides.");
@@ -743,6 +750,46 @@ public class GestionStockController {
         }
 
         return true;
+    }
+
+    /**
+     * Demande confirmation lorsque le couple prix d'achat / prix de vente paraît
+     * anormal : vente à perte, ou marge démesurée trahissant une faute de frappe.
+     *
+     * Ne bloque pas la saisie — un commerçant peut vendre à perte un produit en fin
+     * de série — mais l'erreur n'est plus silencieuse.
+     *
+     * @return true s'il faut poursuivre l'enregistrement
+     */
+    private boolean confirmerPrixInhabituel(BigDecimal prixAchat, BigDecimal prixVente) {
+        String probleme = null;
+
+        if (prixAchat.compareTo(BigDecimal.ZERO) > 0
+                && prixVente.compareTo(prixAchat) < 0) {
+            probleme = String.format(
+                    "Le prix de vente (%.3f DT) est inférieur au prix d'achat (%.3f DT).%n"
+                  + "Chaque vente de ce produit entraînera une perte de %.3f DT.",
+                    prixVente, prixAchat, prixAchat.subtract(prixVente));
+
+        } else if (prixAchat.compareTo(BigDecimal.ZERO) > 0
+                && prixVente.compareTo(prixAchat.multiply(new BigDecimal("20"))) > 0) {
+            probleme = String.format(
+                    "Le prix de vente (%.3f DT) représente plus de 20 fois le prix "
+                  + "d'achat (%.3f DT).%nS'agit-il d'une erreur de saisie ?",
+                    prixVente, prixAchat);
+        }
+
+        if (probleme == null) {
+            return true;
+        }
+
+        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmation.setTitle("Vérification du prix");
+        confirmation.setHeaderText("Prix inhabituel");
+        confirmation.setContentText(probleme + "\n\nEnregistrer quand même ?");
+        confirmation.getDialogPane().setMinWidth(480);
+
+        return confirmation.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK;
     }
 
     /**

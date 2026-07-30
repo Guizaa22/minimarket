@@ -100,16 +100,31 @@ class RegressionIT {
             return;
         }
         // Nettoyage dans l'ordre inverse des dépendances.
-        try (Connection conn = DBConnector.getConnection();
-             Statement stmt = conn.createStatement()) {
-            stmt.execute("DELETE FROM detailsvente WHERE id_produit = " + produitId);
-            stmt.execute("DELETE FROM ventes WHERE id_utilisateur = " + employeId);
-            stmt.execute("DELETE FROM ajouts_stock WHERE employe_id = " + employeId);
-            stmt.execute("DELETE FROM notes_jour WHERE employe_id = " + employeId);
-            stmt.execute("DELETE FROM produits WHERE id = " + produitId);
-            stmt.execute("DELETE FROM utilisateurs WHERE id = " + employeId);
+        // Chaque suppression est isolée : si l'une échoue, les autres doivent
+        // tout de même s'exécuter, sinon un test en échec laisse des données
+        // résiduelles derrière lui.
+        String[] nettoyage = {
+            "DELETE FROM detailsvente WHERE id_produit IN "
+                + "(SELECT id FROM produits WHERE code_barre LIKE 'TEST%" + suffix + "')",
+            "DELETE FROM detailsvente WHERE id_produit = " + produitId,
+            "DELETE FROM ventes WHERE id_utilisateur = " + employeId,
+            "DELETE FROM ajouts_stock WHERE employe_id = " + employeId,
+            "DELETE FROM notes_jour WHERE employe_id = " + employeId,
+            "DELETE FROM produits WHERE code_barre LIKE 'TEST%" + suffix + "'",
+            "DELETE FROM produits WHERE id = " + produitId,
+            "DELETE FROM categories WHERE nom LIKE 'Cat%\\_" + suffix + "'",
+            "DELETE FROM utilisateurs WHERE id = " + employeId,
+        };
+        try (Connection conn = DBConnector.getConnection()) {
+            for (String sql : nettoyage) {
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.execute(sql);
+                } catch (SQLException e) {
+                    System.err.println("Nettoyage — échec de [" + sql + "] : " + e.getMessage());
+                }
+            }
         } catch (SQLException e) {
-            System.err.println("Nettoyage incomplet : " + e.getMessage());
+            System.err.println("Nettoyage impossible : " + e.getMessage());
         }
         SessionManager.reset();
         DBConnector.closeConnection();
@@ -269,6 +284,114 @@ class RegressionIT {
                         "le montant doit être restitué à l'identique");
             }
         }
+    }
+
+    // ------------------------------------------------------------------
+    // Catégories
+    // ------------------------------------------------------------------
+
+    @Test
+    @Order(10)
+    @DisplayName("Une catégorie sans produit apparaît quand même (bug signalé)")
+    void emptyCategoryIsVisible() {
+        assumeTrue(dbAvailable);
+
+        CategorieDAO catDAO = new CategorieDAO();
+        String nom = "CatVide_" + suffix;
+        assertTrue(catDAO.create(new model.Categorie(nom)), "création de la catégorie");
+
+        List<String> visibles = new ProduitDAO().findAllCategories();
+        assertTrue(visibles.contains(nom),
+                "une catégorie sans produit doit être visible côté caisse ; "
+                + "l'ancien INNER JOIN sur produits la masquait. Trouvées : " + visibles);
+    }
+
+    @Test
+    @Order(11)
+    @DisplayName("findByCategoryId renvoie aussi les produits en rupture")
+    void categoryIncludesOutOfStock() {
+        assumeTrue(dbAvailable);
+
+        ProduitDAO dao = new ProduitDAO();
+        Produit rupture = new Produit(
+                "TESTRUP" + suffix, "Produit rupture " + suffix, "Divers",
+                new BigDecimal("1.000"), new BigDecimal("2.000"),
+                0, "unité", 5);
+        assertTrue(dao.create(rupture), "création du produit à stock nul");
+
+        Integer catId = categoryIdOf(rupture.getId());
+        assumeTrue(catId != null, "le produit doit être rattaché à une catégorie");
+
+        boolean present = dao.findByCategoryId(catId).stream()
+                .anyMatch(p -> p.getId() == rupture.getId());
+        assertTrue(present,
+                "un produit à stock 0 doit rester listé ; le filtre quantite_stock > 0 "
+                + "le faisait disparaître de l'inventaire");
+    }
+
+    @Test
+    @Order(12)
+    @DisplayName("Renommer une catégorie reclasse ses produits")
+    void renamePropagatesToProducts() {
+        assumeTrue(dbAvailable);
+
+        CategorieDAO catDAO = new CategorieDAO();
+        String initial = "CatRenom_" + suffix;
+        model.Categorie cat = new model.Categorie(initial);
+        assertTrue(catDAO.create(cat));
+
+        ProduitDAO dao = new ProduitDAO();
+        Produit p = new Produit("TESTREN" + suffix, "Produit renom " + suffix, initial,
+                new BigDecimal("1.000"), new BigDecimal("2.000"), 5, "unité", 1);
+        assertTrue(dao.create(p));
+
+        String nouveau = "CatRenomme_" + suffix;
+        cat.setNom(nouveau);
+        assertTrue(catDAO.update(cat), "le renommage doit réussir");
+
+        assertEquals(nouveau, dao.findById(p.getId()).getCategorie(),
+                "le produit doit suivre le nouveau nom ; sinon la caisse et la liste "
+                + "des produits le classent différemment");
+    }
+
+    @Test
+    @Order(13)
+    @DisplayName("Supprimer une catégorie utilisée est refusé")
+    void deleteUsedCategoryIsRejected() {
+        assumeTrue(dbAvailable);
+
+        CategorieDAO catDAO = new CategorieDAO();
+        model.Categorie cat = new model.Categorie("CatSuppr_" + suffix);
+        assertTrue(catDAO.create(cat));
+
+        ProduitDAO dao = new ProduitDAO();
+        Produit p = new Produit("TESTSUP" + suffix, "Produit suppr " + suffix, cat.getNom(),
+                new BigDecimal("1.000"), new BigDecimal("2.000"), 5, "unité", 1);
+        assertTrue(dao.create(p));
+
+        SQLException refus = org.junit.jupiter.api.Assertions.assertThrows(
+                SQLException.class, () -> catDAO.delete(cat.getId()),
+                "la suppression doit être refusée tant qu'un produit l'utilise");
+        assertTrue(refus.getMessage().contains("produit"),
+                "le message doit expliquer la cause : " + refus.getMessage());
+    }
+
+    /** Renvoie le category_id d'un produit, ou null. */
+    private static Integer categoryIdOf(int produitId) {
+        try (Connection conn = DBConnector.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                     "SELECT category_id FROM produits WHERE id = ?")) {
+            stmt.setInt(1, produitId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    int id = rs.getInt(1);
+                    return rs.wasNull() ? null : id;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("categoryIdOf : " + e.getMessage());
+        }
+        return null;
     }
 
     // ------------------------------------------------------------------
