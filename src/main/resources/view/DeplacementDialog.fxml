@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="15" style="-fx-padding: 20; -fx-background-color: white;" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.DeplacementDialogController">
+   <children>
+      <Label style="-fx-font-size: 18px; -fx-font-weight: bold;" text="🚗 Suivi de Déplacement" />
+      
+      <VBox spacing="8">
+         <Label style="-fx-font-weight: bold;" text="Destination:" />
+         <TextField fx:id="destinationField" promptText="Ex: Fournisseur Central, Entrepôt..." />
+      </VBox>
+      
+      <VBox spacing="8">
+         <Label style="-fx-font-weight: bold;" text="Notes:" />
+         <TextArea fx:id="notesField" prefRowCount="4" wrapText="true" promptText="Notes sur le déplacement..." />
+      </VBox>
+      
+      <HBox spacing="10" alignment="CENTER_RIGHT">
+         <Button fx:id="annulerButton" onAction="#handleAnnuler" text="Annuler" />
+         <Button fx:id="enregistrerButton" onAction="#handleEnregistrer" styleClass="btn, btn-primary" text="Démarrer" />
+      </HBox>
+   </children>
+</VBox>
+

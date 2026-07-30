@@ -1,0 +1,244 @@
+/* ============================================
+   ADMIN DASHBOARD - GREEN THEME
+   Modern UI/UX with Large Buttons
+   ============================================ */
+
+/* Dashboard Root */
+.dashboard-root {
+    -fx-background-color: #2E7D32;
+    -fx-background-size: cover;
+    -fx-background-position: center center;
+}
+
+/* Dashboard Container */
+.dashboard-container {
+    -fx-background-color: rgba(255, 255, 255, 0.95);
+    -fx-background-radius: 20;
+    -fx-padding: 40;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 25, 0, 0, 10);
+}
+
+/* Dashboard Title */
+.dashboard-title {
+    -fx-font-size: 36px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1B5E20;
+    -fx-effect: dropshadow(three-pass-box, rgba(46, 125, 50, 0.3), 8, 0, 0, 2);
+}
+
+/* Dashboard Section Title */
+.dashboard-section-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2E7D32;
+    -fx-padding: 0 0 20 0;
+}
+
+/* ============================================
+   DASHBOARD BUTTONS - LARGE & MODERN
+   ============================================ */
+
+.dashboard-button {
+    -fx-pref-width: 380px;
+    -fx-pref-height: 160px;
+    -fx-min-width: 380px;
+    -fx-min-height: 160px;
+    -fx-background-color: #4CAF50;
+    -fx-background-radius: 15;
+    -fx-border-radius: 15;
+    -fx-border-width: 0;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(46, 125, 50, 0.4), 15, 0, 0, 5);
+    -fx-padding: 25;
+    -fx-alignment: center;
+    -fx-content-display: top;
+    -fx-graphic-text-gap: 20;
+}
+
+.dashboard-button .text {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 4, 0, 0, 1);
+    -fx-font-family: "Segoe UI", "Roboto", "Helvetica Neue", "Arial", sans-serif;
+}
+
+.dashboard-button:hover {
+    -fx-background-color: #66BB6A;
+    -fx-effect: dropshadow(three-pass-box, rgba(46, 125, 50, 0.6), 20, 0, 0, 8);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.dashboard-button:pressed {
+    -fx-background-color: #2E7D32;
+    -fx-effect: dropshadow(three-pass-box, rgba(46, 125, 50, 0.3), 10, 0, 0, 3);
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+/* Button Variants with Green Theme */
+.dashboard-button-primary {
+    -fx-background-color: #4CAF50;
+}
+
+.dashboard-button-primary:hover {
+    -fx-background-color: #66BB6A;
+}
+
+.dashboard-button-accent {
+    -fx-background-color: #66BB6A;
+}
+
+.dashboard-button-accent:hover {
+    -fx-background-color: #81C784;
+}
+
+.dashboard-button-warning {
+    -fx-background-color: #8BC34A;
+}
+
+.dashboard-button-warning:hover {
+    -fx-background-color: #9CCC65;
+}
+
+.dashboard-button-purple {
+    -fx-background-color: #7CB342;
+}
+
+.dashboard-button-purple:hover {
+    -fx-background-color: #9CCC65;
+}
+
+.dashboard-button-cyan {
+    -fx-background-color: #66BB6A;
+}
+
+.dashboard-button-cyan:hover {
+    -fx-background-color: #81C784;
+}
+
+/* Icon Styling in Buttons */
+.dashboard-button .image-view {
+    -fx-fit-width: 64px;
+    -fx-fit-height: 64px;
+}
+
+/* ============================================
+   STATISTICS CARDS
+   ============================================ */
+
+.dashboard-stat-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-padding: 20;
+    -fx-pref-width: 200px;
+    -fx-pref-height: 120px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 3);
+    -fx-border-color: #4CAF50;
+    -fx-border-width: 2;
+    -fx-border-radius: 12;
+}
+
+.dashboard-stat-card:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(46, 125, 50, 0.3), 15, 0, 0, 5);
+    -fx-border-color: #66BB6A;
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+.dashboard-stat-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2E7D32;
+}
+
+.dashboard-stat-value {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1B5E20;
+}
+
+.dashboard-stat-value-accent {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4CAF50;
+}
+
+.dashboard-stat-value-warning {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #F57C00;
+}
+
+.dashboard-stat-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: #666;
+}
+
+/* ============================================
+   HEADER BAR - GREEN THEME
+   ============================================ */
+
+.dashboard-header {
+    -fx-background-color: #2E7D32;
+    -fx-padding: 20 40;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 5);
+}
+
+.dashboard-header .label,
+.dashboard-header-label {
+    -fx-text-fill: white;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 5, 0, 0, 2);
+}
+
+/* Logout Button in Header */
+.dashboard-logout-button {
+    -fx-background-color: rgba(255, 255, 255, 0.2);
+    -fx-background-radius: 8;
+    -fx-border-color: rgba(255, 255, 255, 0.4);
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-padding: 10 20;
+    -fx-cursor: hand;
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.dashboard-logout-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.3);
+    -fx-border-color: rgba(255, 255, 255, 0.6);
+}
+
+.dashboard-logout-button:pressed {
+    -fx-background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Button Description Labels */
+.dashboard-button-label {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2E7D32;
+    -fx-text-alignment: center;
+    -fx-wrap-text: true;
+}
+
+/* ============================================
+   RESPONSIVE LAYOUT
+   ============================================ */
+
+.dashboard-buttons-container {
+    -fx-spacing: 30;
+    -fx-alignment: center;
+    -fx-padding: 20;
+}
+
+.dashboard-stats-container {
+    -fx-spacing: 20;
+    -fx-alignment: center;
+    -fx-padding: 20;
+}
+

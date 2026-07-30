@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/17.0.2-ea"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="controller.GestionStockController"
+            stylesheets="@/styles/global.css, @/styles/gestionstock.css"
+            styleClass="root">
+   <style>
+      -fx-background-image: url('/background/backgroundpointdevente.jpg');
+      -fx-background-size: cover;
+      -fx-background-position: center center;
+      -fx-background-repeat: no-repeat;
+   </style>
+
+   <children>
+      <!-- Semi-transparent overlay for better readability and clarity -->
+      <AnchorPane style="-fx-background-color: rgba(255, 255, 255, 0.08);" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" mouseTransparent="true" />
+      
+      <!-- ========================================
+           CONTENEUR PRINCIPAL
+           ======================================== -->
+      <VBox spacing="0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+            AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+
+         <!-- ========================================
+              HEADER - Barre supérieure moderne
+              ======================================== -->
+         <HBox alignment="CENTER_LEFT" spacing="20" styleClass="header-bar" style="-fx-background-color: linear-gradient(to right, rgba(46, 125, 50, 0.95), rgba(76, 175, 80, 0.95)); -fx-padding: 25 40;">
+            <padding>
+               <Insets top="25" right="40" bottom="25" left="40"/>
+            </padding>
+            <children>
+               <!-- Icône & Titre -->
+               <HBox alignment="CENTER_LEFT" spacing="15">
+                  <Label text="[STOCK]" style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
+                  <Label text="Gestion de Stock" styleClass="header-title">
+                     <font>
+                        <Font name="System Bold" size="32.0"/>
+                     </font>
+                  </Label>
+               </HBox>
+
+               <!-- Espaceur -->
+               <Region HBox.hgrow="ALWAYS"/>
+
+               <!-- Bouton Retour -->
+               <Button fx:id="retourButton" text="← Retour" onAction="#handleRetour" visible="true" managed="true">
+                  <font>
+                     <Font name="System Bold" size="16.0"/>
+                  </font>
+               </Button>
+            </children>
+         </HBox>
+
+         <!-- ========================================
+              CONTENEUR PRINCIPAL (Formulaire + Liste)
+              ======================================== -->
+         <HBox spacing="30" VBox.vgrow="ALWAYS">
+            <padding>
+               <Insets top="30" right="30" bottom="30" left="30"/>
+            </padding>
+
+            <!-- ========================================
+                 SECTION GAUCHE - FORMULAIRE PRODUIT
+                 ======================================== -->
+            <VBox spacing="20" styleClass="section-box"
+                  style="-fx-pref-width: 400; -fx-min-width: 380; -fx-background-color: rgba(255, 255, 255, 0.92); -fx-background-radius: 10; -fx-padding: 20;">
+               <children>
+                  <!-- Titre Formulaire -->
+                  <HBox alignment="CENTER_LEFT" spacing="10">
+                     <Label text="[+]" style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
+                     <Label fx:id="formTitleLabel" text="Nouveau Produit" styleClass="section-title">
+                        <font>
+                           <Font name="System Bold" size="22.0"/>
+                        </font>
+                     </Label>
+                  </HBox>
+
+                  <!-- Séparateur -->
+                  <Separator style="-fx-padding: 5 0;"/>
+
+                  <!-- Formulaire -->
+                  <VBox spacing="16" styleClass="form-container">
+                     <!-- Code-barres -->
+                     <VBox spacing="6">
+                        <Label text="Code-barres *" styleClass="form-label">
+                           <font>
+                              <Font name="System Bold" size="14.0"/>
+                           </font>
+                        </Label>
+                        <TextField fx:id="codeBarreField"
+                                   promptText="Entrer le code-barres"
+                                   onAction="#handleCodeBarreScan"/>
+                     </VBox>
+
+                     <!-- Nom du produit -->
+                     <VBox spacing="6">
+                        <Label text="Nom du produit *" styleClass="form-label">
+                           <font>
+                              <Font name="System Bold" size="14.0"/>
+                           </font>
+                        </Label>
+                        <TextField fx:id="nomField" promptText="Nom du produit"/>
+                     </VBox>
+
+                     <!-- Catégorie -->
+                     <VBox spacing="6">
+                        <Label text="Catégorie" styleClass="form-label">
+                           <font>
+                              <Font name="System Bold" size="14.0"/>
+                           </font>
+                        </Label>
+                        <HBox spacing="8">
+                           <ComboBox fx:id="categorieComboBox" HBox.hgrow="ALWAYS" promptText="Sélectionner une catégorie"/>
+                           <Button fx:id="ajouterCategorieButton" text="+" onAction="#handleAjouterCategorie" style="-fx-min-width: 40;"/>
+                        </HBox>
+                     </VBox>
+
+                     <!-- Prix d'achat & Prix de vente -->
+                     <HBox spacing="12">
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                           <Label text="Prix d'achat (€)" styleClass="form-label">
+                              <font>
+                                 <Font name="System Bold" size="14.0"/>
+                              </font>
+                           </Label>
+                           <TextField fx:id="prixAchatField" promptText="0.00"/>
+                        </VBox>
+
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                           <Label text="Prix de vente (€)" styleClass="form-label">
+                              <font>
+                                 <Font name="System Bold" size="14.0"/>
+                              </font>
+                           </Label>
+                           <TextField fx:id="prixVenteField" promptText="0.00"/>
+                        </VBox>
+                     </HBox>
+
+                     <!-- Quantité stock & Seuil d'alerte -->
+                     <HBox spacing="12">
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                           <Label text="Quantité stock" styleClass="form-label">
+                              <font>
+                                 <Font name="System Bold" size="14.0"/>
+                              </font>
+                           </Label>
+                           <TextField fx:id="quantiteStockField" promptText="0"/>
+                        </VBox>
+
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                           <Label text="Seuil d'alerte" styleClass="form-label">
+                              <font>
+                                 <Font name="System Bold" size="14.0"/>
+                              </font>
+                           </Label>
+                           <TextField fx:id="seuilAlerteField" promptText="0"/>
+                        </VBox>
+                     </HBox>
+                  </VBox>
+
+                  <!-- Espaceur flexible -->
+                  <Region VBox.vgrow="ALWAYS"/>
+
+                  <!-- Boutons d'action -->
+                  <VBox spacing="12" styleClass="button-container">
+                     <!-- Bouton Ajouter (visible par défaut) -->
+                     <Button fx:id="ajouterButton" text="+ Ajouter"
+                             onAction="#handleAjouter"
+                             maxWidth="Infinity" minHeight="50" prefHeight="50" visible="true" managed="true">
+                        <font>
+                           <Font name="System Bold" size="16.0"/>
+                        </font>
+                     </Button>
+
+                     <!-- Boutons Modifier & Annuler (cachés par défaut) -->
+                     <HBox fx:id="editButtonsBox" spacing="12" visible="false" managed="false">
+                        <Button fx:id="modifierButton" text="Modifier"
+                                onAction="#handleModifier"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity">
+                           <font>
+                              <Font name="System Bold" size="16.0"/>
+                           </font>
+                        </Button>
+
+                        <Button fx:id="annulerButton" text="Annuler"
+                                onAction="#handleAnnuler"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity">
+                           <font>
+                              <Font name="System Bold" size="16.0"/>
+                           </font>
+                        </Button>
+                     </HBox>
+                  </VBox>
+               </children>
+            </VBox>
+
+            <!-- ========================================
+                 SECTION DROITE - LISTE DES PRODUITS
+                 ======================================== -->
+            <VBox spacing="20" styleClass="section-box" HBox.hgrow="ALWAYS" style="-fx-background-color: rgba(255, 255, 255, 0.92); -fx-background-radius: 10; -fx-padding: 20;">
+               <children>
+                  <!-- Header de la liste avec recherche -->
+                  <HBox alignment="CENTER_LEFT" spacing="20">
+                     <children>
+                        <!-- Titre -->
+                        <HBox alignment="CENTER_LEFT" spacing="12" HBox.hgrow="ALWAYS">
+                           <Label text="[LIST]" style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
+                           <Label text="Liste des Produits" styleClass="section-title">
+                              <font>
+                                 <Font name="System Bold" size="22.0"/>
+                              </font>
+                           </Label>
+                        </HBox>
+
+                        <!-- Barre de recherche LIVE -->
+                        <VBox spacing="2" alignment="CENTER_RIGHT">
+                           <HBox spacing="0" alignment="CENTER_RIGHT" styleClass="search-box">
+                              <Label text="🔎" style="-fx-font-size: 18px; -fx-padding: 0 10 0 15;"/>
+                              <TextField fx:id="rechercheField"
+                                         promptText="✨ Recherche en temps réel..."
+                                         style="-fx-pref-width: 300; -fx-background-color: transparent; -fx-border-width: 0;"
+                                         onKeyReleased="#handleRechercher"/>
+                           </HBox>
+                           <Label text="Filtre instantané" style="-fx-font-size: 10px; -fx-text-fill: #718096; -fx-font-style: italic; -fx-padding: 0 15 0 0;" />
+                        </VBox>
+                     </children>
+                  </HBox>
+
+                  <!-- Séparateur -->
+                  <Separator style="-fx-padding: 5 0;"/>
+
+                  <!-- TableView des produits -->
+                  <TableView fx:id="produitsTable" VBox.vgrow="ALWAYS">
+                     <columns>
+                        <TableColumn fx:id="codeBarreColumn" text="Code-barres"
+                                     prefWidth="120" minWidth="100"/>
+
+                        <TableColumn fx:id="nomColumn" text="Nom"
+                                     prefWidth="180" minWidth="150"/>
+
+                        <TableColumn fx:id="categorieColumn" text="Catégorie"
+                                     prefWidth="130" minWidth="100"/>
+
+                        <TableColumn fx:id="prixAchatColumn" text="Prix Achat"
+                                     prefWidth="110" minWidth="100"
+                                     style="-fx-alignment: CENTER-RIGHT;"/>
+
+                        <TableColumn fx:id="prixVenteColumn" text="Prix Vente"
+                                     prefWidth="110" minWidth="100"
+                                     style="-fx-alignment: CENTER-RIGHT;"/>
+
+                        <TableColumn fx:id="quantiteStockColumn" text="Stock"
+                                     prefWidth="90" minWidth="80"
+                                     style="-fx-alignment: CENTER;"/>
+
+                        <TableColumn fx:id="seuilAlerteColumn" text="Seuil"
+                                     prefWidth="90" minWidth="80"
+                                     style="-fx-alignment: CENTER;"/>
+
+                        <TableColumn fx:id="actionsColumn" text="Actions"
+                                     prefWidth="130" minWidth="120"
+                                     style="-fx-alignment: CENTER;"/>
+                     </columns>
+
+                     <!-- Message si table vide -->
+                     <placeholder>
+                        <VBox alignment="CENTER" spacing="15" style="-fx-padding: 50;">
+                           <Label text="[EMPTY]" style="-fx-font-size: 48px; -fx-opacity: 0.3;"/>
+                           <Label text="Aucun produit trouvé"
+                                  style="-fx-font-size: 18px; -fx-text-fill: #a0aec0; -fx-font-weight: bold;"/>
+                        </VBox>
+                     </placeholder>
+                  </TableView>
+               </children>
+            </VBox>
+         </HBox>
+      </VBox>
+   </children>
+</AnchorPane>

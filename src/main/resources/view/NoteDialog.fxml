@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<StackPane fx:id="rootPane" styleClass="root" stylesheets="@/styles/global.css" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.NoteDialogController">
+   <children>
+      <!-- Background avec gradient subtil -->
+      <VBox style="-fx-background-color: linear-gradient(to bottom, #F5F7FA, #E8ECF1);" />
+      
+      <!-- Contenu principal -->
+      <VBox spacing="0" styleClass="card" style="-fx-background-color: white; -fx-background-radius: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 20, 0, 0, 8); -fx-max-width: 600; -fx-min-width: 550;">
+         <children>
+            <!-- Header avec gradient -->
+            <VBox style="-fx-background-color: linear-gradient(to right, #2E7D32, #4CAF50); -fx-background-radius: 20 20 0 0; -fx-padding: 25;">
+               <children>
+                  <HBox alignment="CENTER_LEFT" spacing="15">
+                     <children>
+                        <Label style="-fx-font-size: 32px;" text="📝" />
+                        <VBox spacing="2">
+                           <children>
+                              <Label style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;" text="Ajouter une Note" />
+                              <Label style="-fx-text-fill: rgba(255,255,255,0.9); -fx-font-size: 13px;" text="Enregistrez vos notes de crédit, sortie de caisse, etc." />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+            
+            <!-- Contenu du formulaire -->
+            <VBox spacing="20" style="-fx-padding: 30;">
+               <children>
+                  <!-- Type de Note -->
+                  <VBox spacing="8">
+                     <children>
+                        <Label style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #4A5568;">
+                           <graphic>
+                              <Label style="-fx-font-size: 18px;" text="🏷️" />
+                           </graphic>
+                           <text>Type de Note</text>
+                        </Label>
+                        <ComboBox fx:id="typeNoteComboBox" maxWidth="Infinity" prefHeight="45" styleClass="combo-box" 
+                                  style="-fx-background-radius: 12; -fx-border-radius: 12; -fx-font-size: 14px;" />
+                     </children>
+                  </VBox>
+                  
+                  <!-- Montant (conditionnel) -->
+                  <VBox fx:id="montantContainer" spacing="8" visible="false" managed="false">
+                     <children>
+                        <Label style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #4A5568;">
+                           <graphic>
+                              <Label style="-fx-font-size: 18px;" text="💰" />
+                           </graphic>
+                           <text>Montant (DT)</text>
+                        </Label>
+                        <TextField fx:id="montantField" promptText="0.00" prefHeight="45" styleClass="text-field" 
+                                   style="-fx-background-radius: 12; -fx-border-radius: 12; -fx-font-size: 14px; -fx-padding: 12;" />
+                        <Label style="-fx-font-size: 11px; -fx-text-fill: #718096; -fx-font-style: italic;" 
+                               text="💡 Entrez le montant en dinars tunisiens" />
+                     </children>
+                  </VBox>
+                  
+                  <!-- Description -->
+                  <VBox spacing="8" VBox.vgrow="ALWAYS">
+                     <children>
+                        <Label style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #4A5568;">
+                           <graphic>
+                              <Label style="-fx-font-size: 18px;" text="📄" />
+                           </graphic>
+                           <text>Description</text>
+                        </Label>
+                        <TextArea fx:id="descriptionField" prefRowCount="5" wrapText="true" 
+                                  promptText="Décrivez votre note en détail...&#10;Exemples:&#10;• Crédit accordé à un fournisseur&#10;• Sortie de caisse pour achat de matériel&#10;• Remarque importante sur les opérations du jour"
+                                  styleClass="text-field" 
+                                  style="-fx-background-radius: 12; -fx-border-radius: 12; -fx-font-size: 14px; -fx-padding: 12;" />
+                        <HBox alignment="CENTER_RIGHT" spacing="5">
+                           <children>
+                              <Label fx:id="charCountLabel" style="-fx-font-size: 11px; -fx-text-fill: #718096;" text="0 / 500 caractères" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  
+                  <!-- Boutons d'action -->
+                  <HBox spacing="12" alignment="CENTER_RIGHT" style="-fx-padding: 10 0 0 0;">
+                     <children>
+                        <Button fx:id="annulerButton" onAction="#handleAnnuler" styleClass="btn, btn-secondary" 
+                                text="Annuler" prefWidth="120" prefHeight="45" />
+                        <Button fx:id="enregistrerButton" onAction="#handleEnregistrer" styleClass="btn, btn-primary" 
+                                text="✅ Enregistrer" prefWidth="150" prefHeight="45" />
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+         </children>
+      </VBox>
+   </children>
+</StackPane>

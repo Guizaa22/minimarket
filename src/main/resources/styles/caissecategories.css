@@ -1,0 +1,345 @@
+/* ==========================================
+   CAISSE CATÉGORIES - CSS MODERNE
+   Interface de point de vente professionnelle
+   ========================================== */
+
+/* ==========================================
+   ROOT & BASE
+   ========================================== */
+.root {
+    -fx-font-family: "Segoe UI", "Roboto", "Arial", sans-serif;
+    -fx-font-size: 14px;
+    /* Background will be set via FXML style */
+}
+
+/* Panels with semi-transparent background to show background image */
+.search-section {
+    -fx-background-color: rgba(255, 255, 255, 0.92);
+    -fx-background-radius: 15;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 12, 0, 0, 4);
+}
+
+.categories-section {
+    -fx-background-color: rgba(255, 255, 255, 0.90);
+    -fx-background-radius: 15;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 12, 0, 0, 4);
+}
+
+/* ==========================================
+   HEADER - Barre supérieure
+   ========================================== */
+.header-box {
+    -fx-background-color: linear-gradient(to right, #10b981 0%, #059669 100%);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 12, 0, 0, 4);
+}
+
+.header-title {
+    -fx-text-fill: white;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 3, 0, 2, 2);
+}
+
+/* ==========================================
+   BADGE PANIER
+   ========================================== */
+.panier-badge {
+    -fx-background-color: rgba(255, 255, 255, 0.2);
+    -fx-text-fill: white;
+    -fx-padding: 8 16;
+    -fx-background-radius: 15;
+    -fx-border-color: rgba(255, 255, 255, 0.4);
+    -fx-border-width: 2;
+    -fx-border-radius: 15;
+}
+
+/* ==========================================
+   BOUTON PANIER
+   ========================================== */
+.panier-button {
+    -fx-background-color: linear-gradient(to bottom, #f59e0b 0%, #d97706 100%);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-background-radius: 8;
+    -fx-padding: 10 20;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.4), 8, 0, 0, 3);
+}
+
+.panier-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #fbbf24 0%, #f59e0b 100%);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.6), 12, 0, 0, 5);
+}
+
+.panier-button:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+/* ==========================================
+   BOUTON DÉCONNEXION
+   ========================================== */
+.logout-button {
+    -fx-background-color: linear-gradient(to bottom, #ef4444 0%, #dc2626 100%);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-background-radius: 8;
+    -fx-padding: 10 20;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.4), 8, 0, 0, 3);
+}
+
+.logout-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #dc2626 0%, #b91c1c 100%);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.6), 12, 0, 0, 5);
+}
+
+.logout-button:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+/* ==========================================
+   SECTION RECHERCHE
+   ========================================== */
+.search-section {
+    -fx-background-color: white;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 6, 0, 0, 2);
+}
+
+.section-title {
+    -fx-text-fill: #1f2937;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.search-label {
+    -fx-text-fill: #6b7280;
+    -fx-font-size: 12px;
+}
+
+.search-bar {
+    -fx-background-color: #f9fafb;
+    -fx-padding: 12;
+    -fx-background-radius: 10;
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+}
+
+/* ==========================================
+   CHAMP DE RECHERCHE
+   ========================================== */
+.search-field {
+    -fx-background-color: white;
+    -fx-border-color: #d1d5db;
+    -fx-border-width: 2;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 10 14;
+    -fx-font-size: 14px;
+    -fx-text-fill: #1f2937;
+    -fx-prompt-text-fill: #9ca3af;
+    -fx-pref-height: 40;
+}
+
+.search-field:focused {
+    -fx-border-color: #10b981;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.3), 8, 0, 0, 0);
+}
+
+/* ==========================================
+   CONTRÔLES DE QUANTITÉ
+   ========================================== */
+.quantity-field {
+    -fx-background-color: white;
+    -fx-border-color: #d1d5db;
+    -fx-border-width: 2;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 8;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1f2937;
+    -fx-alignment: center;
+    -fx-pref-width: 60;
+    -fx-pref-height: 40;
+}
+
+.quantity-minus {
+    -fx-background-color: linear-gradient(to bottom, #ef4444 0%, #dc2626 100%);
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+    -fx-pref-width: 40;
+    -fx-pref-height: 40;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.3), 6, 0, 0, 2);
+}
+
+.quantity-minus:hover {
+    -fx-background-color: linear-gradient(to bottom, #dc2626 0%, #b91c1c 100%);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.quantity-plus {
+    -fx-background-color: linear-gradient(to bottom, #10b981 0%, #059669 100%);
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+    -fx-pref-width: 40;
+    -fx-pref-height: 40;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.3), 6, 0, 0, 2);
+}
+
+.quantity-plus:hover {
+    -fx-background-color: linear-gradient(to bottom, #059669 0%, #047857 100%);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+/* ==========================================
+   BOUTON AJOUTER
+   ========================================== */
+.add-button {
+    -fx-background-color: linear-gradient(to bottom, #3b82f6 0%, #2563eb 100%);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-background-radius: 8;
+    -fx-padding: 10 20;
+    -fx-pref-height: 40;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.4), 8, 0, 0, 3);
+}
+
+.add-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #2563eb 0%, #1d4ed8 100%);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.6), 12, 0, 0, 5);
+}
+
+.add-button:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+/* ==========================================
+   INFO PRODUIT
+   ========================================== */
+.product-info {
+    -fx-padding: 10 12;
+    -fx-background-color: rgba(16, 185, 129, 0.1);
+    -fx-background-radius: 6;
+    -fx-border-color: rgba(16, 185, 129, 0.3);
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-text-fill: #059669;
+}
+
+/* ==========================================
+   SECTION CATÉGORIES
+   ========================================== */
+.categories-section {
+    -fx-background-color: transparent;
+}
+
+/* ==========================================
+   BOUTONS DE CATÉGORIE (dans le contrôleur)
+   Styles appliqués dynamiquement en Java
+   ========================================== */
+
+/* Style de base pour les catégories */
+.category-button {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-background-color: linear-gradient(to bottom, #10b981 0%, #059669 100%);
+    -fx-text-fill: white;
+    -fx-background-radius: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.3), 12, 0, 0, 6);
+    -fx-cursor: hand;
+    -fx-padding: 20;
+    -fx-pref-width: 220;
+    -fx-pref-height: 180;
+}
+
+.category-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #34d399 0%, #10b981 100%);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.5), 18, 0, 0, 10);
+    -fx-scale-x: 1.08;
+    -fx-scale-y: 1.08;
+}
+
+.category-button:pressed {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+/* ==========================================
+   SCROLLBAR
+   ========================================== */
+.scroll-bar {
+    -fx-background-color: transparent;
+    -fx-padding: 2;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #10b981;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #059669;
+}
+
+.scroll-bar .track {
+    -fx-background-color: rgba(229, 231, 235, 0.3);
+    -fx-background-radius: 8;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+/* ==========================================
+   SEPARATOR
+   ========================================== */
+.separator {
+    -fx-background-color: transparent;
+}
+
+.separator .line {
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 2 0 0 0;
+}
+
+/* ==========================================
+   ANIMATIONS
+   ========================================== */
+.button,
+.text-field {
+    -fx-transition: all 0.3s ease;
+}
+
+/* ==========================================
+   FOCUS
+   ========================================== */
+*:focused {
+    -fx-focus-color: #10b981;
+    -fx-faint-focus-color: rgba(16, 185, 129, 0.2);
+}

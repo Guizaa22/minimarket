@@ -1,0 +1,264 @@
+/* ============================================
+   STYLES POUR L'INTERFACE CAISSE - 2M MARKET
+   ============================================ */
+
+/* Variables de couleurs */
+.root {
+    -fx-primary-color: #4CAF50;
+    -fx-primary-dark: #2E7D32;
+    -fx-primary-light: #66BB6A;
+    -fx-secondary-color: #2196F3;
+    -fx-warning-color: #FF9800;
+    -fx-danger-color: #f44336;
+    -fx-success-color: #4CAF50;
+    -fx-background-light: #f5f5f5;
+    -fx-text-dark: #333333;
+    -fx-text-light: #666666;
+}
+
+/* ============================================
+   BOUTONS DE CATÉGORIE
+   ============================================ */
+
+.category-button {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-background-color: linear-gradient(to bottom, #4CAF50, #2E7D32);
+    -fx-text-fill: white;
+    -fx-background-radius: 15;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.25), 12, 0, 0, 6);
+    -fx-cursor: hand;
+    -fx-padding: 20;
+    -fx-transition: all 0.3s ease;
+}
+
+.category-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #66BB6A, #4CAF50);
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 18, 0, 0, 10);
+    -fx-scale-x: 1.08;
+    -fx-scale-y: 1.08;
+    -fx-rotate: 1;
+}
+
+.category-button:pressed {
+    -fx-background-color: linear-gradient(to bottom, #2E7D32, #1B5E20);
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+}
+
+/* ============================================
+   CARTES PRODUITS
+   ============================================ */
+
+.product-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 10, 0, 0, 4);
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-padding: 15;
+    -fx-cursor: hand;
+    -fx-transition: all 0.3s ease;
+}
+
+.product-card:hover {
+    -fx-background-color: linear-gradient(to bottom, #f9f9f9, #f5f5f5);
+    -fx-effect: dropshadow(three-pass-box, rgba(76, 175, 80, 0.4), 15, 0, 0, 8);
+    -fx-border-color: #4CAF50;
+    -fx-border-width: 2;
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
+    -fx-translate-y: -5;
+}
+
+.product-card:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+/* Nom du produit dans la carte */
+.product-name {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
+    -fx-wrap-text: true;
+}
+
+/* Prix dans la carte */
+.product-price {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4CAF50;
+}
+
+/* Stock dans la carte */
+.product-stock {
+    -fx-font-size: 12px;
+    -fx-text-fill: #666;
+}
+
+.product-stock.low {
+    -fx-text-fill: #f44336;
+    -fx-font-weight: bold;
+}
+
+/* ============================================
+   BOUTONS D'ACTION
+   ============================================ */
+
+.add-button {
+    -fx-background-color: linear-gradient(to bottom, #4CAF50, #2E7D32);
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-padding: 10 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 5, 0, 0, 2);
+    -fx-transition: all 0.2s ease;
+}
+
+.add-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #66BB6A, #4CAF50);
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 8, 0, 0, 4);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.add-button:pressed {
+    -fx-background-color: linear-gradient(to bottom, #2E7D32, #1B5E20);
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+.panier-button {
+    -fx-background-color: linear-gradient(to bottom, #FF9800, #F57C00);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 5, 0, 0, 2);
+}
+
+.panier-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #FFB74D, #FF9800);
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 8, 0, 0, 4);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+/* ============================================
+   CHAMPS DE SAISIE
+   ============================================ */
+
+.text-field {
+    -fx-background-color: white;
+    -fx-border-color: #bdbdbd;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+    -fx-padding: 8;
+    -fx-font-size: 14px;
+}
+
+.text-field:focused {
+    -fx-border-color: #4CAF50;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(three-pass-box, rgba(76, 175, 80, 0.3), 5, 0, 0, 2);
+}
+
+/* ============================================
+   HEADER / BARRE DE NAVIGATION
+   ============================================ */
+
+.header-bar {
+    -fx-background-color: linear-gradient(to right, #2E7D32, #4CAF50);
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 3);
+}
+
+/* ============================================
+   SCROLLPANE
+   ============================================ */
+
+.scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: #fafafa;
+}
+
+.scroll-bar:vertical {
+    -fx-background-color: #e0e0e0;
+    -fx-background-radius: 5;
+}
+
+.scroll-bar:vertical .thumb {
+    -fx-background-color: #4CAF50;
+    -fx-background-radius: 5;
+}
+
+.scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #66BB6A;
+}
+
+/* ============================================
+   CARTES PANIER (TACTILE OPTIMIZED)
+   ============================================ */
+
+.panier-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 10, 0, 0, 4);
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-cursor: hand;
+    -fx-transition: all 0.3s ease;
+    -fx-min-height: 120px;
+}
+
+.panier-card:hover {
+    -fx-background-color: linear-gradient(to bottom, #f9f9f9, #f5f5f5);
+    -fx-effect: dropshadow(three-pass-box, rgba(76, 175, 80, 0.3), 15, 0, 0, 6);
+    -fx-border-color: #4CAF50;
+    -fx-border-width: 2;
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+/* Boutons tactiles - taille minimale pour interaction facile */
+.button {
+    -fx-min-height: 50px;
+    -fx-min-width: 100px;
+    -fx-font-size: 16px;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.button:pressed {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes fadeIn {
+    from {
+        -fx-opacity: 0;
+    }
+    to {
+        -fx-opacity: 1;
+    }
+}
+
+.fade-in {
+    -fx-opacity: 0;
+    animation: fadeIn 0.5s ease-in forwards;
+}

@@ -1,0 +1,424 @@
+/* ==========================================
+   GESTION DE STOCK - CSS PREMIUM MODERNE
+   Design professionnel inspiré par React
+   ========================================== */
+
+/* ==========================================
+   ROOT & BASE
+   ========================================== */
+.root {
+    -fx-font-family: "Segoe UI", "Roboto", "Arial", sans-serif;
+    -fx-font-size: 14px;
+    -fx-background-color: linear-gradient(to bottom right, #f9fafb 0%, #e5e7eb 100%);
+}
+
+/* ==========================================
+   HEADER - Barre supérieure moderne
+   ========================================== */
+.header-box {
+    -fx-background-color: linear-gradient(to right, #059669 0%, #047857 100%);
+    -fx-padding: 25 40;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 15, 0, 0, 5);
+}
+
+.header-title {
+    -fx-text-fill: white;
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 3, 0, 2, 2);
+}
+
+/* ==========================================
+   BOUTON RETOUR - Design moderne
+   ========================================== */
+#retourButton {
+    -fx-background-color: white;
+    -fx-text-fill: #059669;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-background-radius: 10;
+    -fx-padding: 12 30;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0, 0, 3);
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+}
+
+#retourButton:hover {
+    -fx-background-color: #f9fafb;
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 12, 0, 0, 5);
+}
+
+#retourButton:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+    -fx-background-color: #e5e7eb;
+}
+
+/* ==========================================
+   SECTIONS - Cards avec glassmorphism
+   ========================================== */
+.section-box {
+    -fx-background-color: white;
+    -fx-background-radius: 15;
+    -fx-padding: 25;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 5);
+    -fx-border-color: rgba(229, 231, 235, 0.8);
+    -fx-border-width: 1;
+    -fx-border-radius: 15;
+}
+
+/* ==========================================
+   TITRES DES SECTIONS
+   ========================================== */
+.section-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 22px;
+    -fx-text-fill: #1f2937;
+}
+
+/* ==========================================
+   LABELS DU FORMULAIRE
+   ========================================== */
+.form-label {
+    -fx-text-fill: #374151;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+/* ==========================================
+   CHAMPS DE TEXTE - Design moderne
+   ========================================== */
+.text-field {
+    -fx-background-color: white;
+    -fx-border-color: #d1d5db;
+    -fx-border-width: 2;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 12 16;
+    -fx-font-size: 14px;
+    -fx-text-fill: #1f2937;
+    -fx-prompt-text-fill: #9ca3af;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 3, 0, 0, 1);
+}
+
+.text-field:focused {
+    -fx-border-color: #059669;
+    -fx-border-width: 2;
+    -fx-background-color: white;
+    -fx-effect: dropshadow(gaussian, rgba(5, 150, 105, 0.3), 10, 0, 0, 0);
+    -fx-scale-x: 1.01;
+    -fx-scale-y: 1.01;
+}
+
+.text-field:hover {
+    -fx-border-color: #9ca3af;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 5, 0, 0, 2);
+}
+
+/* Champs spécifiques */
+#codeBarreField, #nomField, #categorieField,
+#prixAchatField, #prixVenteField,
+#quantiteStockField, #seuilAlerteField {
+    -fx-pref-height: 42;
+}
+
+/* ==========================================
+   BARRE DE RECHERCHE - Design moderne
+   ========================================== */
+.search-box {
+    -fx-background-color: white;
+    -fx-border-color: #d1d5db;
+    -fx-border-width: 2;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 2);
+}
+
+.search-box:hover {
+    -fx-border-color: #059669;
+    -fx-effect: dropshadow(gaussian, rgba(5, 150, 105, 0.2), 8, 0, 0, 3);
+}
+
+#rechercheField:focused {
+    -fx-effect: none;
+    -fx-scale-x: 1;
+    -fx-scale-y: 1;
+}
+
+/* ==========================================
+   BOUTONS D'ACTION - Design premium
+   ========================================== */
+
+/* Bouton Ajouter - Vert émeraude */
+#ajouterButton {
+    -fx-background-color: linear-gradient(to bottom, #059669 0%, #047857 100%);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-background-radius: 10;
+    -fx-padding: 14 30;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(5, 150, 105, 0.4), 10, 0, 0, 4);
+    -fx-border-color: transparent;
+}
+
+#ajouterButton:hover {
+    -fx-background-color: linear-gradient(to bottom, #047857 0%, #065f46 100%);
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
+    -fx-effect: dropshadow(gaussian, rgba(5, 150, 105, 0.5), 15, 0, 0, 6);
+}
+
+#ajouterButton:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+    -fx-effect: dropshadow(gaussian, rgba(5, 150, 105, 0.3), 5, 0, 0, 2);
+}
+
+/* Bouton Modifier - Bleu */
+#modifierButton {
+    -fx-background-color: linear-gradient(to bottom, #2563eb 0%, #1d4ed8 100%);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-background-radius: 10;
+    -fx-padding: 14 30;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.4), 10, 0, 0, 4);
+}
+
+#modifierButton:hover {
+    -fx-background-color: linear-gradient(to bottom, #1d4ed8 0%, #1e40af 100%);
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
+    -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.5), 15, 0, 0, 6);
+}
+
+#modifierButton:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+/* Bouton Annuler - Gris */
+#annulerButton {
+    -fx-background-color: linear-gradient(to bottom, #6b7280 0%, #4b5563 100%);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-background-radius: 10;
+    -fx-padding: 14 30;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(107, 114, 128, 0.4), 10, 0, 0, 4);
+}
+
+#annulerButton:hover {
+    -fx-background-color: linear-gradient(to bottom, #4b5563 0%, #374151 100%);
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
+    -fx-effect: dropshadow(gaussian, rgba(107, 114, 128, 0.5), 15, 0, 0, 6);
+}
+
+#annulerButton:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+/* Boutons d'action dans le tableau (Modifier/Supprimer) */
+.action-button-edit {
+    -fx-background-color: transparent;
+    -fx-text-fill: #2563eb;
+    -fx-font-size: 16px;
+    -fx-cursor: hand;
+    -fx-padding: 8;
+    -fx-background-radius: 8;
+}
+
+.action-button-edit:hover {
+    -fx-background-color: rgba(37, 99, 235, 0.1);
+}
+
+.action-button-delete {
+    -fx-background-color: transparent;
+    -fx-text-fill: #dc2626;
+    -fx-font-size: 16px;
+    -fx-cursor: hand;
+    -fx-padding: 8;
+    -fx-background-radius: 8;
+}
+
+.action-button-delete:hover {
+    -fx-background-color: rgba(220, 38, 38, 0.1);
+}
+
+/* ==========================================
+   TABLEVIEW - Design ultra moderne
+   ========================================== */
+#produitsTable {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-background-radius: 10;
+}
+
+/* En-têtes de colonnes */
+#produitsTable .column-header-background {
+    -fx-background-color: #f9fafb;
+    -fx-background-radius: 10 10 0 0;
+    -fx-border-color: transparent transparent #e5e7eb transparent;
+    -fx-border-width: 0 0 2 0;
+}
+
+#produitsTable .column-header {
+    -fx-background-color: transparent;
+    -fx-padding: 12;
+    -fx-border-color: transparent;
+}
+
+#produitsTable .column-header .label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #6b7280;
+    -fx-alignment: center-left;
+}
+
+/* Cellules du tableau */
+#produitsTable .table-cell {
+    -fx-padding: 14 12;
+    -fx-border-color: transparent transparent #f3f4f6 transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-font-size: 14px;
+    -fx-text-fill: #374151;
+    -fx-alignment: center-left;
+}
+
+/* Lignes du tableau */
+#produitsTable .table-row-cell {
+    -fx-background-color: white;
+    -fx-background-radius: 0;
+}
+
+#produitsTable .table-row-cell:hover {
+    -fx-background-color: #f9fafb;
+    -fx-cursor: hand;
+}
+
+#produitsTable .table-row-cell:selected {
+    -fx-background-color: rgba(5, 150, 105, 0.1);
+}
+
+#produitsTable .table-row-cell:selected .table-cell {
+    -fx-text-fill: #059669;
+}
+
+/* ==========================================
+   BADGE DE STOCK - Alerte et Normal
+   ========================================== */
+.stock-badge {
+    -fx-padding: 6 12;
+    -fx-background-radius: 20;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+
+.stock-badge-low {
+    -fx-background-color: rgba(220, 38, 38, 0.1);
+    -fx-text-fill: #dc2626;
+}
+
+.stock-badge-normal {
+    -fx-background-color: rgba(5, 150, 105, 0.1);
+    -fx-text-fill: #059669;
+}
+
+/* ==========================================
+   SCROLLBAR - Design moderne minimaliste
+   ========================================== */
+.scroll-bar {
+    -fx-background-color: transparent;
+    -fx-padding: 2;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #d1d5db;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #9ca3af;
+}
+
+.scroll-bar .thumb:pressed {
+    -fx-background-color: #6b7280;
+}
+
+.scroll-bar .track {
+    -fx-background-color: rgba(229, 231, 235, 0.3);
+    -fx-background-radius: 8;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+/* ==========================================
+   SEPARATOR - Élégant
+   ========================================== */
+.separator {
+    -fx-background-color: transparent;
+}
+
+.separator .line {
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 1 0 0 0;
+}
+
+/* ==========================================
+   TOOLTIP - Info-bulles modernes
+   ========================================== */
+.tooltip {
+    -fx-background-color: #1f2937;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-padding: 8 12;
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 0, 3);
+}
+
+/* ==========================================
+   PLACEHOLDER - Message quand table vide
+   ========================================== */
+.table-view .placeholder .label {
+    -fx-text-fill: #9ca3af;
+    -fx-font-size: 16px;
+}
+
+/* ==========================================
+   FOCUS VISIBLE - Amélioration accessibilité
+   ========================================== */
+*:focused {
+    -fx-focus-color: #059669;
+    -fx-faint-focus-color: rgba(5, 150, 105, 0.2);
+}
+
+/* ==========================================
+   DISABLED STATE
+   ========================================== */
+.text-field:disabled,
+.button:disabled {
+    -fx-opacity: 0.5;
+    -fx-cursor: default;
+}
+
+/* ==========================================
+   ANIMATIONS - Transitions fluides
+   ========================================== */
+.text-field,
+.button,
+.table-row-cell {
+    -fx-transition: all 0.3s ease;
+}

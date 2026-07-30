@@ -1,0 +1,83 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.classpath
+.project
+.settings/
+bin/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+build_log*.txt
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
+
+# Database
+*.db
+*.sqlite
+*.db.bak
+*.backup-*
+
+# Secrets - ne JAMAIS commiter
+database.properties
+.env
+*.pgpass
+cp.txt
+
+# Tickets de caisse generes
+ticket_*.txt
+
+# Compiled classes
+*.class
+
+# Package files
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# User-specific files
+*.user
+*.suo
+
+# Sorties de build supplementaires
+dist/
+archive/
+installer/
+build.log
+build-output.txt
+*.dumpstream
+
+# Anciens scripts de depannage SQLite/MySQL (obsoletes depuis PostgreSQL)
+FIX_SQLiteDatabaseSetup.java
+
+# Export de donnees reelles (hachages de mots de passe, chiffre d'affaires)
+tools/data_postgres.sql
+data_postgres.sql

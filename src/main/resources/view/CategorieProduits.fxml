@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane styleClass="root" stylesheets="@/styles/global.css, @/styles/product-card.css" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.CategorieProduitsController">
+   <children>
+      <VBox spacing="0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <!-- Header -->
+            <HBox alignment="CENTER_LEFT" spacing="15.0" styleClass="header-bar">
+               <children>
+                  <Label fx:id="categorieLabel" styleClass="header-title" text="Catégorie" />
+                  <Region HBox.hgrow="ALWAYS" />
+                  <Label fx:id="panierCountLabel" style="-fx-font-weight: bold; -fx-text-fill: white;" text="Panier: 0 article(s)" />
+                  <Button fx:id="panierButton" mnemonicParsing="false" onAction="#handleVoirPanier" styleClass="btn, btn-accent" text="🛒 Panier" />
+                  <Button fx:id="retourButton" mnemonicParsing="false" onAction="#handleRetour" styleClass="btn, btn-secondary" text="◀ Retour" visible="true" managed="true" />
+               </children>
+            </HBox>
+            
+            <!-- Content -->
+            <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
+               <content>
+                  <FlowPane fx:id="produitsContainer" hgap="20.0" vgap="20.0" style="-fx-background-color: transparent;" prefWrapLength="1000.0">
+                     <padding>
+                        <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
+                     </padding>
+                  </FlowPane>
+               </content>
+            </ScrollPane>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>
+

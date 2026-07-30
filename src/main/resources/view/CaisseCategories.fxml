@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane styleClass="root" stylesheets="@/styles/global.css, @/styles/caissecategories.css" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.CaisseCategoriesController">
+   <style>
+      -fx-background-image: url('/background/backgroundpointdevente.jpg');
+      -fx-background-size: cover;
+      -fx-background-position: center center;
+      -fx-background-repeat: no-repeat;
+   </style>
+   <children>
+      <!-- Semi-transparent overlay for better readability and clarity -->
+      <AnchorPane style="-fx-background-color: rgba(255, 255, 255, 0.08);" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" mouseTransparent="true" />
+      
+      <!-- ========================================
+           CONTENEUR PRINCIPAL
+           ======================================== -->
+      <VBox spacing="0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+
+         <!-- ========================================
+              HEADER - Barre supérieure moderne
+              ======================================== -->
+         <HBox alignment="CENTER_LEFT" spacing="15" styleClass="header-bar">
+            <children>
+               <!-- Logo & Titre -->
+               <HBox alignment="CENTER_LEFT" spacing="10">
+                  <Label style="-fx-font-size: 28px;" text="🏪" />
+                  <Label styleClass="header-title" text="2M Market - Point de Vente" />
+               </HBox>
+
+               <!-- Espaceur -->
+               <Region HBox.hgrow="ALWAYS" />
+
+               <!-- Badge Panier -->
+               <HBox alignment="CENTER" spacing="12">
+                  <Label fx:id="panierCountLabel" style="-fx-font-weight: bold; -fx-text-fill: white;" text="Panier: 0" />
+
+                  <!-- Bouton Ajout Stock -->
+                  <Button fx:id="ajoutStockButton" onAction="#handleAjoutStock" styleClass="btn, btn-accent" text="📦 Ajout Stock" />
+
+                  <!-- Bouton Panier -->
+                  <Button fx:id="panierButton" onAction="#handleVoirPanier" styleClass="btn, btn-accent" text="🛒 Panier" />
+
+                  <!-- Bouton Déconnexion -->
+                  <Button fx:id="deconnexionButton" onAction="#handleDeconnexion" styleClass="btn, btn-danger" text="🚪 Déconnexion" />
+               </HBox>
+            </children>
+         </HBox>
+
+         <!-- ========================================
+              SECTION RECHERCHE RAPIDE
+              ======================================== -->
+         <VBox spacing="10" styleClass="search-section" style="-fx-background-color: rgba(255, 255, 255, 0.92);">
+            <padding>
+               <Insets bottom="15" left="25" right="25" top="15" />
+            </padding>
+            <children>
+               <!-- Titre de la section -->
+               <HBox alignment="CENTER_LEFT" spacing="8">
+                  <Label style="-fx-font-size: 18px;" text="🔎" />
+                  <Label styleClass="section-title" text="Recherche Rapide en Direct" />
+                  <Label style="-fx-font-size: 11px; -fx-text-fill: #718096; -fx-font-style: italic;" text="✨ Tapez pour voir les résultats instantanément" />
+               </HBox>
+
+               <!-- Ligne de recherche et quantité -->
+               <HBox alignment="CENTER_LEFT" spacing="12" styleClass="search-bar">
+                  <!-- Champ de recherche -->
+                  <VBox spacing="4" HBox.hgrow="ALWAYS">
+                     <Label styleClass="search-label" text="Nom ou Code-barres (Filtre en direct)" />
+                     <TextField fx:id="rechercheField" onAction="#handleRecherche" promptText="✨ Tapez pour rechercher instantanément..." styleClass="search-field" HBox.hgrow="ALWAYS" />
+                  </VBox>
+
+                  <!-- Contrôle de quantité -->
+                  <VBox spacing="4">
+                     <Label styleClass="search-label" text="Quantité" />
+                     <HBox alignment="CENTER" spacing="6">
+                        <Button fx:id="moinsButton" onAction="#handleMoinsQuantite" styleClass="quantity-minus" text="➖" />
+
+                        <TextField fx:id="quantiteField" styleClass="quantity-field" text="1" />
+
+                        <Button fx:id="plusButton" onAction="#handlePlusQuantite" styleClass="quantity-plus" text="➕" />
+                     </HBox>
+                  </VBox>
+
+                  <!-- Bouton Ajouter -->
+                  <VBox spacing="4">
+                     <Label style="-fx-font-size: 12px;" text=" " />
+                     <Button fx:id="ajouterRapideButton" onAction="#handleAjouterRapide" styleClass="btn, btn-primary" text="✚ Ajouter" />
+                  </VBox>
+               </HBox>
+
+               <!-- Info produit trouvé -->
+               <Label fx:id="produitInfoLabel" styleClass="product-info" text="" />
+            </children>
+         </VBox>
+
+         <!-- Séparateur -->
+         <Separator />
+
+         <!-- ========================================
+              SECTION CATÉGORIES
+              ======================================== -->
+         <VBox spacing="10" styleClass="categories-section" VBox.vgrow="ALWAYS">
+            <padding>
+               <Insets bottom="15" left="25" right="25" top="15" />
+            </padding>
+            <children>
+               <!-- Titre -->
+               <HBox alignment="CENTER_LEFT" spacing="8">
+                  <Label style="-fx-font-size: 18px;" text="📂" />
+                  <Label styleClass="section-title" text="Sélectionnez une Catégorie" />
+               </HBox>
+
+               <!-- ScrollPane avec les catégories -->
+               <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
+                  <content>
+                     <FlowPane fx:id="categoriesContainer" hgap="20" style="-fx-background-color: transparent;" vgap="20" prefWrapLength="1000.0">
+                        <padding>
+                           <Insets bottom="5" left="5" right="5" top="5" />
+                        </padding>
+                     </FlowPane>
+                  </content>
+               </ScrollPane>
+            </children>
+         </VBox>
+      </VBox>
+   </children>
+</AnchorPane>

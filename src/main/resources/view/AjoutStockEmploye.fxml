@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<StackPane fx:id="rootPane" styleClass="root" stylesheets="@/styles/global.css, @/styles/product-card.css" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.AjoutStockEmployeController" style="-fx-background-color: transparent;">
+   <children>
+      <AnchorPane>
+         <style>
+            -fx-background-image: url('/background/backgroundstock.jpg');
+            -fx-background-size: cover;
+            -fx-background-position: center center;
+            -fx-background-repeat: no-repeat;
+         </style>
+         <children>
+            <!-- Semi-transparent overlay for better readability and clarity -->
+            <AnchorPane style="-fx-background-color: rgba(255, 255, 255, 0.08);" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" mouseTransparent="true" />
+            
+            <VBox spacing="0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <!-- ========================================
+                 HEADER - Barre supérieure
+                 ======================================== -->
+            <HBox alignment="CENTER_LEFT" spacing="15" styleClass="header-bar">
+               <padding>
+                  <Insets bottom="20" left="30" right="30" top="20" />
+               </padding>
+               <children>
+                  <Label styleClass="header-title" text="📦 Ajout de Stock - Employé">
+                     <font>
+                        <Font name="System Bold" size="28.0" />
+                     </font>
+                  </Label>
+                  <Region HBox.hgrow="ALWAYS" />
+                  <Button fx:id="notesButton" onAction="#handleNotes" styleClass="btn, btn-secondary" text="📝 Notes" minWidth="120" prefHeight="45" visible="true" managed="true" />
+                  <Button fx:id="recetteJourButton" onAction="#handleRecetteJour" styleClass="btn, btn-secondary" text="📊 Recette du Jour" minWidth="180" prefHeight="45" visible="true" managed="true" />
+                  <Button fx:id="retourButton" onAction="#handleRetour" styleClass="btn, btn-secondary" text="◀ Retour" minWidth="120" prefHeight="45" style="-fx-font-size: 16px; -fx-font-weight: bold;" visible="true" managed="true" />
+               </children>
+            </HBox>
+
+            <!-- ========================================
+                 CONTENU PRINCIPAL - Avec ScrollPane
+                 ======================================== -->
+            <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS" style="-fx-background: transparent; -fx-background-color: transparent;" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+               <content>
+            <HBox spacing="20" style="-fx-min-height: 600;">
+               <padding>
+                  <Insets bottom="20" left="20" right="20" top="20" />
+               </padding>
+               <children>
+                  <!-- ========================================
+                       PANEL GAUCHE - Recherche & Ajout
+                       ======================================== -->
+                  <VBox spacing="20" styleClass="card" HBox.hgrow="NEVER" prefWidth="500" minWidth="450" maxWidth="550" style="-fx-background-color: rgba(255, 255, 255, 0.98); -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 3);">
+                     <padding>
+                        <Insets bottom="25" left="25" right="25" top="25" />
+                     </padding>
+                     <children>
+                        <Label styleClass="section-title" text="🔍 Rechercher un Produit">
+                           <font>
+                              <Font name="System Bold" size="20.0" />
+                           </font>
+                        </Label>
+
+                        <!-- Champ de recherche LIVE -->
+                        <VBox spacing="8">
+                           <Label style="-fx-font-weight: bold; -fx-font-size: 14px;" text="🔎 Recherche en temps réel:" />
+                           <TextField fx:id="rechercheField" onAction="#handleRecherche" promptText="✨ Tapez pour filtrer instantanément..." styleClass="text-field" />
+                           <Label style="-fx-font-size: 11px; -fx-text-fill: #718096; -fx-font-style: italic;" text="💡 Les résultats s'affichent pendant que vous tapez" />
+                        </VBox>
+
+                        <Separator />
+
+                        <!-- Informations produit trouvé -->
+                        <VBox fx:id="produitInfoBox" spacing="12" visible="false">
+                           <children>
+                              <Label styleClass="section-title" text="📋 Informations Produit" />
+                              
+                              <VBox spacing="8">
+                                 <HBox spacing="10">
+                                    <Label style="-fx-font-weight: bold; -fx-min-width: 120;" text="Nom:" />
+                                    <Label fx:id="nomLabel" style="-fx-font-size: 16px;" text="" />
+                                 </HBox>
+                                 <HBox spacing="10">
+                                    <Label style="-fx-font-weight: bold; -fx-min-width: 120;" text="Code-barres:" />
+                                    <Label fx:id="codeBarreLabel" style="-fx-font-size: 14px;" text="" />
+                                 </HBox>
+                                 <HBox spacing="10">
+                                    <Label style="-fx-font-weight: bold; -fx-min-width: 120;" text="Catégorie:" />
+                                    <Label fx:id="categorieLabel" style="-fx-font-size: 14px;" text="" />
+                                 </HBox>
+                                 <HBox spacing="10">
+                                    <Label style="-fx-font-weight: bold; -fx-min-width: 120;" text="Stock actuel:" />
+                                    <Label fx:id="stockActuelLabel" style="-fx-font-size: 16px; -fx-font-weight: bold;" text="" />
+                                 </HBox>
+                                 <HBox spacing="10">
+                                    <Label style="-fx-font-weight: bold; -fx-min-width: 120;" text="Unité:" />
+                                    <Label fx:id="uniteLabel" style="-fx-font-size: 14px;" text="" />
+                                 </HBox>
+                                 <HBox spacing="10">
+                                    <Label style="-fx-font-weight: bold; -fx-min-width: 120;" text="Prix d'achat:" />
+                                    <Label fx:id="prixAchatLabel" style="-fx-font-size: 14px;" text="" />
+                                 </HBox>
+                                 <HBox spacing="10">
+                                    <Label style="-fx-font-weight: bold; -fx-min-width: 120;" text="Prix vente:" />
+                                    <Label fx:id="prixVenteLabel" style="-fx-font-size: 14px;" text="" />
+                                 </HBox>
+                                 <HBox spacing="10">
+                                    <Label style="-fx-font-weight: bold; -fx-min-width: 120;" text="Seuil alerte:" />
+                                    <Label fx:id="seuilAlerteLabel" style="-fx-font-size: 14px;" text="" />
+                                 </HBox>
+                                 <Separator />
+                                 <VBox spacing="6">
+                                    <Label style="-fx-font-weight: bold; -fx-font-size: 13px;" text="📝 Description / Notes:" />
+                                    <TextArea fx:id="descriptionProduitField" styleClass="text-field" prefRowCount="3" wrapText="true" promptText="Ajoutez des notes ou une description pour ce produit..." editable="true" />
+                                 </VBox>
+                              </VBox>
+
+                              <Separator />
+
+                              <!-- Ajout de stock -->
+                              <VBox spacing="12">
+                                 <Label styleClass="section-title" text="➕ Ajouter au Stock" />
+                                 
+                                 <VBox spacing="8">
+                                    <Label style="-fx-font-weight: bold; -fx-font-size: 14px;" text="Quantité à ajouter:" />
+                                    <HBox alignment="CENTER" spacing="15">
+                                       <Button fx:id="moinsButton" onAction="#handleMoins" styleClass="btn, btn-secondary" text="➖" prefWidth="60" prefHeight="50" visible="true" managed="true" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-cursor: hand;" />
+                                       <TextField fx:id="quantiteField" styleClass="text-field" text="1" prefWidth="120" prefHeight="50" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-alignment: center;" />
+                                       <Button fx:id="plusButton" onAction="#handlePlus" styleClass="btn, btn-secondary" text="➕" prefWidth="60" prefHeight="50" visible="true" managed="true" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-cursor: hand;" />
+                                    </HBox>
+                                 </VBox>
+
+                                 <!-- Bouton Ajout Rapide (sans fournisseur) -->
+                                 <Button fx:id="ajouterRapideButton" onAction="#handleAjouterRapide" styleClass="btn, btn-primary" text="⚡ Ajouter Rapidement" maxWidth="Infinity" prefHeight="45" minHeight="45" visible="true" managed="true" style="-fx-font-size: 15px; -fx-font-weight: bold;" />
+
+                                 <Separator />
+
+                                 <!-- Informations Fournisseur -->
+                                 <VBox spacing="8">
+                                    <Label styleClass="section-title" text="🏪 Informations Fournisseur" />
+                                    
+                                    <VBox spacing="6">
+                                       <Label style="-fx-font-weight: bold; -fx-font-size: 13px;" text="Fournisseur:" />
+                                       <ComboBox fx:id="fournisseurComboBox" styleClass="combo-box" maxWidth="Infinity" />
+                                       <Label fx:id="creditDisponibleLabel" style="-fx-font-size: 12px; -fx-text-fill: #2E7D32;" text="" visible="false" />
+                                    </VBox>
+
+                                    <VBox spacing="6">
+                                       <Label style="-fx-font-weight: bold; -fx-font-size: 13px;" text="Montant Paiement (DT):" />
+                                       <TextField fx:id="montantPaiementField" styleClass="text-field" promptText="0.00" />
+                                    </VBox>
+
+                                    <VBox spacing="6">
+                                       <Label style="-fx-font-weight: bold; -fx-font-size: 13px;" text="Crédit Utilisé (DT):" />
+                                       <TextField fx:id="creditUtiliseField" styleClass="text-field" promptText="0.00" />
+                                    </VBox>
+
+                                    <VBox spacing="6">
+                                       <Label style="-fx-font-weight: bold; -fx-font-size: 13px;" text="Notes:" />
+                                       <TextArea fx:id="notesField" styleClass="text-field" prefRowCount="3" wrapText="true" promptText="Notes sur le paiement, crédit, etc." />
+                                    </VBox>
+                                 </VBox>
+
+                                 <Button fx:id="ajouterStockButton" onAction="#handleAjouterStock" styleClass="btn, btn-primary" text="✅ Ajouter au Stock" maxWidth="Infinity" prefHeight="50" minHeight="50" visible="true" managed="true" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                              </VBox>
+                           </children>
+                        </VBox>
+
+                        <!-- Message si produit non trouvé -->
+                        <Label fx:id="messageLabel" style="-fx-font-size: 14px; -fx-text-alignment: center; -fx-wrap-text: true;" text="" visible="false" />
+                     </children>
+                  </VBox>
+
+                  <!-- ========================================
+                       PANEL DROIT - Liste des Produits
+                       ======================================== -->
+                  <VBox spacing="15" styleClass="card" HBox.hgrow="ALWAYS" style="-fx-background-color: rgba(255, 255, 255, 0.98); -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 3);">
+                     <padding>
+                        <Insets bottom="25" left="25" right="25" top="25" />
+                     </padding>
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10">
+                           <Label styleClass="section-title" text="📦 Liste des Produits">
+                              <font>
+                                 <Font name="System Bold" size="20.0" />
+                              </font>
+                           </Label>
+                           <Region HBox.hgrow="ALWAYS" />
+                           <VBox spacing="2">
+                              <TextField fx:id="filtreField" onKeyReleased="#handleFiltre" promptText="✨ Filtrer en direct..." styleClass="text-field" prefWidth="280" />
+                              <Label style="-fx-font-size: 10px; -fx-text-fill: #718096; -fx-font-style: italic;" text="Filtre instantané pendant que vous tapez" />
+                           </VBox>
+                        </HBox>
+
+                        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background: transparent; -fx-background-color: transparent;" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" pannable="true">
+                           <content>
+                              <FlowPane fx:id="produitsContainer" hgap="20" vgap="20" style="-fx-padding: 10; -fx-background-color: transparent;" prefWrapLength="300" />
+                           </content>
+                        </ScrollPane>
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+               </content>
+            </ScrollPane>
+            </children>
+         </VBox>
+         </children>
+      </AnchorPane>
+   </children>
+</StackPane>
+

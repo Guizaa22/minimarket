@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.chart.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="controller.GestionVentesController"
+            stylesheets="@/styles/gestion-ventes.css" styleClass="root">
+    <style>
+        -fx-background-image: url('/background/backgroundlogin.jpg');
+        -fx-background-size: cover;
+        -fx-background-position: center center;
+        -fx-background-repeat: no-repeat;
+    </style>
+
+    <!-- Header -->
+    <top>
+        <VBox styleClass="header">
+            <HBox styleClass="header-content" alignment="CENTER_LEFT" spacing="15">
+                <Label text="📊" styleClass="header-icon"/>
+                <VBox>
+                    <Label text="Gestion des Ventes" styleClass="header-title"/>
+                    <Label text="2M Market - Tableau de bord" styleClass="header-subtitle"/>
+                </VBox>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="dateLabel" styleClass="date-badge"/>
+                <Button fx:id="retourButton" text="↩️ Retour Dashboard" styleClass="btn-retour" onAction="#retourDashboard" visible="true" managed="true"/>
+
+            </HBox>
+
+            <!-- Navigation Tabs -->
+            <HBox styleClass="tabs-container" spacing="5">
+                <Button fx:id="btnDashboard" text="📈 Tableau de Bord" styleClass="tab-button, active"
+                        onAction="#showDashboard"/>
+                <Button fx:id="btnVentes" text="🧾 Historique Ventes" styleClass="tab-button"
+                        onAction="#showVentes"/>
+                <Button fx:id="btnProduits" text="🏆 Top Produits" styleClass="tab-button"
+                        onAction="#showProduits"/>
+                <Button fx:id="btnRapports" text="📄 Rapports" styleClass="tab-button"
+                        onAction="#showRapports"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <!-- Content -->
+    <center>
+        <StackPane>
+            <!-- Overlay pour améliorer la lisibilité -->
+            <AnchorPane style="-fx-background-color: rgba(255, 255, 255, 0.05);" mouseTransparent="true" />
+            <ScrollPane fitToWidth="true" styleClass="content-scroll">
+                <StackPane fx:id="contentPane" styleClass="content-container">
+
+                <!-- Dashboard View -->
+                <VBox fx:id="dashboardView" spacing="30" styleClass="view-container">
+                    <!-- KPI Cards -->
+                    <GridPane styleClass="kpi-grid" hgap="20" vgap="20">
+                        <VBox styleClass="kpi-card" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="💰" styleClass="kpi-icon"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label text="+12%" styleClass="kpi-badge, badge-green"/>
+                            </HBox>
+                            <Label text="CA Aujourd'hui" styleClass="kpi-title"/>
+                            <Label fx:id="caJourLabel" text="2890.50 €" styleClass="kpi-value, value-green"/>
+                        </VBox>
+
+                        <VBox styleClass="kpi-card" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="📅" styleClass="kpi-icon"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label text="+12%" styleClass="kpi-badge, badge-blue"/>
+                            </HBox>
+                            <Label text="CA Semaine" styleClass="kpi-title"/>
+                            <Label fx:id="caSemaineLabel" text="15420.00 €" styleClass="kpi-value, value-blue"/>
+                        </VBox>
+
+                        <VBox styleClass="kpi-card" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="📊" styleClass="kpi-icon"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label text="+12%" styleClass="kpi-badge, badge-purple"/>
+                            </HBox>
+                            <Label text="CA Mois" styleClass="kpi-title"/>
+                            <Label fx:id="caMoisLabel" text="58730.00 €" styleClass="kpi-value, value-purple"/>
+                        </VBox>
+
+                        <VBox styleClass="kpi-card" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="🛒" styleClass="kpi-icon"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label text="+12%" styleClass="kpi-badge, badge-orange"/>
+                            </HBox>
+                            <Label text="Ventes Aujourd'hui" styleClass="kpi-title"/>
+                            <Label fx:id="nbVentesLabel" text="98" styleClass="kpi-value, value-orange"/>
+                        </VBox>
+
+                        <VBox styleClass="kpi-card" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="💳" styleClass="kpi-icon"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label text="+12%" styleClass="kpi-badge, badge-cyan"/>
+                            </HBox>
+                            <Label text="Panier Moyen" styleClass="kpi-title"/>
+                            <Label fx:id="panierMoyenLabel" text="29.50 €" styleClass="kpi-value, value-cyan"/>
+                        </VBox>
+
+                        <VBox styleClass="kpi-card" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="💎" styleClass="kpi-icon"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label text="+12%" styleClass="kpi-badge, badge-pink"/>
+                            </HBox>
+                            <Label text="Bénéfice Estimé" styleClass="kpi-title"/>
+                            <Label fx:id="beneficeLabel" text="12450.00 €" styleClass="kpi-value, value-pink"/>
+                        </VBox>
+                    </GridPane>
+
+                    <!-- Charts Row -->
+                    <HBox spacing="20" styleClass="charts-row">
+                        <VBox styleClass="chart-card" HBox.hgrow="ALWAYS">
+                            <Label text="📈 Évolution des Ventes (7 jours)" styleClass="chart-title"/>
+                            <LineChart fx:id="ventesLineChart" styleClass="line-chart">
+                                <xAxis><CategoryAxis side="BOTTOM"/></xAxis>
+                                <yAxis><NumberAxis side="LEFT"/></yAxis>
+                            </LineChart>
+                        </VBox>
+
+                        <VBox styleClass="chart-card" prefWidth="400">
+                            <Label text="🎯 Ventes par Catégorie" styleClass="chart-title"/>
+                            <PieChart fx:id="categoriesPieChart" styleClass="pie-chart"/>
+                        </VBox>
+                    </HBox>
+
+                    <!-- Bar Chart -->
+                    <VBox styleClass="chart-card">
+                        <Label text="📊 Chiffre d'Affaires par Catégorie" styleClass="chart-title"/>
+                        <BarChart fx:id="caBarChart" styleClass="bar-chart">
+                            <xAxis><CategoryAxis side="BOTTOM"/></xAxis>
+                            <yAxis><NumberAxis side="LEFT"/></yAxis>
+                        </BarChart>
+                    </VBox>
+                </VBox>
+
+                <!-- Ventes View -->
+                <VBox fx:id="ventesView" visible="false" styleClass="view-container, card">
+                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="table-header">
+                        <Label text="🧾 Historique des Ventes" styleClass="section-title"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="Filtrer par date:" style="-fx-text-fill: #333; -fx-font-size: 14px;"/>
+                        <DatePicker fx:id="datePickerFilter" styleClass="date-picker"/>
+                    </HBox>
+
+                    <TableView fx:id="ventesTable" styleClass="sales-table">
+                        <columns>
+                            <TableColumn text="ID" prefWidth="80" fx:id="colId"/>
+                            <TableColumn text="Date &amp; Heure" prefWidth="180" fx:id="colDate"/>
+                            <TableColumn text="Montant" prefWidth="120" fx:id="colMontant"/>
+                            <TableColumn text="Articles" prefWidth="100" fx:id="colArticles"/>
+                            <TableColumn text="Caissier" prefWidth="150" fx:id="colCaissier"/>
+                            <TableColumn text="Action" prefWidth="120" fx:id="colAction"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+
+                <!-- Produits View -->
+                <VBox fx:id="produitsView" visible="false" styleClass="view-container, card">
+                    <Label text="🏆 Top 5 Produits les Plus Vendus" styleClass="section-title"/>
+
+                    <TableView fx:id="produitsTable" styleClass="products-table">
+                        <columns>
+                            <TableColumn text="🏅 Rang" prefWidth="100" fx:id="colRang"/>
+                            <TableColumn text="Produit" prefWidth="300" fx:id="colProduit"/>
+                            <TableColumn text="Quantité" prefWidth="150" fx:id="colQuantite"/>
+                            <TableColumn text="CA Généré" prefWidth="150" fx:id="colCA"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+
+                <!-- Rapports View -->
+                <VBox fx:id="rapportsView" visible="false" styleClass="view-container, card">
+                    <Label text="📄 Génération de Rapports" styleClass="section-title"/>
+
+                    <GridPane styleClass="reports-grid" hgap="20" vgap="20">
+                        <VBox styleClass="report-card, report-green" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                            <Label text="📅" styleClass="report-icon"/>
+                            <Label text="Rapport Journalier" styleClass="report-title"/>
+                            <Label text="Ventes du jour avec détails" styleClass="report-desc"/>
+                            <Button text="📥 Télécharger PDF" styleClass="btn-download, btn-green"/>
+                        </VBox>
+
+                        <VBox styleClass="report-card, report-blue" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                            <Label text="📊" styleClass="report-icon"/>
+                            <Label text="Rapport Hebdomadaire" styleClass="report-title"/>
+                            <Label text="Résumé de la semaine" styleClass="report-desc"/>
+                            <Button text="📥 Télécharger PDF" styleClass="btn-download, btn-blue"/>
+                        </VBox>
+
+                        <VBox styleClass="report-card, report-purple" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                            <Label text="📈" styleClass="report-icon"/>
+                            <Label text="Rapport Mensuel" styleClass="report-title"/>
+                            <Label text="Statistiques du mois" styleClass="report-desc"/>
+                            <Button text="📥 Télécharger PDF" styleClass="btn-download, btn-purple"/>
+                        </VBox>
+
+                        <VBox styleClass="report-card, report-orange" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                            <Label text="📋" styleClass="report-icon"/>
+                            <Label text="Rapport Annuel" styleClass="report-title"/>
+                            <Label text="Bilan de l'année" styleClass="report-desc"/>
+                            <Button text="📥 Télécharger PDF" styleClass="btn-download, btn-orange"/>
+                        </VBox>
+                    </GridPane>
+                </VBox>
+
+                </StackPane>
+            </ScrollPane>
+        </StackPane>
+    </center>
+
+</BorderPane>

@@ -1,0 +1,105 @@
+========================================
+  2M MARKET - RÉSUMÉ INSTALLATION
+========================================
+
+📦 TÂCHE 1 : CRÉER L'INSTALLATEUR
+========================================
+
+FICHIER À EXÉCUTER:
+  build-exe.ps1
+
+COMMANDE:
+  .\build-exe.ps1
+
+RÉSULTAT:
+  dist\2M-Market_Setup.exe (installateur Windows)
+
+FICHIERS NÉCESSAIRES (déjà présents):
+  ✅ build-exe.ps1
+  ✅ pom.xml
+  ✅ src/ (code source)
+  ✅ database/init_sqlite.sql (copié automatiquement dans ressources)
+
+PRÉREQUIS:
+  ✅ Java JDK 17+ (avec jpackage)
+  ✅ Maven 3.6+
+  ✅ Windows 10/11
+
+========================================
+📋 TÂCHE 2 : INSTALLER SUR PC DE CAISSE
+========================================
+
+FICHIER À COPIER:
+  2M-Market_Setup.exe (UNIQUEMENT ce fichier!)
+
+ÉTAPES:
+  1. Copier 2M-Market_Setup.exe sur clé USB
+  2. Transférer sur PC de caisse
+  3. Double-cliquer pour installer
+  4. Lancer l'application (base créée automatiquement)
+
+CE QUI EST INCLUS DANS L'INSTALLATEUR:
+  ✅ Application JavaFX complète
+  ✅ Java Runtime (JRE) - Aucune installation Java requise!
+  ✅ Script SQLite (dans les ressources du JAR)
+  ✅ Toutes les dépendances
+
+FICHIERS CRÉÉS AUTOMATIQUEMENT:
+  ✅ C:\Program Files\2M-Market\2M-Market.exe
+  ✅ C:\Program Files\2M-Market\MarketDB.db (au premier lancement)
+  ✅ Raccourcis Windows (Menu Démarrer + Bureau)
+
+PRÉREQUIS SUR PC DE CAISSE:
+  ✅ Windows 10/11
+  ✅ ~300-400 MB d'espace disque
+  ❌ Java NON requis (inclus!)
+  ❌ MySQL NON requis (SQLite embarqué!)
+
+========================================
+🗄️ BASE DE DONNÉES SQLite
+========================================
+
+CRÉATION:
+  ✅ Automatique au premier lancement
+  ✅ Script inclus dans les ressources du JAR
+  ✅ Aucun script SQL externe requis!
+
+FICHIER:
+  MarketDB.db (dans le dossier d'installation)
+
+UTILISATEURS PAR DÉFAUT:
+  Admin: admin / admin123
+  Employé: employe / admin123
+
+========================================
+📁 FICHIERS AJOUTÉS/MODIFIÉS
+========================================
+
+NOUVEAUX FICHIERS:
+  ✅ build-exe.ps1 (modifié - crée installateur .exe)
+  ✅ GUIDE_INSTALLATION.md (guide complet)
+  ✅ FICHIERS_NECESSAIRES.md (liste des fichiers)
+  ✅ RESUME_INSTALLATION.txt (ce fichier)
+  ✅ src/main/resources/database/init_sqlite.sql (script SQLite dans ressources)
+
+FICHIERS MODIFIÉS:
+  ✅ build-exe.ps1 (type "exe" au lieu de "app-image")
+
+========================================
+✅ CHECKLIST
+========================================
+
+CRÉATION INSTALLATEUR:
+  [ ] Exécuter build-exe.ps1
+  [ ] Vérifier que 2M-Market_Setup.exe est créé
+  [ ] Vérifier la taille (~200-300 MB)
+
+INSTALLATION PC DE CAISSE:
+  [ ] Copier 2M-Market_Setup.exe sur USB
+  [ ] Installer sur PC de caisse
+  [ ] Lancer l'application
+  [ ] Vérifier que MarketDB.db est créé
+  [ ] Tester connexion admin/admin123
+
+========================================
+

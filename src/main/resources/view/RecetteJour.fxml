@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<StackPane styleClass="root" stylesheets="@/styles/global.css" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.RecetteJourController">
+   <children>
+      <AnchorPane>
+         <style>
+            -fx-background-image: url('/background/backgroundcaisse.jpg');
+            -fx-background-size: cover;
+            -fx-background-position: center center;
+            -fx-background-repeat: no-repeat;
+         </style>
+         <children>
+            <AnchorPane style="-fx-background-color: rgba(255, 255, 255, 0.08);" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" mouseTransparent="true" />
+            
+            <VBox spacing="0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <children>
+                  <!-- Header -->
+                  <HBox alignment="CENTER_LEFT" spacing="15" styleClass="header-bar">
+                     <padding>
+                        <Insets bottom="20" left="30" right="30" top="20" />
+                     </padding>
+                     <children>
+                        <Label styleClass="header-title" text="📊 Recette du Jour">
+                           <font>
+                              <Font name="System Bold" size="28.0" />
+                           </font>
+                        </Label>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button fx:id="exporterPDFButton" onAction="#handleExporterPDF" styleClass="btn, btn-primary" text="📄 Exporter PDF" />
+                        <Button fx:id="retourButton" onAction="#handleRetour" styleClass="btn, btn-secondary" text="◀ Retour" visible="true" managed="true" />
+                     </children>
+                  </HBox>
+
+                  <!-- Contenu principal -->
+                  <VBox spacing="20" VBox.vgrow="ALWAYS">
+                     <padding>
+                        <Insets bottom="20" left="20" right="20" top="20" />
+                     </padding>
+                     <children>
+                        <!-- Sélection de date -->
+                        <HBox alignment="CENTER_LEFT" spacing="15" styleClass="card" style="-fx-background-color: rgba(255, 255, 255, 0.95);">
+                           <padding>
+                              <Insets bottom="15" left="20" right="20" top="15" />
+                           </padding>
+                           <children>
+                              <Label style="-fx-font-weight: bold; -fx-font-size: 16px;" text="📅 Date:" />
+                              <DatePicker fx:id="datePicker" />
+                              <Button fx:id="rechercherButton" onAction="#handleRechercher" styleClass="btn, btn-primary" text="🔍 Rechercher" />
+                           </children>
+                        </HBox>
+
+                        <!-- Résumé -->
+                        <HBox spacing="15" styleClass="card" style="-fx-background-color: rgba(255, 255, 255, 0.95);">
+                           <padding>
+                              <Insets bottom="20" left="20" right="20" top="20" />
+                           </padding>
+                           <children>
+                              <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label style="-fx-font-size: 12px; -fx-text-fill: #666;" text="Total Ventes" />
+                                    <Label fx:id="totalVentesLabel" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2E7D32;" text="0.00 DT" />
+                                 </children>
+                              </VBox>
+                              <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label style="-fx-font-size: 12px; -fx-text-fill: #666;" text="Paiements Fournisseurs" />
+                                    <Label fx:id="totalPaiementsLabel" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #D32F2F;" text="0.00 DT" />
+                                 </children>
+                              </VBox>
+                              <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label style="-fx-font-size: 12px; -fx-text-fill: #666;" text="Crédits Utilisés" />
+                                    <Label fx:id="totalCreditsLabel" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #F57C00;" text="0.00 DT" />
+                                 </children>
+                              </VBox>
+                              <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label style="-fx-font-size: 12px; -fx-text-fill: #666;" text="Heures Travaillées" />
+                                    <Label fx:id="totalHeuresLabel" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1976D2;" text="0.00 h" />
+                                 </children>
+                              </VBox>
+                              <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label style="-fx-font-size: 12px; -fx-text-fill: #666;" text="Recette Nette" />
+                                    <Label fx:id="recetteNetLabel" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #7B1FA2;" text="0.00 DT" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+
+                        <!-- Tables -->
+                        <TabPane VBox.vgrow="ALWAYS" styleClass="card" style="-fx-background-color: rgba(255, 255, 255, 0.95);">
+                           <tabs>
+                              <!-- Tab Paiements -->
+                              <Tab text="💵 Paiements Fournisseurs">
+                                 <content>
+                                    <TableView fx:id="paiementsTable" VBox.vgrow="ALWAYS">
+                                       <columns>
+                                          <TableColumn fx:id="paiementFournisseurCol" text="Fournisseur" prefWidth="200" />
+                                          <TableColumn fx:id="paiementMontantCol" text="Montant" prefWidth="120" />
+                                          <TableColumn fx:id="paiementNotesCol" text="Notes" prefWidth="300" />
+                                          <TableColumn fx:id="paiementDateCol" text="Heure" prefWidth="100" />
+                                       </columns>
+                                    </TableView>
+                                 </content>
+                              </Tab>
+                              
+                              <!-- Tab Ajouts Stock -->
+                              <Tab text="📦 Ajouts de Stock">
+                                 <content>
+                                    <TableView fx:id="ajoutsStockTable" VBox.vgrow="ALWAYS">
+                                       <columns>
+                                          <TableColumn fx:id="ajoutProduitCol" text="Produit" prefWidth="200" />
+                                          <TableColumn fx:id="ajoutQuantiteCol" text="Quantité" prefWidth="100" />
+                                          <TableColumn fx:id="ajoutFournisseurCol" text="Fournisseur" prefWidth="150" />
+                                          <TableColumn fx:id="ajoutPaiementCol" text="Paiement" prefWidth="120" />
+                                          <TableColumn fx:id="ajoutCreditCol" text="Crédit" prefWidth="120" />
+                                          <TableColumn fx:id="ajoutNotesCol" text="Notes" prefWidth="200" />
+                                       </columns>
+                                    </TableView>
+                                 </content>
+                              </Tab>
+                              
+                              <!-- Tab Déplacements -->
+                              <Tab text="🚗 Déplacements">
+                                 <content>
+                                    <TableView fx:id="deplacementsTable" VBox.vgrow="ALWAYS">
+                                       <columns>
+                                          <TableColumn fx:id="deplacementDestinationCol" text="Destination" prefWidth="250" />
+                                          <TableColumn fx:id="deplacementHeuresCol" text="Heures" prefWidth="120" />
+                                          <TableColumn fx:id="deplacementNotesCol" text="Notes" prefWidth="400" />
+                                       </columns>
+                                    </TableView>
+                                 </content>
+                              </Tab>
+                              
+                              <!-- Tab Notes -->
+                              <Tab text="📝 Notes">
+                                 <content>
+                                    <TableView fx:id="notesTable" VBox.vgrow="ALWAYS">
+                                       <columns>
+                                          <TableColumn fx:id="noteTypeCol" text="Type" prefWidth="150" />
+                                          <TableColumn fx:id="noteMontantCol" text="Montant" prefWidth="120" />
+                                          <TableColumn fx:id="noteDescriptionCol" text="Description" prefWidth="400" />
+                                          <TableColumn fx:id="noteDateCol" text="Heure" prefWidth="100" />
+                                       </columns>
+                                    </TableView>
+                                 </content>
+                              </Tab>
+                              
+                              <!-- Tab Historique Ventes -->
+                              <Tab text="💰 Historique des Ventes">
+                                 <content>
+                                    <TableView fx:id="ventesTable" VBox.vgrow="ALWAYS">
+                                       <columns>
+                                          <TableColumn fx:id="venteIdCol" text="ID" prefWidth="80" />
+                                          <TableColumn fx:id="venteDateCol" text="Heure" prefWidth="120" />
+                                          <TableColumn fx:id="venteTotalCol" text="Total" prefWidth="120" />
+                                          <TableColumn fx:id="venteDetailsCol" text="Détails" prefWidth="500" />
+                                       </columns>
+                                    </TableView>
+                                 </content>
+                              </Tab>
+                           </tabs>
+                        </TabPane>
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+         </children>
+      </AnchorPane>
+   </children>
+</StackPane>
+

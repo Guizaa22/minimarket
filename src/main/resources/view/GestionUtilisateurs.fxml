@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/17.0.2-ea"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="controller.GestionUtilisateursController"
+            stylesheets="@/styles/gestionutilisateurs.css"
+            styleClass="root">
+
+   <children>
+      <!-- ========================================
+           CONTENEUR PRINCIPAL
+           ======================================== -->
+      <VBox spacing="0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+            AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+
+         <!-- ========================================
+              HEADER - Barre supérieure moderne
+              ======================================== -->
+         <HBox alignment="CENTER_LEFT" spacing="20" styleClass="header-box">
+            <padding>
+               <Insets top="25" right="40" bottom="25" left="40"/>
+            </padding>
+            <children>
+               <!-- Icône & Titre -->
+               <HBox alignment="CENTER_LEFT" spacing="15">
+                  <Label text="👥" style="-fx-font-size: 36px;"/>
+                  <Label text="Gestion des Utilisateurs" styleClass="header-title">
+                     <font>
+                        <Font name="System Bold" size="32.0"/>
+                     </font>
+                  </Label>
+               </HBox>
+
+               <!-- Espaceur -->
+               <Region HBox.hgrow="ALWAYS"/>
+
+               <!-- Bouton Retour -->
+               <Button fx:id="retourButton" text="← Retour" onAction="#handleRetour" visible="true" managed="true">
+                  <font>
+                     <Font name="System Bold" size="16.0"/>
+                  </font>
+               </Button>
+            </children>
+         </HBox>
+
+         <!-- ========================================
+              CONTENEUR PRINCIPAL (Formulaire + Liste)
+              ======================================== -->
+         <HBox spacing="30" VBox.vgrow="ALWAYS">
+            <padding>
+               <Insets top="30" right="30" bottom="30" left="30"/>
+            </padding>
+
+            <!-- ========================================
+                 SECTION GAUCHE - FORMULAIRE UTILISATEUR
+                 ======================================== -->
+            <VBox spacing="20" styleClass="section-box"
+                  style="-fx-pref-width: 420; -fx-min-width: 400;">
+               <children>
+                  <!-- Titre Formulaire -->
+                  <HBox alignment="CENTER_LEFT" spacing="10">
+                     <Label text="✏️" style="-fx-font-size: 22px;"/>
+                     <Label fx:id="formTitleLabel" text="Nouvel Utilisateur" styleClass="section-title">
+                        <font>
+                           <Font name="System Bold" size="22.0"/>
+                        </font>
+                     </Label>
+                  </HBox>
+
+                  <!-- Séparateur -->
+                  <Separator style="-fx-padding: 5 0;"/>
+
+                  <!-- Formulaire -->
+                  <VBox spacing="18" styleClass="form-container">
+                     <!-- Nom d'utilisateur -->
+                     <VBox spacing="6">
+                        <Label text="Nom d'utilisateur *" styleClass="form-label">
+                           <font>
+                              <Font name="System Bold" size="14.0"/>
+                           </font>
+                        </Label>
+                        <TextField fx:id="usernameField"
+                                   promptText="Entrer le nom d'utilisateur"/>
+                     </VBox>
+
+                     <!-- Mot de passe -->
+                     <VBox spacing="6">
+                        <Label text="Mot de passe *" styleClass="form-label">
+                           <font>
+                              <Font name="System Bold" size="14.0"/>
+                           </font>
+                        </Label>
+                        <PasswordField fx:id="passwordField"
+                                       promptText="Entrer le mot de passe"/>
+                     </VBox>
+
+                     <!-- Rôle -->
+                     <VBox spacing="6">
+                        <Label text="Rôle *" styleClass="form-label">
+                           <font>
+                              <Font name="System Bold" size="14.0"/>
+                           </font>
+                        </Label>
+                        <ComboBox fx:id="roleComboBox"
+                                  promptText="Sélectionner un rôle"
+                                  maxWidth="Infinity"/>
+                     </VBox>
+
+                     <!-- Note d'information -->
+                     <HBox alignment="CENTER_LEFT" spacing="8"
+                           style="-fx-background-color: rgba(33, 150, 243, 0.1); -fx-padding: 12; -fx-background-radius: 8; -fx-border-color: rgba(33, 150, 243, 0.3); -fx-border-width: 1; -fx-border-radius: 8;">
+                        <Label text="ℹ️" style="-fx-font-size: 18px;"/>
+                        <Label text="Laissez le mot de passe vide pour ne pas le modifier lors de l'édition"
+                               wrapText="true"
+                               style="-fx-text-fill: #1976D2; -fx-font-size: 13px;"
+                               HBox.hgrow="ALWAYS"/>
+                     </HBox>
+                  </VBox>
+
+                  <!-- Espaceur flexible -->
+                  <Region VBox.vgrow="ALWAYS"/>
+
+                  <!-- Boutons d'action -->
+                  <VBox spacing="12" styleClass="button-container">
+                     <!-- Bouton Ajouter (visible par défaut) -->
+                     <Button fx:id="ajouterButton" text="✚ Ajouter l'utilisateur"
+                             onAction="#handleAjouter"
+                             maxWidth="Infinity">
+                        <font>
+                           <Font name="System Bold" size="16.0"/>
+                        </font>
+                     </Button>
+
+                     <!-- Boutons Modifier & Annuler (cachés par défaut) -->
+                     <HBox fx:id="editButtonsBox" spacing="12" visible="false" managed="false">
+                        <Button fx:id="modifierButton" text="Modifier"
+                                onAction="#handleModifier"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity">
+                           <font>
+                              <Font name="System Bold" size="16.0"/>
+                           </font>
+                        </Button>
+
+                        <Button fx:id="annulerButton" text="Annuler"
+                                onAction="#handleAnnuler"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity">
+                           <font>
+                              <Font name="System Bold" size="16.0"/>
+                           </font>
+                        </Button>
+                     </HBox>
+                  </VBox>
+               </children>
+            </VBox>
+
+            <!-- ========================================
+                 SECTION DROITE - LISTE DES UTILISATEURS
+                 ======================================== -->
+            <VBox spacing="20" styleClass="section-box" HBox.hgrow="ALWAYS">
+               <children>
+                  <!-- Header de la liste -->
+                  <HBox alignment="CENTER_LEFT" spacing="20">
+                     <children>
+                        <!-- Titre -->
+                        <HBox alignment="CENTER_LEFT" spacing="12" HBox.hgrow="ALWAYS">
+                           <Label text="📋" style="-fx-font-size: 22px;"/>
+                           <Label text="Liste des Utilisateurs" styleClass="section-title">
+                              <font>
+                                 <Font name="System Bold" size="22.0"/>
+                              </font>
+                           </Label>
+                        </HBox>
+
+                        <!-- Badge compteur -->
+                        <Label fx:id="totalUsersLabel" text="Total : 0" styleClass="counter-badge">
+                           <font>
+                              <Font name="System Bold" size="14.0"/>
+                           </font>
+                        </Label>
+                     </children>
+                  </HBox>
+
+                  <!-- Séparateur -->
+                  <Separator style="-fx-padding: 5 0;"/>
+
+                  <!-- TableView des utilisateurs -->
+                  <TableView fx:id="utilisateursTable" VBox.vgrow="ALWAYS">
+                     <columns>
+                        <TableColumn fx:id="usernameColumn" text="Nom d'utilisateur"
+                                     prefWidth="280" minWidth="200"/>
+
+                        <TableColumn fx:id="roleColumn" text="Rôle"
+                                     prefWidth="180" minWidth="150"/>
+
+                        <TableColumn fx:id="actionsColumn" text="Actions"
+                                     prefWidth="150" minWidth="130"
+                                     style="-fx-alignment: CENTER;"/>
+                     </columns>
+
+                     <!-- Message si table vide -->
+                     <placeholder>
+                        <VBox alignment="CENTER" spacing="15" style="-fx-padding: 50;">
+                           <Label text="👥" style="-fx-font-size: 64px; -fx-opacity: 0.3;"/>
+                           <Label text="Aucun utilisateur trouvé"
+                                  style="-fx-font-size: 18px; -fx-text-fill: #a0aec0; -fx-font-weight: bold;"/>
+                           <Label text="Ajoutez votre premier utilisateur pour commencer"
+                                  style="-fx-font-size: 14px; -fx-text-fill: #cbd5e0;"/>
+                        </VBox>
+                     </placeholder>
+                  </TableView>
+
+                  <!-- Séparateur -->
+                  <Separator style="-fx-padding: 5 0;"/>
+
+                  <!-- Info en bas -->
+                  <HBox alignment="CENTER_LEFT" spacing="10"
+                        style="-fx-background-color: rgba(245, 158, 11, 0.1); -fx-padding: 12; -fx-background-radius: 8; -fx-border-color: rgba(245, 158, 11, 0.3); -fx-border-width: 1; -fx-border-radius: 8;">
+                     <Label text="⚠️" style="-fx-font-size: 18px;"/>
+                     <Label text="La suppression d'un utilisateur est irréversible"
+                            style="-fx-text-fill: #d97706; -fx-font-size: 13px; -fx-font-weight: bold;"/>
+                  </HBox>
+               </children>
+            </VBox>
+         </HBox>
+      </VBox>
+   </children>
+</AnchorPane>
