@@ -583,15 +583,15 @@ public class GestionStockController {
      * Charger tous les produits depuis la base de données
      */
     private void chargerProduits() {
-        produitsList.clear();
-        java.util.List<Produit> produits = produitDAO.findAll();
-        produitsList.addAll(produits);
-        
-        // Debug: afficher le nombre de produits chargés
-        LOG.info("Produits chargés: " + produits.size());
-        
-        // Forcer le rafraîchissement de la table
-        produitsTable.refresh();
+        // Lecture hors du fil JavaFX : sur une base distante, un chargement
+        // synchrone fige l'écran le temps de l'aller-retour réseau.
+        ui.TacheFond.executer(produitsTable,
+                () -> produitDAO.findAll(),
+                produits -> {
+                    produitsList.setAll(produits);
+                    produitsTable.refresh();
+                    LOG.debug("{} produit(s) chargé(s)", produits.size());
+                });
     }
 
     /**

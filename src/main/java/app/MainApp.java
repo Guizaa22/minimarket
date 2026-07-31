@@ -90,6 +90,7 @@ public class MainApp extends Application {
      */
     @Override
     public void stop() {
+        ui.TacheFond.arreter();
         DBConnector.closeConnection();
     }
 

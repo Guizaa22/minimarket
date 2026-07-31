@@ -112,7 +112,11 @@ public class CreditFournisseurDAO {
     
     private CreditFournisseur mapResultSetToCredit(ResultSet rs) throws SQLException {
         Timestamp tsCreation = rs.getTimestamp("date_creation");
-        Timestamp tsModif = rs.getTimestamp("date_modification");
+        // La colonne s'appelle date_maj, comme dans l'UPDATE plus haut : la
+        // lecture visait date_modification, qui n'existe pas. Toute consultation
+        // d'un crédit fournisseur échouait donc, sans effet visible à l'écran
+        // puisque l'erreur partait sur System.err.
+        Timestamp tsModif = rs.getTimestamp("date_maj");
         
         return new CreditFournisseur(
             rs.getInt("id"),

@@ -1,0 +1,272 @@
+/* ============================================================
+   2M Market — couche de finition visuelle
+   ============================================================
+   Superposée à global.css : ne redéfinit pas la structure des écrans,
+   seulement la matière (rayons, ombres, états de survol, contrastes).
+
+   Priorités retenues :
+   - lisibilité à distance, l'écran de caisse se lit debout, de biais ;
+   - cibles tactiles larges, l'usage se fait souvent à l'index ;
+   - retour visuel immédiat au survol et au clic, pour éviter le
+     double appui quand l'utilisateur doute que son geste a été pris.
+   ============================================================ */
+
+.root {
+    -fx-font-family: "Segoe UI", "Inter", system-ui, sans-serif;
+
+    /* Palette : un vert d'enseigne, des gris neutres, des accents d'état. */
+    -couleur-primaire:        #1B7A3E;
+    -couleur-primaire-claire: #24A353;
+    -couleur-primaire-sombre: #145C2F;
+    -couleur-danger:          #C62828;
+    -couleur-avertissement:   #EF6C00;
+    -couleur-info:            #1565C0;
+
+    -fond-page:      #F4F6F8;
+    -fond-carte:     #FFFFFF;
+    -bordure:        #E1E5EA;
+    -texte-fort:     #16202A;
+    -texte-normal:   #3D4A57;
+    -texte-discret:  #7A8794;
+}
+
+/* ------------------------------------------------------------
+   Boutons
+   ------------------------------------------------------------ */
+
+.btn {
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 10 20;
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-cursor: hand;
+    /* Transition douce entre les états : le changement de couleur au survol
+       est perçu comme une réaction plutôt qu'un clignotement. */
+    -fx-transition: all 0.15s ease;
+}
+
+.btn:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 8, 0, 0, 2);
+}
+
+/* Enfoncement léger au clic : confirme la prise en compte du geste. */
+.btn:pressed {
+    -fx-translate-y: 1;
+    -fx-effect: none;
+}
+
+.btn-primary {
+    -fx-background-color: -couleur-primaire;
+    -fx-text-fill: white;
+}
+
+.btn-primary:hover {
+    -fx-background-color: -couleur-primaire-claire;
+}
+
+.btn-secondary {
+    -fx-background-color: -fond-carte;
+    -fx-text-fill: -texte-normal;
+    -fx-border-color: -bordure;
+    -fx-border-width: 1;
+}
+
+.btn-secondary:hover {
+    -fx-background-color: #EEF1F4;
+    -fx-border-color: #CBD2D9;
+}
+
+.btn-danger {
+    -fx-background-color: -couleur-danger;
+    -fx-text-fill: white;
+}
+
+.btn-danger:hover {
+    -fx-background-color: #D32F2F;
+}
+
+/* Boutons de caisse : cible tactile confortable. */
+.btn-caisse {
+    -fx-min-height: 56px;
+    -fx-font-size: 16px;
+}
+
+/* ------------------------------------------------------------
+   Cartes et conteneurs
+   ------------------------------------------------------------ */
+
+.carte,
+.panier-card,
+.product-card {
+    -fx-background-color: -fond-carte;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: -bordure;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(16,32,48,0.06), 6, 0, 0, 1);
+}
+
+.panier-card:hover,
+.product-card:hover {
+    -fx-border-color: -couleur-primaire-claire;
+    -fx-effect: dropshadow(gaussian, rgba(27,122,62,0.18), 12, 0, 0, 3);
+}
+
+/* Carte produit : léger soulèvement au survol, pour distinguer
+   l'élément visé quand la grille est dense. */
+.product-card:hover {
+    -fx-translate-y: -2;
+}
+
+/* ------------------------------------------------------------
+   Tableaux
+   ------------------------------------------------------------ */
+
+.table-view {
+    -fx-background-color: -fond-carte;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: -bordure;
+    -fx-border-width: 1;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #F7F9FA;
+    -fx-background-radius: 10 10 0 0;
+}
+
+.table-view .column-header {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent -bordure transparent transparent;
+    -fx-padding: 12 10;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: -texte-discret;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.table-row-cell {
+    -fx-cell-size: 44px;
+    -fx-border-color: transparent transparent -bordure transparent;
+}
+
+/* Alternance discrète : facilite le suivi d'une ligne sur toute sa largeur. */
+.table-row-cell:odd {
+    -fx-background-color: #FBFCFD;
+}
+
+.table-row-cell:hover {
+    -fx-background-color: #EDF6F0;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #D8EEE0;
+    -fx-text-fill: -texte-fort;
+}
+
+/* ------------------------------------------------------------
+   Champs de saisie
+   ------------------------------------------------------------ */
+
+.text-field,
+.password-field,
+.combo-box,
+.date-picker {
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: -bordure;
+    -fx-border-width: 1;
+    -fx-padding: 9 12;
+    -fx-font-size: 14px;
+    -fx-background-color: -fond-carte;
+}
+
+/* Anneau de focus visible : indispensable pour une saisie au clavier
+   ou au lecteur de code-barres, où le champ actif n'est pas évident. */
+.text-field:focused,
+.password-field:focused,
+.combo-box:focused,
+.date-picker:focused {
+    -fx-border-color: -couleur-primaire;
+    -fx-border-width: 2;
+    -fx-padding: 8 11;
+}
+
+/* ------------------------------------------------------------
+   Badges d'état
+   ------------------------------------------------------------ */
+
+.stock-badge {
+    -fx-background-radius: 12;
+    -fx-padding: 4 12;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.stock-badge-low {
+    -fx-background-color: #FFEBEE;
+    -fx-text-fill: -couleur-danger;
+}
+
+.stock-badge-ok {
+    -fx-background-color: #E8F5E9;
+    -fx-text-fill: -couleur-primaire;
+}
+
+/* ------------------------------------------------------------
+   Totaux de caisse
+   ------------------------------------------------------------ */
+
+/* Le montant total est l'information la plus lue de l'écran :
+   il est dimensionné pour être lisible d'un pas de recul. */
+.total-label {
+    -fx-font-size: 34px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -couleur-primaire;
+}
+
+.total-container {
+    -fx-background-color: #F0F7F2;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: #C9E4D3;
+    -fx-border-width: 1;
+    -fx-padding: 18 24;
+}
+
+/* ------------------------------------------------------------
+   Barres de défilement — discrètes mais saisissables au doigt
+   ------------------------------------------------------------ */
+
+.scroll-bar:vertical,
+.scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar:vertical .thumb,
+.scroll-bar:horizontal .thumb {
+    -fx-background-color: #C6CFD8;
+    -fx-background-radius: 6;
+}
+
+.scroll-bar:vertical .thumb:hover,
+.scroll-bar:horizontal .thumb:hover {
+    -fx-background-color: #A9B4BF;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-opacity: 0;
+    -fx-padding: 0;
+}
+
+/* ------------------------------------------------------------
+   Indicateur de chargement
+   ------------------------------------------------------------ */
+
+.progress-indicator {
+    -fx-progress-color: -couleur-primaire;
+}

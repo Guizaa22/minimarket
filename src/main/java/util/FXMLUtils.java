@@ -48,18 +48,10 @@ public class FXMLUtils {
         // Create scene with screen dimensions to ensure full screen works properly
         Scene scene = new Scene(root, bounds.getWidth(), bounds.getHeight());
         
-        // Apply global CSS to all scenes
-        try {
-            java.net.URL cssUrl = FXMLUtils.class.getResource("/styles/global.css");
-            if (cssUrl != null) {
-                String globalCss = cssUrl.toExternalForm();
-                scene.getStylesheets().add(globalCss);
-            } else {
-                LOG.error("Warning: CSS file /styles/global.css not found, continuing without styles");
-            }
-        } catch (Exception e) {
-            LOG.error("Warning: Could not load CSS file: " + e.getMessage(), e);
-        }
+        // Feuilles communes à tous les écrans. L'ordre compte : modern.css
+        // affine ce que global.css a posé, il doit donc être chargé après.
+        appliquerFeuille(scene, "/styles/global.css");
+        appliquerFeuille(scene, "/styles/modern.css");
         
         stage.setScene(scene);
         stage.setTitle(title);
@@ -78,12 +70,44 @@ public class FXMLUtils {
             stage.setFullScreen(true);
         });
         
-        FadeTransition fadeIn = new FadeTransition(Duration.millis(320), root);
-        fadeIn.setFromValue(0);
-        fadeIn.setToValue(1);
-        fadeIn.play();
+        // Fondu combiné à une légère remontée : le changement d'écran est perçu
+        // comme un enchaînement plutôt que comme un clignotement.
+        root.setOpacity(0);
+        root.setTranslateY(18);
+
+        FadeTransition apparition = new FadeTransition(Duration.millis(260), root);
+        apparition.setFromValue(0);
+        apparition.setToValue(1);
+
+        javafx.animation.TranslateTransition remontee =
+                new javafx.animation.TranslateTransition(Duration.millis(260), root);
+        remontee.setFromY(18);
+        remontee.setToY(0);
+        remontee.setInterpolator(javafx.animation.Interpolator.EASE_OUT);
+
+        new javafx.animation.ParallelTransition(apparition, remontee).play();
     }
     
+    /**
+     * Ajoute une feuille de style à la scène si la ressource existe.
+     * Une feuille absente est signalée mais n'empêche pas l'affichage.
+     */
+    private static void appliquerFeuille(Scene scene, String chemin) {
+        try {
+            java.net.URL url = FXMLUtils.class.getResource(chemin);
+            if (url == null) {
+                LOG.warn("Feuille de style introuvable : {}", chemin);
+                return;
+            }
+            String feuille = url.toExternalForm();
+            if (!scene.getStylesheets().contains(feuille)) {
+                scene.getStylesheets().add(feuille);
+            }
+        } catch (Exception e) {
+            LOG.warn("Chargement de {} impossible", chemin, e);
+        }
+    }
+
     /**
      * Charge une vue FXML avec un contrôleur personnalisé
      * @param fxmlPath Le chemin vers le fichier FXML

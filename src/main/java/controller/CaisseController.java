@@ -196,31 +196,55 @@ public class CaisseController {
         HBox quantiteControls = new HBox(8);
         quantiteControls.setAlignment(Pos.CENTER);
         
+        Label qteLabel = new Label(String.valueOf(detail.getQuantite()));
+        qteLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: #2E7D32; -fx-min-width: 35px; -fx-alignment: center;");
+
+        // Les libellés de prix sont déclarés ici pour que les boutons +/-
+        // puissent les mettre à jour directement.
+        Label prixTotalLabel = new Label(String.format("%.2f DT", detail.getSousTotal()));
+        prixTotalLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: #2E7D32;");
+
+        // Ne rafraîchit que la ligne concernée et le total. L'ancien code
+        // appelait updatePanierView() à chaque +1, ce qui vidait et
+        // reconstruisait toutes les lignes du panier — et relançait un
+        // findById() par ligne dont le produit n'était pas encore chargé.
+        Runnable rafraichirLigne = () -> {
+            qteLabel.setText(String.valueOf(finalDetail.getQuantite()));
+            prixTotalLabel.setText(String.format("%.2f DT", finalDetail.getSousTotal()));
+            updateTotal();
+        };
+
         Button minusButton = new Button("➖");
         minusButton.getStyleClass().addAll("btn", "btn-secondary");
         minusButton.setStyle("-fx-padding: 5 12; -fx-font-size: 14px; -fx-min-width: 35px;");
         minusButton.setOnAction(e -> {
             if (finalDetail.getQuantite() > 1) {
                 finalDetail.setQuantite(finalDetail.getQuantite() - 1);
-                updatePanierView(); // Refresh the entire cart display
-                updateTotal();      // Update totals
+                rafraichirLigne.run();
             } else {
+                // Le retrait change la composition du panier : reconstruction complète.
                 retirerDuPanier(finalDetail);
             }
         });
-        
-        Label qteLabel = new Label(String.valueOf(detail.getQuantite()));
-        qteLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: #2E7D32; -fx-min-width: 35px; -fx-alignment: center;");
-        
+
         Button plusButton = new Button("➕");
         plusButton.getStyleClass().addAll("btn", "btn-primary");
         plusButton.setStyle("-fx-padding: 5 12; -fx-font-size: 14px; -fx-min-width: 35px;");
         plusButton.setOnAction(e -> {
+            Produit p = finalDetail.getProduit();
+            // Contrôle immédiat : inutile d'attendre l'encaissement pour
+            // apprendre que le stock est insuffisant.
+            if (p != null && !p.isFrakCigarette()
+                    && finalDetail.getQuantite() + 1 > p.getQuantiteStock()) {
+                ui.Toast.avertissement(plusButton,
+                        "Stock limité : il ne reste que " + p.getQuantiteStock()
+                        + " « " + p.getNom() + " ».");
+                return;
+            }
             finalDetail.setQuantite(finalDetail.getQuantite() + 1);
-            updatePanierView(); // Refresh the entire cart display
-            updateTotal();      // Update totals
+            rafraichirLigne.run();
         });
-        
+
         quantiteControls.getChildren().addAll(minusButton, qteLabel, plusButton);
         quantiteContainer.getChildren().addAll(qteTitleLabel, quantiteControls);
 
@@ -230,10 +254,8 @@ public class CaisseController {
         
         Label prixUnitLabel = new Label(String.format("%.2f DT /u", detail.getPrixVenteUnitaire()));
         prixUnitLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
-        
-        Label prixTotalLabel = new Label(String.format("%.2f DT", detail.getSousTotal()));
-        prixTotalLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: #2E7D32;");
-        
+
+        // prixTotalLabel est créé plus haut, avec les contrôles de quantité.
         prixContainer.getChildren().addAll(prixTotalLabel, prixUnitLabel);
 
         // Actions
@@ -264,11 +286,12 @@ public class CaisseController {
     @FXML
     private void handleValider() {
         if (service.SessionContext.get().getPanier().getLignes().isEmpty()) {
-            afficherAlerte(Alert.AlertType.WARNING, "Panier vide", "Veuillez ajouter des articles au panier.");
+            ui.Toast.avertissement(validerButton, "Le panier est vide.");
             return;
         }
 
         BigDecimal total = calculerTotal();
+        int nombreArticles = service.SessionContext.get().getPanier().getNombreArticles();
 
         // Vérifier que tous les détails ont des prix valides
         for (DetailVente detail : service.SessionContext.get().getPanier().getLignes()) {
@@ -323,14 +346,16 @@ public class CaisseController {
 
         } catch (exception.StockInsuffisantException e) {
             // Le panier est conservé : le caissier ajuste la quantité et réessaie.
-            afficherAlerte(Alert.AlertType.WARNING, "Stock insuffisant", e.getMessageUtilisateur());
+            // Toast plutôt que boîte modale : le message n'appelle aucune décision,
+            // et une modale interrompt l'encaissement du client suivant.
+            ui.Toast.avertissement(validerButton, e.getMessageUtilisateur());
             return;
 
         } catch (exception.ApplicationException e) {
             // Message déjà formulé pour l'utilisateur ; le détail technique est
             // dans le journal. L'ancien code renvoyait « vérifiez la console »,
             // inutilisable pour un commerçant.
-            afficherAlerte(Alert.AlertType.ERROR, "Vente non enregistrée", e.getMessageUtilisateur());
+            ui.Toast.erreur(validerButton, e.getMessageUtilisateur());
             return;
         }
 
@@ -340,9 +365,12 @@ public class CaisseController {
         } catch (Exception e) {
             LOG.error("Erreur lors de l'impression du ticket", e);
             // Ne pas bloquer si l'impression échoue : la vente est déjà enregistrée.
+            ui.Toast.avertissement(validerButton,
+                    "Vente enregistrée, mais le ticket n'a pas pu être imprimé.");
         }
 
-        afficherAlerte(Alert.AlertType.INFORMATION, "Vente validée", "La vente a été enregistrée avec succès.");
+        ui.Toast.succes(validerButton, String.format(
+                "Vente enregistrée — %d article(s), %.2f DT", nombreArticles, total));
 
         // Vider le panier
         service.SessionContext.get().getPanier().getLignes().clear();
