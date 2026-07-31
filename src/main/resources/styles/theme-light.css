@@ -1,0 +1,306 @@
+/* ============================================================
+   2M Market — thème clair
+   ============================================================
+   Même palette, rôles inversés :
+     #0441bd  bleu franc  — accent, conservé tel quel
+     #041547  bleu nuit   — texte principal, au lieu du fond
+     #7c7cac  lavande     — texte secondaire, bordures
+     #60434c  mauve       — accent tabac
+     #393c59  ardoise     — texte de rappel
+
+   Les cinq couleurs fournies sont toutes sombres à moyennes. Employées
+   telles quelles en fond de thème clair, le texte deviendrait illisible.
+   Elles servent donc ici aux accents et au texte, les fonds étant des
+   teintes très pâles des mêmes bleus — l'identité visuelle reste la même
+   d'un mode à l'autre.
+   ============================================================ */
+
+.root {
+    -fx-font-family: "Segoe UI", "Inter", system-ui, sans-serif;
+
+    /* Couleurs de la palette */
+    -c-nuit:      #041547;
+    -c-ardoise:   #393c59;
+    -c-bleu:      #0441bd;
+    -c-lavande:   #7c7cac;
+    -c-mauve:     #60434c;
+
+    /* Rôles */
+    -fond-page:      #F2F4FA;
+    -fond-carte:     #FFFFFF;
+    -fond-eleve:     #E9EDF8;
+    -bordure:        #D5DBEC;
+    -bordure-forte:  -c-lavande;
+
+    -texte-fort:     -c-nuit;
+    -texte-normal:   #2B3556;
+    -texte-discret:  #6E769B;
+
+    -accent:         -c-bleu;
+    -accent-survol:  #0353E8;
+    -accent-sombre:  -c-nuit;
+
+    -succes:         #1E7D4F;
+    -danger:         #C0392B;
+    -avertissement:  #C97A16;
+    -info:           -c-bleu;
+    -tabac:          -c-mauve;
+
+    -fx-background-color: -fond-page;
+}
+
+/* ------------------------------------------------------------
+   Surfaces
+   ------------------------------------------------------------ */
+
+.content-area, .main-container, .scroll-pane, .scroll-pane > .viewport {
+    -fx-background-color: -fond-page;
+}
+
+.carte, .panier-card, .product-card, .category-card, .tuile {
+    -fx-background-color: -fond-carte;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: -bordure;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(4,21,71,0.07), 8, 0, 0, 2);
+}
+
+.carte:hover, .panier-card:hover, .product-card:hover,
+.category-card:hover, .tuile:hover {
+    -fx-border-color: -accent;
+    -fx-effect: dropshadow(gaussian, rgba(4,65,189,0.22), 16, 0, 0, 4);
+}
+
+/* ------------------------------------------------------------
+   Texte
+   ------------------------------------------------------------ */
+
+.label {
+    -fx-text-fill: -texte-normal;
+}
+
+.titre, .title-label {
+    -fx-text-fill: -texte-fort;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+.sous-titre {
+    -fx-text-fill: -texte-discret;
+    -fx-font-size: 13px;
+}
+
+/* ------------------------------------------------------------
+   Boutons
+   ------------------------------------------------------------ */
+
+.btn, .button {
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-padding: 12 22;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-background-color: -fond-eleve;
+    -fx-text-fill: -texte-fort;
+}
+
+.btn:hover, .button:hover {
+    -fx-background-color: #DCE3F5;
+}
+
+.btn:pressed, .button:pressed {
+    -fx-translate-y: 1;
+    -fx-opacity: 0.9;
+}
+
+.btn-primary, .button.btn-primary {
+    -fx-background-color: -accent;
+    -fx-text-fill: white;
+}
+
+.btn-primary:hover {
+    -fx-background-color: -accent-survol;
+}
+
+.btn-secondary {
+    -fx-background-color: -fond-carte;
+    -fx-text-fill: -texte-normal;
+    -fx-border-color: -bordure;
+    -fx-border-width: 1.5;
+}
+
+.btn-secondary:hover {
+    -fx-background-color: -fond-eleve;
+    -fx-border-color: -c-lavande;
+}
+
+.btn-danger  { -fx-background-color: -danger;  -fx-text-fill: white; }
+.btn-succes  { -fx-background-color: -succes;  -fx-text-fill: white; }
+.btn-tabac   { -fx-background-color: -tabac;   -fx-text-fill: white; }
+
+.btn-tactile {
+    -fx-min-height: 58px;
+    -fx-min-width: 58px;
+    -fx-font-size: 17px;
+}
+
+/* ------------------------------------------------------------
+   Champs de saisie
+   ------------------------------------------------------------ */
+
+.text-field, .password-field, .text-area, .combo-box, .date-picker, .spinner {
+    -fx-background-color: -fond-carte;
+    -fx-text-fill: -texte-fort;
+    -fx-prompt-text-fill: -texte-discret;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: -bordure;
+    -fx-border-width: 1.5;
+    -fx-padding: 11 14;
+    -fx-font-size: 15px;
+}
+
+.text-field:focused, .password-field:focused, .text-area:focused,
+.combo-box:focused, .date-picker:focused {
+    -fx-border-color: -accent;
+    -fx-border-width: 2.5;
+    -fx-padding: 10 13;
+}
+
+.combo-box .list-cell, .combo-box-popup .list-view {
+    -fx-background-color: -fond-carte;
+    -fx-text-fill: -texte-normal;
+}
+
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: -accent;
+    -fx-text-fill: white;
+}
+
+/* ------------------------------------------------------------
+   Tableaux
+   ------------------------------------------------------------ */
+
+.table-view {
+    -fx-background-color: -fond-carte;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: -bordure;
+    -fx-border-width: 1;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: -fond-eleve;
+    -fx-background-radius: 12 12 0 0;
+}
+
+.table-view .column-header {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 14 10;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: -texte-discret;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.table-view .table-row-cell {
+    -fx-background-color: -fond-carte;
+    -fx-text-fill: -texte-normal;
+    -fx-cell-size: 48px;
+    -fx-border-color: transparent transparent -bordure transparent;
+}
+
+.table-view .table-row-cell:odd {
+    -fx-background-color: #FAFBFE;
+}
+
+.table-view .table-row-cell:hover {
+    -fx-background-color: -fond-eleve;
+}
+
+.table-view .table-row-cell:selected {
+    -fx-background-color: #CFDDF8;
+    -fx-text-fill: -texte-fort;
+}
+
+.table-view .table-cell {
+    -fx-text-fill: -texte-normal;
+    -fx-alignment: center-left;
+    -fx-padding: 0 10;
+}
+
+/* ------------------------------------------------------------
+   Barre supérieure
+   ------------------------------------------------------------ */
+
+.barre-haut {
+    -fx-background-color: -c-nuit;
+    -fx-padding: 10 18;
+}
+
+/* La barre reste sombre dans les deux modes : elle porte l'identité de
+   l'enseigne et sert de repère fixe d'un écran à l'autre. */
+.barre-haut .label {
+    -fx-text-fill: #F2F4FC;
+}
+
+.bouton-theme {
+    -fx-background-color: transparent;
+    -fx-border-color: #3A4A85;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-padding: 8 16;
+    -fx-font-size: 15px;
+    -fx-text-fill: #F2F4FC;
+}
+
+.bouton-theme:hover {
+    -fx-border-color: -c-lavande;
+    -fx-background-color: #12245C;
+}
+
+/* ------------------------------------------------------------
+   Badges et totaux
+   ------------------------------------------------------------ */
+
+.stock-badge { -fx-background-radius: 14; -fx-padding: 5 14; -fx-font-size: 12px; -fx-font-weight: bold; }
+.stock-badge-low { -fx-background-color: #FDE8E6; -fx-text-fill: -danger; }
+.stock-badge-ok  { -fx-background-color: #E4F4EC; -fx-text-fill: -succes; }
+
+.total-container {
+    -fx-background-color: #E8EEFC;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-border-color: -accent;
+    -fx-border-width: 1.5;
+    -fx-padding: 20 26;
+}
+
+.total-label {
+    -fx-font-size: 38px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -c-nuit;
+}
+
+/* ------------------------------------------------------------
+   Défilement
+   ------------------------------------------------------------ */
+
+.scroll-bar { -fx-background-color: transparent; }
+.scroll-bar .track { -fx-background-color: transparent; }
+.scroll-bar .thumb { -fx-background-color: #C3CBE2; -fx-background-radius: 8; }
+.scroll-bar .thumb:hover { -fx-background-color: -c-lavande; }
+.scroll-bar .increment-button, .scroll-bar .decrement-button { -fx-opacity: 0; -fx-padding: 0; }
+
+.progress-indicator { -fx-progress-color: -accent; }
+
+.separator .line {
+    -fx-border-color: -bordure;
+    -fx-border-width: 1 0 0 0;
+}
