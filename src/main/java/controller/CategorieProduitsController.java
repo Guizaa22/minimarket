@@ -58,7 +58,6 @@ public class CategorieProduitsController {
     // ============================================
     private ProduitDAO produitDAO;
     private String categorie;
-    private static javafx.collections.ObservableList<DetailVente> panierGlobal;
 
     // ============================================
     // INITIALISATION
@@ -85,12 +84,11 @@ public class CategorieProduitsController {
     }
 
     /**
-     * Initialise le panier global s'il n'existe pas
+     * Le panier est porté par SessionContext ; il n'y a plus rien à initialiser
+     * ici. Méthode conservée pour ne pas toucher aux appelants.
      */
     private void initialiserPanierGlobal() {
-        if (panierGlobal == null) {
-            panierGlobal = javafx.collections.FXCollections.observableArrayList();
-        }
+        // sans objet
     }
 
     /**
@@ -395,7 +393,7 @@ public class CategorieProduitsController {
      * Recherche un produit dans le panier par son ID
      */
     private DetailVente rechercherProduitDansPanier(int produitId) {
-        return panierGlobal.stream()
+        return service.SessionContext.get().getPanier().getLignes().stream()
                 .filter(d -> d.getProduitId() == produitId)
                 .findFirst()
                 .orElse(null);
@@ -440,27 +438,33 @@ public class CategorieProduitsController {
         detail.setPrixVenteUnitaire(produit.getPrixVenteDefaut());
         detail.setPrixAchatUnitaire(produit.getPrixAchatActuel() != null ? produit.getPrixAchatActuel() : java.math.BigDecimal.ZERO);
         detail.setProduit(produit);
-        panierGlobal.add(detail);
+        service.SessionContext.get().getPanier().getLignes().add(detail);
     }
 
     /**
      * Met à jour le compteur d'articles dans le panier
      */
     private void updatePanierCount() {
-        int count = panierGlobal != null ? panierGlobal.size() : 0;
+        int count = service.SessionContext.get().getPanier().getLignes().size();
         if (panierCountLabel != null) {
             panierCountLabel.setText("Panier: " + count + " article(s)");
         }
     }
 
     /**
-     * Retourne le panier global
+     * Panier de la session en cours.
+     *
+     * Conservée par compatibilité : le panier n'est plus un champ statique de ce
+     * contrôleur mais appartient à {@link service.SessionContext}. Il vivait
+     * auparavant dans cette classe d'écran, que trois autres contrôleurs
+     * interrogeaient statiquement — non testable, et sa durée de vie était celle
+     * de la classe plutôt que celle de la session.
+     *
+     * @deprecated utiliser {@code SessionContext.get().getPanier()}.
      */
+    @Deprecated
     public static javafx.collections.ObservableList<DetailVente> getPanierGlobal() {
-        if (panierGlobal == null) {
-            panierGlobal = javafx.collections.FXCollections.observableArrayList();
-        }
-        return panierGlobal;
+        return service.SessionContext.get().getPanier().getLignes();
     }
 
     // ============================================

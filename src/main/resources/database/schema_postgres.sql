@@ -241,6 +241,88 @@ CREATE INDEX IF NOT EXISTS idx_notes_jour_employe ON notes_jour (employe_id);
 CREATE INDEX IF NOT EXISTS idx_notes_jour_date    ON notes_jour (date_note);
 CREATE INDEX IF NOT EXISTS idx_notes_jour_emp_date ON notes_jour (employe_id, date_note);
 
+-- ============================================================
+-- Traçabilité et préparation de l'application mobile
+-- ============================================================
+
+-- ------------------------------------------------------------
+-- Mouvements de stock
+-- ------------------------------------------------------------
+-- Journal unique de toutes les variations de stock, quelle qu'en soit
+-- l'origine. La table ajouts_stock ne couvrait que les réapprovisionnements
+-- saisis au comptoir : les ventes n'y figuraient pas, et rien ne permettait
+-- de reconstituer l'évolution d'un stock ni de savoir d'où venait un écart.
+--
+-- quantite_delta est signé : négatif pour une sortie, positif pour une entrée.
+CREATE TABLE IF NOT EXISTS stock_movements (
+    id              SERIAL PRIMARY KEY,
+    product_id      INTEGER   NOT NULL REFERENCES produits     (id) ON DELETE RESTRICT,
+    user_id         INTEGER            REFERENCES utilisateurs (id) ON DELETE SET NULL,
+    quantity_change INTEGER   NOT NULL CHECK (quantity_change <> 0),
+    stock_apres     INTEGER,
+    type            TEXT      NOT NULL
+                    CHECK (type IN ('DESKTOP_SALE', 'MOBILE_ADD', 'DESKTOP_ADD',
+                                    'INVENTORY_ADJUSTMENT', 'SALE_CANCELLED')),
+    reference       TEXT,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements (product_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_user    ON stock_movements (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_type    ON stock_movements (type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_date    ON stock_movements (created_at DESC);
+
+-- ------------------------------------------------------------
+-- Journal d'audit
+-- ------------------------------------------------------------
+-- Répond à « qui a changé ce prix », « qui a supprimé ce produit ».
+-- user_id est nullable et ON DELETE SET NULL : supprimer un employé ne doit
+-- pas effacer la trace de ses actions.
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id          SERIAL PRIMARY KEY,
+    user_id     INTEGER            REFERENCES utilisateurs (id) ON DELETE SET NULL,
+    action      TEXT      NOT NULL,
+    entity_name TEXT,
+    entity_id   INTEGER,
+    details     TEXT,
+    timestamp   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user   ON audit_logs (user_id, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs (entity_name, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_date   ON audit_logs (timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs (action, timestamp DESC);
+
+-- ------------------------------------------------------------
+-- Vue : produits en rupture ou sous le seuil d'alerte
+-- ------------------------------------------------------------
+-- Destinée à l'application mobile : une seule requête sans jointure à écrire
+-- côté client. manquant indique la quantité à commander pour repasser au seuil.
+CREATE OR REPLACE VIEW vw_products_low_stock AS
+SELECT p.id,
+       p.code_barre,
+       p.nom,
+       COALESCE(c.nom, p.categorie)       AS categorie,
+       COALESCE(c.type, 'Standard')       AS categorie_type,
+       p.quantite_stock,
+       p.seuil_alerte,
+       GREATEST(p.seuil_alerte - p.quantite_stock, 0) AS manquant,
+       p.prix_achat_actuel,
+       p.prix_vente_defaut,
+       p.unite,
+       CASE WHEN p.quantite_stock = 0 THEN 'RUPTURE' ELSE 'SOUS_SEUIL' END AS etat,
+       p.date_derniere_maj
+  FROM produits p
+  LEFT JOIN categories c ON c.id = p.category_id
+ WHERE p.quantite_stock <= p.seuil_alerte;
+
+-- Index de couverture des recherches de l'API mobile.
+-- Recherche insensible à la casse sur le nom : sans cet index fonctionnel,
+-- un LOWER(nom) LIKE ... impose un parcours complet de la table.
+CREATE INDEX IF NOT EXISTS idx_produits_nom_lower  ON produits (LOWER(nom));
+CREATE INDEX IF NOT EXISTS idx_produits_stock_bas  ON produits (quantite_stock, seuil_alerte);
+CREATE INDEX IF NOT EXISTS idx_produits_categorie  ON produits (categorie);
+
 -- ------------------------------------------------------------
 -- Données de référence (idempotent, aucun mot de passe ici)
 -- ------------------------------------------------------------

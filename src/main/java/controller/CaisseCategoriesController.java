@@ -231,8 +231,8 @@ public class CaisseCategoriesController {
      * Écoute les changements du panier global
      */
     private void ecouterChangementsPanier() {
-        if (CategorieProduitsController.getPanierGlobal() != null) {
-            CategorieProduitsController.getPanierGlobal().addListener(
+        if (service.SessionContext.get().getPanier().getLignes() != null) {
+            service.SessionContext.get().getPanier().getLignes().addListener(
                     (javafx.collections.ListChangeListener.Change<? extends DetailVente> c) -> {
                         updatePanierCount();
                     }
@@ -719,7 +719,7 @@ public class CaisseCategoriesController {
             typeVenteFinal = typeVenteTabac;
         }
         
-        javafx.collections.ObservableList<DetailVente> panier = CategorieProduitsController.getPanierGlobal();
+        javafx.collections.ObservableList<DetailVente> panier = service.SessionContext.get().getPanier().getLignes();
         // Chercher un détail existant avec le même produit ET le même type de vente (pour tabac)
         DetailVente detailExistant = panier.stream()
                 .filter(d -> {
@@ -777,7 +777,7 @@ public class CaisseCategoriesController {
     private void ajouterAuPanierSilencieuxAvecTabacAssocie(Produit produitFrak, int quantite, int produitTabacAssocieId) {
         if (produitFrak == null) return;
         
-        javafx.collections.ObservableList<DetailVente> panier = CategorieProduitsController.getPanierGlobal();
+        javafx.collections.ObservableList<DetailVente> panier = service.SessionContext.get().getPanier().getLignes();
         
         // Chercher un détail existant avec le même produit "frak" et le même produit tabac associé
         DetailVente detailExistant = panier.stream()
@@ -893,8 +893,8 @@ public class CaisseCategoriesController {
      */
     private void updatePanierCount() {
         int count = 0;
-        if (CategorieProduitsController.getPanierGlobal() != null) {
-            count = CategorieProduitsController.getPanierGlobal().size();
+        if (service.SessionContext.get().getPanier().getLignes() != null) {
+            count = service.SessionContext.get().getPanier().getLignes().size();
         }
         if (panierCountLabel != null) {
             panierCountLabel.setText("Panier: " + count);

@@ -2,13 +2,16 @@ package controller;
 
 import java.io.IOException;
 
-import dao.UtilisateurDAO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import model.Utilisateur;
+import service.AuthService;
 import util.FXMLUtils;
 import util.SessionManager;
 
@@ -16,18 +19,20 @@ import util.SessionManager;
  * Contrôleur pour l'interface de connexion
  */
 public class ConnexionController {
-    
+
+    private static final Logger LOG = LoggerFactory.getLogger(ConnexionController.class);
+
     @FXML
     private TextField usernameField;
-    
+
     @FXML
     private PasswordField passwordField;
-    
-    private final UtilisateurDAO utilisateurDAO;
+
+    private final AuthService authService;
     private static Utilisateur utilisateurConnecte;
-    
+
     public ConnexionController() {
-        utilisateurDAO = new UtilisateurDAO();
+        authService = new AuthService();
     }
     
     @FXML
@@ -73,33 +78,35 @@ public class ConnexionController {
             return;
         }
         
-        Utilisateur utilisateur = utilisateurDAO.authenticate(username, password);
+        // L'ouverture de session est portée par AuthService : le contrôleur ne
+        // manipule plus l'état de session directement. C'est l'oubli d'un de ces
+        // appels qui faisait renvoyer -1 à getCurrentUserId() dans toute
+        // l'application, et attribuait toutes les ventes au compte admin.
+        java.util.Optional<Utilisateur> connecte = authService.connecter(username, password);
 
-        if (utilisateur != null) {
-            utilisateurConnecte = utilisateur;
-            // Sans cet appel, SessionManager.getCurrentUserId() renvoie -1 partout
-            // dans l'application : les ventes étaient attribuées à un utilisateur
-            // par défaut et les ajouts de stock n'étaient jamais enregistrés.
-            SessionManager.startSession(utilisateur);
-
-            try {
-                Stage stage = (Stage) usernameField.getScene().getWindow();
-                
-                if (utilisateur.isAdmin()) {
-                    // Rediriger vers le dashboard admin
-                    FXMLUtils.changeScene(stage, "/view/AdminDashboard.fxml", "Dashboard Administrateur");
-                } else {
-                    // Rediriger vers les catégories pour les employés (page principale)
-                    FXMLUtils.changeScene(stage, "/view/CaisseCategories.fxml", "Catégories");
-                }
-            } catch (IOException e) {
-                showAlert(Alert.AlertType.ERROR, "Erreur", 
-                         "Erreur lors du chargement de l'interface: " + e.getMessage());
-            }
-        } else {
-            showAlert(Alert.AlertType.ERROR, "Échec de connexion", 
+        if (connecte.isEmpty()) {
+            showAlert(Alert.AlertType.ERROR, "Échec de connexion",
                      "Nom d'utilisateur ou mot de passe incorrect.");
             passwordField.clear();
+            return;
+        }
+
+        Utilisateur utilisateur = connecte.get();
+        utilisateurConnecte = utilisateur;
+        SessionManager.startSession(utilisateur);
+
+        try {
+            Stage stage = (Stage) usernameField.getScene().getWindow();
+
+            if (utilisateur.isAdmin()) {
+                FXMLUtils.changeScene(stage, "/view/AdminDashboard.fxml", "Dashboard Administrateur");
+            } else {
+                FXMLUtils.changeScene(stage, "/view/CaisseCategories.fxml", "Catégories");
+            }
+        } catch (IOException e) {
+            LOG.error("Chargement de l'interface impossible après connexion", e);
+            showAlert(Alert.AlertType.ERROR, "Erreur",
+                     "Erreur lors du chargement de l'interface : " + e.getMessage());
         }
     }
     
@@ -112,7 +119,13 @@ public class ConnexionController {
         return utilisateurConnecte;
     }
     
+    /**
+     * Ferme la session : vide le panier, journalise et efface l'utilisateur des
+     * trois emplacements qui le mémorisent encore (SessionContext, SessionManager
+     * et ce champ statique, conservés le temps de la migration des contrôleurs).
+     */
     public static void deconnecter() {
+        new AuthService().deconnecter();
         utilisateurConnecte = null;
         SessionManager.endSession();
     }

@@ -105,7 +105,7 @@ public class CaisseController {
         updateTotal();
 
         // Écouter les changements du panier global
-        CategorieProduitsController.getPanierGlobal().addListener((ListChangeListener.Change<? extends DetailVente> c) -> {
+        service.SessionContext.get().getPanier().getLignes().addListener((ListChangeListener.Change<? extends DetailVente> c) -> {
             updatePanierView();
             updateTotal();
         });
@@ -135,14 +135,14 @@ public class CaisseController {
     private void updatePanierView() {
         panierListContainer.getChildren().clear();
 
-        if (CategorieProduitsController.getPanierGlobal().isEmpty()) {
+        if (service.SessionContext.get().getPanier().getLignes().isEmpty()) {
             Label emptyLabel = new Label("Le panier est vide");
             emptyLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #999; -fx-padding: 20;");
             panierListContainer.getChildren().add(emptyLabel);
             return;
         }
 
-        for (DetailVente detail : CategorieProduitsController.getPanierGlobal()) {
+        for (DetailVente detail : service.SessionContext.get().getPanier().getLignes()) {
             HBox row = createPanierItemRow(detail);
             panierListContainer.getChildren().add(row);
         }
@@ -263,7 +263,7 @@ public class CaisseController {
 
     @FXML
     private void handleValider() {
-        if (CategorieProduitsController.getPanierGlobal().isEmpty()) {
+        if (service.SessionContext.get().getPanier().getLignes().isEmpty()) {
             afficherAlerte(Alert.AlertType.WARNING, "Panier vide", "Veuillez ajouter des articles au panier.");
             return;
         }
@@ -271,7 +271,7 @@ public class CaisseController {
         BigDecimal total = calculerTotal();
 
         // Vérifier que tous les détails ont des prix valides
-        for (DetailVente detail : CategorieProduitsController.getPanierGlobal()) {
+        for (DetailVente detail : service.SessionContext.get().getPanier().getLignes()) {
             if (detail.getPrixVenteUnitaire() == null || detail.getPrixAchatUnitaire() == null) {
                 afficherAlerte(Alert.AlertType.ERROR, "Erreur", 
                     "Un produit dans le panier a un prix invalide. Veuillez réessayer.");
@@ -301,7 +301,7 @@ public class CaisseController {
         vente.setUtilisateurId(userId);
         
         // Ajouter les détails à la vente
-        for (DetailVente detail : CategorieProduitsController.getPanierGlobal()) {
+        for (DetailVente detail : service.SessionContext.get().getPanier().getLignes()) {
             vente.addDetail(detail);
         }
 
@@ -336,7 +336,7 @@ public class CaisseController {
 
         // Imprimer le ticket
         try {
-            TicketPrinter.imprimerTicket(vente, CategorieProduitsController.getPanierGlobal());
+            TicketPrinter.imprimerTicket(vente, service.SessionContext.get().getPanier().getLignes());
         } catch (Exception e) {
             LOG.error("Erreur lors de l'impression du ticket", e);
             // Ne pas bloquer si l'impression échoue : la vente est déjà enregistrée.
@@ -345,14 +345,14 @@ public class CaisseController {
         afficherAlerte(Alert.AlertType.INFORMATION, "Vente validée", "La vente a été enregistrée avec succès.");
 
         // Vider le panier
-        CategorieProduitsController.getPanierGlobal().clear();
+        service.SessionContext.get().getPanier().getLignes().clear();
         updatePanierView();
         updateTotal();
     }
 
     @FXML
     private void handleAnnuler() {
-        if (!CategorieProduitsController.getPanierGlobal().isEmpty()) {
+        if (!service.SessionContext.get().getPanier().getLignes().isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle("Annuler la vente");
             alert.setHeaderText("Êtes-vous sûr de vouloir vider le panier ?");
@@ -360,7 +360,7 @@ public class CaisseController {
 
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK) {
-                CategorieProduitsController.getPanierGlobal().clear();
+                service.SessionContext.get().getPanier().getLignes().clear();
                 updateTotal();
             }
         }
@@ -762,7 +762,7 @@ public class CaisseController {
      */
     private void ajouterAuPanierDirect(Produit produit, int quantite, String typeVenteTabac) {
         // Vérifier si déjà dans le panier (même produit et même type pour tabac)
-        Optional<DetailVente> existing = CategorieProduitsController.getPanierGlobal().stream()
+        Optional<DetailVente> existing = service.SessionContext.get().getPanier().getLignes().stream()
                 .filter(d -> {
                     if (d.getProduitId() == produit.getId()) {
                         // Pour tabac, vérifier aussi le type de vente
@@ -785,8 +785,8 @@ public class CaisseController {
             }
             detail.setQuantite(detail.getQuantite() + quantite);
             // Trigger update via listener
-            int index = CategorieProduitsController.getPanierGlobal().indexOf(detail);
-            CategorieProduitsController.getPanierGlobal().set(index, detail);
+            int index = service.SessionContext.get().getPanier().getLignes().indexOf(detail);
+            service.SessionContext.get().getPanier().getLignes().set(index, detail);
         } else {
             // Vérifier que les prix sont valides
             if (produit.getPrixVenteDefaut() == null) {
@@ -802,7 +802,7 @@ public class CaisseController {
             detail.setPrixVenteUnitaire(produit.getPrixVenteDefaut());
             detail.setPrixAchatUnitaire(produit.getPrixAchatActuel() != null ? produit.getPrixAchatActuel() : java.math.BigDecimal.ZERO);
             detail.setTypeVenteTabac(typeVenteTabac);
-            CategorieProduitsController.getPanierGlobal().add(detail);
+            service.SessionContext.get().getPanier().getLignes().add(detail);
         }
     }
     
@@ -811,7 +811,7 @@ public class CaisseController {
      */
     private void ajouterAuPanierDirectAvecTabacAssocie(Produit produitFrak, int quantite, int produitTabacAssocieId) {
         // Vérifier si déjà dans le panier (même produit "frak" et même produit tabac associé)
-        Optional<DetailVente> existing = CategorieProduitsController.getPanierGlobal().stream()
+        Optional<DetailVente> existing = service.SessionContext.get().getPanier().getLignes().stream()
                 .filter(d -> {
                     if (d.getProduitId() == produitFrak.getId()) {
                         // Pour "frak cigarette", vérifier aussi le produit tabac associé
@@ -826,8 +826,8 @@ public class CaisseController {
             DetailVente detail = existing.get();
             detail.setQuantite(detail.getQuantite() + quantite);
             // Trigger update via listener
-            int index = CategorieProduitsController.getPanierGlobal().indexOf(detail);
-            CategorieProduitsController.getPanierGlobal().set(index, detail);
+            int index = service.SessionContext.get().getPanier().getLignes().indexOf(detail);
+            service.SessionContext.get().getPanier().getLignes().set(index, detail);
         } else {
             // Vérifier que les prix sont valides
             if (produitFrak.getPrixVenteDefaut() == null) {
@@ -844,12 +844,12 @@ public class CaisseController {
             detail.setPrixAchatUnitaire(produitFrak.getPrixAchatActuel() != null ? produitFrak.getPrixAchatActuel() : java.math.BigDecimal.ZERO);
             detail.setProduitTabacAssocieId(produitTabacAssocieId);
             detail.setTypeVenteTabac("cigarette"); // Les "frak cigarettes" sont toujours vendues en cigarettes
-            CategorieProduitsController.getPanierGlobal().add(detail);
+            service.SessionContext.get().getPanier().getLignes().add(detail);
         }
     }
 
     private void retirerDuPanier(DetailVente detail) {
-        CategorieProduitsController.getPanierGlobal().remove(detail);
+        service.SessionContext.get().getPanier().getLignes().remove(detail);
     }
 
     private void modifierQuantiteItem(DetailVente detail) {
@@ -866,8 +866,8 @@ public class CaisseController {
                     if (qty <= detail.getProduit().getQuantiteStock()) {
                         detail.setQuantite(qty);
                         // Trigger update
-                        int index = CategorieProduitsController.getPanierGlobal().indexOf(detail);
-                        CategorieProduitsController.getPanierGlobal().set(index, detail);
+                        int index = service.SessionContext.get().getPanier().getLignes().indexOf(detail);
+                        service.SessionContext.get().getPanier().getLignes().set(index, detail);
                     } else {
                         afficherAlerte(Alert.AlertType.WARNING, "Stock insuffisant", "Stock disponible: " + detail.getProduit().getQuantiteStock());
                     }
@@ -881,7 +881,7 @@ public class CaisseController {
     }
 
     private BigDecimal calculerTotal() {
-        return CategorieProduitsController.getPanierGlobal().stream()
+        return service.SessionContext.get().getPanier().getLignes().stream()
                 .map(DetailVente::getSousTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
