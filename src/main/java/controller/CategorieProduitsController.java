@@ -1,5 +1,8 @@
 package controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dao.ProduitDAO;
 import javafx.animation.ScaleTransition;
 import javafx.fxml.FXML;
@@ -22,6 +25,8 @@ import model.Produit;
  * Contrôleur pour afficher les produits d'une catégorie
  */
 public class CategorieProduitsController {
+    private static final Logger LOG = LoggerFactory.getLogger(CategorieProduitsController.class);
+
 
     // ============================================
     // CONSTANTES
@@ -113,25 +118,25 @@ public class CategorieProduitsController {
             produitsContainer.setPadding(new Insets(25));
             produitsContainer.setAlignment(Pos.TOP_LEFT);
 
-            System.out.println("========================================");
-            System.out.println("Chargement produits pour catégorie: '" + categorie + "'");
+            LOG.info("========================================");
+            LOG.info("Chargement produits pour catégorie: '" + categorie + "'");
             
             // Récupération des produits
             java.util.List<Produit> produits = produitDAO.findByCategorie(categorie);
             
-            System.out.println("Nombre de produits trouvés: " + (produits != null ? produits.size() : 0));
+            LOG.info("Nombre de produits trouvés: " + (produits != null ? produits.size() : 0));
             if (produits != null && !produits.isEmpty()) {
-                System.out.println("Premiers produits:");
+                LOG.info("Premiers produits:");
                 for (int i = 0; i < Math.min(3, produits.size()); i++) {
                     Produit p = produits.get(i);
-                    System.out.println("  - " + p.getNom() + " (ID: " + p.getId() + ", Catégorie: '" + p.getCategorie() + "', Stock: " + p.getQuantiteStock() + ")");
+                    LOG.info("  - " + p.getNom() + " (ID: " + p.getId() + ", Catégorie: '" + p.getCategorie() + "', Stock: " + p.getQuantiteStock() + ")");
                 }
             }
-            System.out.println("========================================");
+            LOG.info("========================================");
 
             // Vérifier si des produits existent
             if (produits == null || produits.isEmpty()) {
-                System.err.println("AUCUN PRODUIT TROUVÉ pour catégorie: '" + categorie + "'");
+                LOG.error("AUCUN PRODUIT TROUVÉ pour catégorie: '" + categorie + "'");
                 afficherMessageAucunProduit();
                 return;
             }
@@ -142,15 +147,14 @@ public class CategorieProduitsController {
                 produitsContainer.getChildren().add(card);
             }
 
-            System.out.println("✓ " + produits.size() + " produit(s) chargé(s) et affiché(s) pour la catégorie: " + categorie);
+            LOG.info("✓ " + produits.size() + " produit(s) chargé(s) et affiché(s) pour la catégorie: " + categorie);
 
         } catch (Exception e) {
-            System.err.println("========================================");
-            System.err.println("ERREUR lors du chargement des produits:");
-            System.err.println("Catégorie: '" + categorie + "'");
-            System.err.println("Message: " + e.getMessage());
-            System.err.println("========================================");
-            e.printStackTrace();
+            LOG.error("========================================");
+            LOG.error("ERREUR lors du chargement des produits:");
+            LOG.error("Catégorie: '" + categorie + "'");
+            LOG.error("Message: " + e.getMessage(), e);
+            LOG.error("========================================");
             afficherErreurChargement();
         }
     }
@@ -421,7 +425,7 @@ public class CategorieProduitsController {
     private void ajouterNouveauProduitAuPanier(Produit produit) {
         // Vérifier que les prix sont valides
         if (produit.getPrixVenteDefaut() == null) {
-            System.err.println("ERREUR: Prix de vente manquant pour produit ID " + produit.getId());
+            LOG.error("ERREUR: Prix de vente manquant pour produit ID " + produit.getId());
             javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
             alert.setTitle("Erreur");
             alert.setHeaderText(null);
@@ -469,7 +473,7 @@ public class CategorieProduitsController {
             Stage stage = (Stage) retourButton.getScene().getWindow();
             util.FXMLUtils.changeScene(stage, "/view/CaisseCategories.fxml", "Catégories");
         } catch (Exception e) {
-            System.err.println("Erreur lors du retour: " + e.getMessage());
+            LOG.error("Erreur lors du retour: " + e.getMessage(), e);
             afficherAlerte(
                     Alert.AlertType.ERROR,
                     "Erreur",

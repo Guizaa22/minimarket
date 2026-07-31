@@ -1,5 +1,8 @@
 package dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Connection;
@@ -18,6 +21,8 @@ import model.DetailVente;
  * DAO pour les détails de vente avec fonctions statistiques
  */
 public class DetailVenteDAO {
+    private static final Logger LOG = LoggerFactory.getLogger(DetailVenteDAO.class);
+
 
     /**
      * Récupère tous les détails de vente pour une vente donnée
@@ -46,7 +51,7 @@ public class DetailVenteDAO {
                 details.add(detail);
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des détails de vente: " + e.getMessage());
+            LOG.error("Erreur lors de la récupération des détails de vente: " + e.getMessage(), e);
         }
 
         return details;
@@ -81,7 +86,7 @@ public class DetailVenteDAO {
                 ventesParCategorie.put(categorie, total != null ? total : BigDecimal.ZERO);
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des ventes par catégorie: " + e.getMessage());
+            LOG.error("Erreur lors de la récupération des ventes par catégorie: " + e.getMessage(), e);
         }
 
         // Si aucune donnée, retourner des données par défaut pour éviter un graphique vide
@@ -131,7 +136,7 @@ public class DetailVenteDAO {
                 topProduits.add(stats);
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération du top produits: " + e.getMessage());
+            LOG.error("Erreur lors de la récupération du top produits: " + e.getMessage(), e);
         }
 
         return topProduits;
@@ -165,7 +170,7 @@ public class DetailVenteDAO {
                 );
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des stats du produit: " + e.getMessage());
+            LOG.error("Erreur lors de la récupération des stats du produit: " + e.getMessage(), e);
         }
 
         return null;
@@ -208,7 +213,7 @@ public class DetailVenteDAO {
                 topProduits.add(stats);
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération du top produits par profit: " + e.getMessage());
+            LOG.error("Erreur lors de la récupération du top produits par profit: " + e.getMessage(), e);
         }
 
         return topProduits;
@@ -232,7 +237,7 @@ public class DetailVenteDAO {
                 return rs.getInt(1);
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors du comptage des articles: " + e.getMessage());
+            LOG.error("Erreur lors du comptage des articles: " + e.getMessage(), e);
         }
 
         return 0;
@@ -262,7 +267,7 @@ public class DetailVenteDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors du calcul du total global: " + e.getMessage());
+            LOG.error("Erreur lors du calcul du total global: " + e.getMessage(), e);
             return pourcentages;
         }
 

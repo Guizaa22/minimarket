@@ -1,5 +1,8 @@
 package dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -20,6 +23,8 @@ import util.DayRange;
  * DAO pour la gestion des ventes + statistiques
  */
 public class VenteDAO {
+    private static final Logger LOG = LoggerFactory.getLogger(VenteDAO.class);
+
 
     /**
      * Créer une vente avec ses détails + mise à jour stock
@@ -65,7 +70,7 @@ public class VenteDAO {
 
             if (venteId <= 0) {
                 conn.rollback();
-                System.err.println("Erreur: Impossible d'obtenir l'ID de la vente créée");
+                LOG.error("Erreur: Impossible d'obtenir l'ID de la vente créée");
                 return false;
             }
             vente.setId(venteId);
@@ -73,9 +78,9 @@ public class VenteDAO {
             // Vérifier qu'il y a des détails AVANT de commencer
             if (vente.getDetails() == null || vente.getDetails().isEmpty()) {
                 conn.rollback();
-                System.err.println("========================================");
-                System.err.println("ERREUR: Aucun détail de vente à enregistrer - le panier est vide");
-                System.err.println("========================================");
+                LOG.error("========================================");
+                LOG.error("ERREUR: Aucun détail de vente à enregistrer - le panier est vide");
+                LOG.error("========================================");
                 return false;
             }
 
@@ -133,7 +138,10 @@ public class VenteDAO {
                             }
                             int stockActuel = rs.getInt("quantite_stock");
                             if (stockActuel < d.getQuantite()) {
-                                throw new SQLException("Stock insuffisant pour produit ID " + d.getProduitId() + ". Stock disponible: " + stockActuel + ", Quantité demandée: " + d.getQuantite());
+                                // Exception métier : le contrôleur peut afficher
+                                // un message utile sans analyser un texte SQL.
+                                throw new exception.StockInsuffisantException(
+                                        produitVendu.getNom(), stockActuel, d.getQuantite());
                             }
                         }
                     }
@@ -167,8 +175,9 @@ public class VenteDAO {
                                         if (rs.next()) {
                                             int stockTabac = rs.getInt("quantite_stock");
                                             if (stockTabac < paquetsADecrémenter) {
-                                                throw new SQLException("Stock insuffisant pour produit tabac associé '" + produitTabacAssocie.getNom() + 
-                                                    "'. Stock disponible: " + stockTabac + " paquets, Quantité demandée: " + paquetsADecrémenter + " paquets (pour " + totalCigarettes + " cigarettes)");
+                                                throw new exception.StockInsuffisantException(
+                                                        produitTabacAssocie.getNom() + " (paquets)",
+                                                        stockTabac, paquetsADecrémenter);
                                             }
                                         }
                                     }
@@ -180,13 +189,13 @@ public class VenteDAO {
                                 stmtStock.setInt(3, paquetsADecrémenter);
                                 stmtStock.addBatch();
                                 
-                                System.out.println("✓ Frak cigarette: " + totalCigarettes + " cigarettes vendues -> " + paquetsADecrémenter + " paquet(s) décrémenté(s) du produit '" + produitTabacAssocie.getNom() + "'");
+                                LOG.info("✓ Frak cigarette: " + totalCigarettes + " cigarettes vendues -> " + paquetsADecrémenter + " paquet(s) décrémenté(s) du produit '" + produitTabacAssocie.getNom() + "'");
                             }
                         } else {
-                            System.err.println("⚠ ATTENTION: Produit tabac associé ID " + produitTabacAssocieId + " introuvable pour le produit 'frak cigarette' '" + produitVendu.getNom() + "'.");
+                            LOG.error("⚠ ATTENTION: Produit tabac associé ID " + produitTabacAssocieId + " introuvable pour le produit 'frak cigarette' '" + produitVendu.getNom() + "'.");
                         }
                     } else {
-                        System.err.println("⚠ ATTENTION: Produit 'frak cigarette' '" + produitVendu.getNom() + "' vendu, mais aucun produit tabac associé spécifié. Le stock du produit tabac ne sera pas décrémenté.");
+                        LOG.error("⚠ ATTENTION: Produit 'frak cigarette' '" + produitVendu.getNom() + "' vendu, mais aucun produit tabac associé spécifié. Le stock du produit tabac ne sera pas décrémenté.");
                     }
                 } else {
                     // Produit normal: décrémenter son propre stock
@@ -216,60 +225,45 @@ public class VenteDAO {
                 if (rs.next()) {
                     int count = rs.getInt(1);
                     if (count != vente.getDetails().size()) {
-                        System.err.println("ATTENTION: Nombre de détails sauvegardés (" + count + ") ne correspond pas au nombre attendu (" + vente.getDetails().size() + ")");
+                        LOG.error("ATTENTION: Nombre de détails sauvegardés (" + count + ") ne correspond pas au nombre attendu (" + vente.getDetails().size() + ")");
                     } else {
-                        System.out.println("✓ Vente sauvegardée avec succès: ID=" + venteId + ", Détails=" + count);
+                        LOG.info("✓ Vente sauvegardée avec succès: ID=" + venteId + ", Détails=" + count);
                     }
                 }
             }
             
             return true;
 
+        } catch (exception.ApplicationException e) {
+            // Erreur métier (stock insuffisant...) : on annule et on laisse
+            // remonter. Elle porte un message destiné au caissier ; l'avaler
+            // ici ferait échouer la vente sans aucune explication à l'écran.
+            LOG.warn("Vente annulée : {}", e.getMessage());
+            rollbackSilencieux(conn);
+            throw e;
+
         } catch (SQLException e) {
-            System.err.println("========================================");
-            System.err.println("ERREUR création vente:");
-            System.err.println("Message: " + e.getMessage());
-            System.err.println("Code SQL: " + e.getSQLState());
-            System.err.println("Code erreur SGBD: " + e.getErrorCode());
-            System.err.println("Utilisateur ID: " + (vente != null ? vente.getUtilisateurId() : "null"));
-            System.err.println("Total: " + (vente != null ? vente.getTotalVente() : "null"));
-            System.err.println("Nombre de détails: " + (vente != null && vente.getDetails() != null ? vente.getDetails().size() : 0));
+            LOG.error("Échec de création de la vente (utilisateur={}, total={}, {} détail(s))",
+                    vente != null ? vente.getUtilisateurId() : "null",
+                    vente != null ? vente.getTotalVente() : "null",
+                    vente != null && vente.getDetails() != null ? vente.getDetails().size() : 0,
+                    e);
             if (vente != null && vente.getDetails() != null) {
-                for (int i = 0; i < vente.getDetails().size(); i++) {
-                    DetailVente d = vente.getDetails().get(i);
-                    System.err.println("  Détail " + i + ": Produit ID=" + d.getProduitId() + 
-                                      ", Quantité=" + d.getQuantite() + 
-                                      ", PrixVente=" + d.getPrixVenteUnitaire() + 
-                                      ", PrixAchat=" + d.getPrixAchatUnitaire());
+                for (DetailVente d : vente.getDetails()) {
+                    LOG.debug("  détail : produit={} qte={} pv={} pa={}",
+                            d.getProduitId(), d.getQuantite(),
+                            d.getPrixVenteUnitaire(), d.getPrixAchatUnitaire());
                 }
             }
-            e.printStackTrace();
-            System.err.println("========================================");
-            
-            try {
-                if (conn != null && !conn.isClosed()) {
-                    conn.rollback();
-                    System.out.println("✓ Rollback effectué");
-                }
-            } catch (SQLException ex) {
-                System.err.println("✗ Erreur lors du rollback: " + ex.getMessage());
-                ex.printStackTrace();
-            }
+            rollbackSilencieux(conn);
+            throw new exception.DatabaseException("Échec de l'enregistrement de la vente", e);
+
         } catch (Exception e) {
-            System.err.println("========================================");
-            System.err.println("ERREUR INATTENDUE création vente:");
-            System.err.println("Type: " + e.getClass().getName());
-            System.err.println("Message: " + e.getMessage());
-            e.printStackTrace();
-            System.err.println("========================================");
-            
-            try {
-                if (conn != null && !conn.isClosed()) {
-                    conn.rollback();
-                }
-            } catch (SQLException ex) {
-                System.err.println("Erreur lors du rollback: " + ex.getMessage());
-            }
+            LOG.error("Erreur inattendue lors de la création de la vente", e);
+            rollbackSilencieux(conn);
+            throw new exception.DatabaseException(
+                    "Erreur inattendue lors de l'enregistrement de la vente", e);
+
         } finally {
             try {
                 if (stmtVente != null) stmtVente.close();
@@ -281,10 +275,28 @@ public class VenteDAO {
                     conn.close();
                 }
             } catch (SQLException e) {
-                System.err.println("Erreur lors de la fermeture des ressources: " + e.getMessage());
+                LOG.error("Erreur lors de la fermeture des ressources", e);
             }
         }
-        return false;
+    }
+
+    /**
+     * Annule la transaction en cours sans masquer l'erreur d'origine.
+     * Un échec de rollback est journalisé mais ne remplace pas l'exception
+     * qui a conduit à l'annulation.
+     */
+    private void rollbackSilencieux(Connection conn) {
+        if (conn == null) {
+            return;
+        }
+        try {
+            if (!conn.isClosed()) {
+                conn.rollback();
+                LOG.debug("Transaction annulée");
+            }
+        } catch (SQLException e) {
+            LOG.error("Échec du rollback", e);
+        }
     }
 
     /**
@@ -303,7 +315,7 @@ public class VenteDAO {
             }
 
         } catch (SQLException e) {
-            System.err.println("Erreur findAll: " + e.getMessage());
+            LOG.error("Erreur findAll: " + e.getMessage(), e);
         }
         return ventes;
     }
@@ -326,7 +338,7 @@ public class VenteDAO {
             }
 
         } catch (SQLException e) {
-            System.err.println("Erreur findRecent: " + e.getMessage());
+            LOG.error("Erreur findRecent: " + e.getMessage(), e);
         }
 
         return ventes;
@@ -350,7 +362,7 @@ public class VenteDAO {
             }
 
         } catch (SQLException e) {
-            System.err.println("Erreur findByUtilisateur: " + e.getMessage());
+            LOG.error("Erreur findByUtilisateur: " + e.getMessage(), e);
         }
 
         return ventes;
@@ -377,11 +389,10 @@ public class VenteDAO {
                 ventes.add(mapResultSetToVente(rs));
             }
             
-            System.out.println("findByUtilisateurAndDate: Trouvé " + ventes.size() + " ventes pour utilisateur " + utilisateurId + " le " + dateDebut.toLocalDate());
+            LOG.info("findByUtilisateurAndDate: Trouvé " + ventes.size() + " ventes pour utilisateur " + utilisateurId + " le " + dateDebut.toLocalDate());
 
         } catch (SQLException e) {
-            System.err.println("Erreur findByUtilisateurAndDate: " + e.getMessage());
-            e.printStackTrace();
+            LOG.error("Erreur findByUtilisateurAndDate: " + e.getMessage(), e);
         }
 
         return ventes;
@@ -412,7 +423,7 @@ public class VenteDAO {
             }
 
         } catch (SQLException e) {
-            System.err.println("Erreur détails vente: " + e.getMessage());
+            LOG.error("Erreur détails vente: " + e.getMessage(), e);
         }
 
         return details;
@@ -435,7 +446,7 @@ public class VenteDAO {
             }
 
         } catch (SQLException e) {
-            System.err.println("Erreur total recettes: " + e.getMessage());
+            LOG.error("Erreur total recettes: " + e.getMessage(), e);
         }
 
         return BigDecimal.ZERO;
@@ -463,7 +474,7 @@ public class VenteDAO {
             if (rs.next()) return rs.getInt(1);
 
         } catch (SQLException e) {
-            System.err.println("Erreur nombre ventes: " + e.getMessage());
+            LOG.error("Erreur nombre ventes: " + e.getMessage(), e);
         }
         return 0;
     }
@@ -492,7 +503,7 @@ public class VenteDAO {
             }
 
         } catch (SQLException e) {
-            System.err.println("Erreur profit: " + e.getMessage());
+            LOG.error("Erreur profit: " + e.getMessage(), e);
         }
 
         return BigDecimal.ZERO;
@@ -527,7 +538,7 @@ public class VenteDAO {
                 ventes.add(mapResultSetToVente(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des ventes de tabac: " + e.getMessage());
+            LOG.error("Erreur lors de la récupération des ventes de tabac: " + e.getMessage(), e);
         }
         
         return ventes;
@@ -564,7 +575,7 @@ public class VenteDAO {
                 return total != null ? total : BigDecimal.ZERO;
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors du calcul du total des ventes de tabac: " + e.getMessage());
+            LOG.error("Erreur lors du calcul du total des ventes de tabac: " + e.getMessage(), e);
         }
         
         return BigDecimal.ZERO;
@@ -610,7 +621,7 @@ public class VenteDAO {
                 topProduits.add(produit);
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des meilleurs produits de tabac: " + e.getMessage());
+            LOG.error("Erreur lors de la récupération des meilleurs produits de tabac: " + e.getMessage(), e);
         }
         
         return topProduits;

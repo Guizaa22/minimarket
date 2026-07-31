@@ -1,5 +1,8 @@
 package dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import model.DeplacementEmploye;
 import util.DayRange;
 import java.math.BigDecimal;
@@ -12,6 +15,8 @@ import java.util.List;
  * DAO pour le suivi des déplacements des employés
  */
 public class DeplacementEmployeDAO {
+    private static final Logger LOG = LoggerFactory.getLogger(DeplacementEmployeDAO.class);
+
     
     /**
      * Crée un nouveau déplacement
@@ -46,7 +51,7 @@ public class DeplacementEmployeDAO {
                 return true;
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la création de déplacement: " + e.getMessage());
+            LOG.error("Erreur lors de la création de déplacement: " + e.getMessage(), e);
         }
         
         return false;
@@ -68,7 +73,7 @@ public class DeplacementEmployeDAO {
             
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la mise à jour de déplacement: " + e.getMessage());
+            LOG.error("Erreur lors de la mise à jour de déplacement: " + e.getMessage(), e);
         }
         
         return false;
@@ -93,10 +98,9 @@ public class DeplacementEmployeDAO {
             while (rs.next()) {
                 deplacements.add(mapResultSetToDeplacement(rs));
             }
-            System.out.println("Déplacements trouvés pour l'employé " + idEmploye + " le " + date.toLocalDate() + ": " + deplacements.size());
+            LOG.info("Déplacements trouvés pour l'employé " + idEmploye + " le " + date.toLocalDate() + ": " + deplacements.size());
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des déplacements: " + e.getMessage());
-            e.printStackTrace();
+            LOG.error("Erreur lors de la récupération des déplacements: " + e.getMessage(), e);
         }
         
         return deplacements;
@@ -121,8 +125,7 @@ public class DeplacementEmployeDAO {
                 return total != null ? total : BigDecimal.ZERO;
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors du calcul des heures: " + e.getMessage());
-            e.printStackTrace();
+            LOG.error("Erreur lors du calcul des heures: " + e.getMessage(), e);
         }
         
         return BigDecimal.ZERO;
@@ -146,7 +149,7 @@ public class DeplacementEmployeDAO {
                 deplacements.add(mapResultSetToDeplacement(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des déplacements: " + e.getMessage());
+            LOG.error("Erreur lors de la récupération des déplacements: " + e.getMessage(), e);
         }
         
         return deplacements;

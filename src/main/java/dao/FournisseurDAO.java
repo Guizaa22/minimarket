@@ -1,5 +1,8 @@
 package dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import model.Fournisseur;
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -10,6 +13,8 @@ import java.util.List;
  * DAO pour les opérations CRUD sur la table fournisseurs
  */
 public class FournisseurDAO {
+    private static final Logger LOG = LoggerFactory.getLogger(FournisseurDAO.class);
+
     
     /**
      * Récupère tous les fournisseurs
@@ -26,7 +31,7 @@ public class FournisseurDAO {
                 fournisseurs.add(mapResultSetToFournisseur(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des fournisseurs: " + e.getMessage());
+            LOG.error("Erreur lors de la récupération des fournisseurs: " + e.getMessage(), e);
         }
         
         return fournisseurs;
@@ -48,7 +53,7 @@ public class FournisseurDAO {
                 return mapResultSetToFournisseur(rs);
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la recherche de fournisseur: " + e.getMessage());
+            LOG.error("Erreur lors de la recherche de fournisseur: " + e.getMessage(), e);
         }
         
         return null;
@@ -78,7 +83,7 @@ public class FournisseurDAO {
                 return true;
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la création de fournisseur: " + e.getMessage());
+            LOG.error("Erreur lors de la création de fournisseur: " + e.getMessage(), e);
         }
         
         return false;
@@ -101,7 +106,7 @@ public class FournisseurDAO {
             
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la mise à jour de fournisseur: " + e.getMessage());
+            LOG.error("Erreur lors de la mise à jour de fournisseur: " + e.getMessage(), e);
         }
         
         return false;
@@ -119,7 +124,7 @@ public class FournisseurDAO {
             stmt.setInt(1, id);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la suppression de fournisseur: " + e.getMessage());
+            LOG.error("Erreur lors de la suppression de fournisseur: " + e.getMessage(), e);
         }
         
         return false;

@@ -1,5 +1,8 @@
 package dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import model.NoteJour;
 import util.DayRange;
 import java.math.BigDecimal;
@@ -12,6 +15,8 @@ import java.util.List;
  * DAO pour les notes du jour
  */
 public class NoteJourDAO {
+    private static final Logger LOG = LoggerFactory.getLogger(NoteJourDAO.class);
+
     
     /**
      * Crée une nouvelle note
@@ -24,13 +29,13 @@ public class NoteJourDAO {
                 checkUser.setInt(1, note.getIdEmploye());
                 try (ResultSet rs = checkUser.executeQuery()) {
                     if (!rs.next()) {
-                        System.err.println("ERREUR: L'utilisateur avec l'ID " + note.getIdEmploye() + " n'existe pas dans la base de données.");
+                        LOG.error("ERREUR: L'utilisateur avec l'ID " + note.getIdEmploye() + " n'existe pas dans la base de données.");
                         return false;
                     }
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la vérification de l'utilisateur: " + e.getMessage());
+            LOG.error("Erreur lors de la vérification de l'utilisateur: " + e.getMessage(), e);
             return false;
         }
         
@@ -62,16 +67,14 @@ public class NoteJourDAO {
                 return true;
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la création de note: " + e.getMessage());
-            e.printStackTrace();
+            LOG.error("Erreur lors de la création de note: " + e.getMessage(), e);
             
             // Vérifier si c'est une erreur de contrainte de clé étrangère
             if (e.getMessage() != null && e.getMessage().contains("FOREIGN KEY")) {
-                System.err.println("ERREUR: L'employé avec l'ID " + note.getIdEmploye() + " n'existe pas dans la base de données.");
+                LOG.error("ERREUR: L'employé avec l'ID " + note.getIdEmploye() + " n'existe pas dans la base de données.");
             }
         } catch (Exception e) {
-            System.err.println("Erreur inattendue lors de la création de note: " + e.getMessage());
-            e.printStackTrace();
+            LOG.error("Erreur inattendue lors de la création de note: " + e.getMessage(), e);
         }
         
         return false;
@@ -96,7 +99,7 @@ public class NoteJourDAO {
                 notes.add(mapResultSetToNote(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des notes: " + e.getMessage());
+            LOG.error("Erreur lors de la récupération des notes: " + e.getMessage(), e);
         }
         
         return notes;
@@ -120,7 +123,7 @@ public class NoteJourDAO {
                 notes.add(mapResultSetToNote(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des notes: " + e.getMessage());
+            LOG.error("Erreur lors de la récupération des notes: " + e.getMessage(), e);
         }
         
         return notes;
@@ -145,7 +148,7 @@ public class NoteJourDAO {
                 return total != null ? total : BigDecimal.ZERO;
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors du calcul du total: " + e.getMessage());
+            LOG.error("Erreur lors du calcul du total: " + e.getMessage(), e);
         }
         
         return BigDecimal.ZERO;

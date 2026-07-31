@@ -1,5 +1,8 @@
 package dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,6 +18,8 @@ import util.SecurityUtil;
  * DAO pour l'authentification et la gestion des utilisateurs
  */
 public class UtilisateurDAO {
+    private static final Logger LOG = LoggerFactory.getLogger(UtilisateurDAO.class);
+
 
     /**
      * Authentifie un utilisateur
@@ -44,7 +49,7 @@ public class UtilisateurDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de l'authentification: " + e.getMessage());
+            LOG.error("Erreur lors de l'authentification: " + e.getMessage(), e);
         }
 
         return null;
@@ -73,7 +78,7 @@ public class UtilisateurDAO {
                 );
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la recherche d'utilisateur: " + e.getMessage());
+            LOG.error("Erreur lors de la recherche d'utilisateur: " + e.getMessage(), e);
         }
 
         return null;
@@ -100,7 +105,7 @@ public class UtilisateurDAO {
                 ));
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des utilisateurs: " + e.getMessage());
+            LOG.error("Erreur lors de la récupération des utilisateurs: " + e.getMessage(), e);
         }
 
         return utilisateurs;
@@ -131,7 +136,7 @@ public class UtilisateurDAO {
                 return true;
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la création d'utilisateur: " + e.getMessage());
+            LOG.error("Erreur lors de la création d'utilisateur: " + e.getMessage(), e);
         }
 
         return false;
@@ -155,7 +160,7 @@ public class UtilisateurDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la mise à jour d'utilisateur: " + e.getMessage());
+            LOG.error("Erreur lors de la mise à jour d'utilisateur: " + e.getMessage(), e);
         }
 
         return false;
@@ -175,7 +180,7 @@ public class UtilisateurDAO {
             stmt.setInt(1, id);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la suppression d'utilisateur: " + e.getMessage());
+            LOG.error("Erreur lors de la suppression d'utilisateur: " + e.getMessage(), e);
         }
 
         return false;
@@ -199,7 +204,7 @@ public class UtilisateurDAO {
                 return rs.getInt(1) > 0;
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la vérification du nom d'utilisateur: " + e.getMessage());
+            LOG.error("Erreur lors de la vérification du nom d'utilisateur: " + e.getMessage(), e);
         }
 
         return false;

@@ -1,5 +1,8 @@
 package dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -21,6 +24,8 @@ import util.Config;
  * toute transaction en cours ailleurs dans l'application.
  */
 public final class DBConnector {
+    private static final Logger LOG = LoggerFactory.getLogger(DBConnector.class);
+
 
     private static volatile HikariDataSource dataSource;
 
@@ -77,7 +82,7 @@ public final class DBConnector {
 
                 dataSource = new HikariDataSource(config);
 
-                System.out.println("✓ Pool de connexions initialisé : " + Config.describe());
+                LOG.info("✓ Pool de connexions initialisé : " + Config.describe());
             } catch (RuntimeException e) {
                 throw new SQLException("Impossible d'initialiser le pool de connexions : "
                         + e.getMessage(), e);
@@ -99,7 +104,7 @@ public final class DBConnector {
                      Config.getJdbcUrl(), Config.getDbUser(), Config.getDbPassword());
              Statement stmt = conn.createStatement()) {
             stmt.execute("CREATE SCHEMA IF NOT EXISTS " + Config.getDbSchema());
-            System.out.println("✓ Schéma dédié : " + Config.getDbSchema());
+            LOG.info("✓ Schéma dédié : " + Config.getDbSchema());
         }
     }
 
@@ -116,7 +121,7 @@ public final class DBConnector {
         synchronized (DBConnector.class) {
             if (dataSource != null && !dataSource.isClosed()) {
                 dataSource.close();
-                System.out.println("✓ Pool de connexions fermé");
+                LOG.info("✓ Pool de connexions fermé");
             }
             dataSource = null;
         }
@@ -129,7 +134,7 @@ public final class DBConnector {
             stmt.execute("SELECT 1");
             return true;
         } catch (SQLException e) {
-            System.err.println("✗ Test de connexion échoué : " + e.getMessage());
+            LOG.error("✗ Test de connexion échoué : " + e.getMessage(), e);
             return false;
         }
     }

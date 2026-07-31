@@ -1,5 +1,8 @@
 package controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 
 import dao.CategorieDAO;
@@ -34,6 +37,8 @@ import util.SessionManager;
  * Version moderne avec interface améliorée
  */
 public class GestionStockController {
+    private static final Logger LOG = LoggerFactory.getLogger(GestionStockController.class);
+
 
     // ========================================
     // LABELS & TITRE
@@ -419,8 +424,7 @@ public class GestionStockController {
                     errorMsg += "\n\nCause: " + e.getCause().getMessage();
                 }
                 showAlert(Alert.AlertType.ERROR, "Erreur", errorMsg);
-                System.err.println("Erreur détaillée lors de l'ajout:");
-                e.printStackTrace();
+                LOG.error("Erreur détaillée lors de l'ajout:");
             }
         }
     }
@@ -584,7 +588,7 @@ public class GestionStockController {
         produitsList.addAll(produits);
         
         // Debug: afficher le nombre de produits chargés
-        System.out.println("Produits chargés: " + produits.size());
+        LOG.info("Produits chargés: " + produits.size());
         
         // Forcer le rafraîchissement de la table
         produitsTable.refresh();
@@ -732,8 +736,7 @@ public class GestionStockController {
                         errorMsg += "\n\nCause: " + e.getCause().getMessage();
                     }
                     showAlert(Alert.AlertType.ERROR, "Erreur", errorMsg);
-                    System.err.println("Erreur détaillée lors de l'ajout de catégorie:");
-                    e.printStackTrace();
+                    LOG.error("Erreur détaillée lors de l'ajout de catégorie:");
                 }
             }
         });

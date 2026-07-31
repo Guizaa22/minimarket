@@ -1,5 +1,8 @@
 package controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -57,6 +60,8 @@ import util.SessionManager;
  */
 @SuppressWarnings("unused") // FXML-bound methods appear unused to static analysis
 public class AjoutStockEmployeController {
+    private static final Logger LOG = LoggerFactory.getLogger(AjoutStockEmployeController.class);
+
 
     @FXML
     private StackPane rootPane;
@@ -373,7 +378,7 @@ public class AjoutStockEmployeController {
         produitsFiltres.setAll(tousProduits);
         
         // Debug: afficher le nombre de produits chargés
-        System.out.println("Produits chargés pour ajout stock: " + tousProduits.size());
+        LOG.info("Produits chargés pour ajout stock: " + tousProduits.size());
     }
 
     /**

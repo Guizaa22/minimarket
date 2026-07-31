@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Journalisation de 2M Market.
+
+    Les traces partent en console (utile en développement) et dans un fichier
+    tournant sous %APPDATA%\2M-Market\logs. Le fichier compte : en cas de
+    problème en caisse, l'utilisateur n'a pas de console sous les yeux, et
+    l'ancien code écrivait tout sur System.err, perdu à la fermeture.
+-->
+<configuration>
+
+    <!-- Répertoire de données de l'application ; repli sur ./logs si APPDATA
+         est absent (poste non Windows). -->
+    <property name="LOG_DIR" value="${APPDATA:-.}/2M-Market/logs"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss} %-5level %logger{25} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FICHIER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/2m-market.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/2m-market.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>100MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{40} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- HikariCP est bavard au niveau INFO à chaque emprunt de connexion. -->
+    <logger name="com.zaxxer.hikari" level="WARN"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FICHIER"/>
+    </root>
+
+</configuration>

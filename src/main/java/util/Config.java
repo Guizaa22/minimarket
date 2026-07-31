@@ -1,5 +1,8 @@
 package util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,6 +24,8 @@ import java.util.Properties;
  * Aucun mot de passe n'est stocké dans le code source ni dans le dépôt Git.
  */
 public final class Config {
+    private static final Logger LOG = LoggerFactory.getLogger(Config.class);
+
 
     /** Dossier de données de l'application (base de données locale, tickets, exports). */
     private static final Path APP_DATA_DIR = resolveAppDataDir();
@@ -45,43 +50,34 @@ public final class Config {
     // ------------------------------------------------------------------
 
     private static void load() {
-        Properties fileProps = readConfigFile();
+        // La résolution des sources et leur priorité sont déléguées à ConfigLoader.
+        ConfigLoader loader = new ConfigLoader(APP_DATA_DIR);
 
-        String databaseUrl = firstNonBlank(System.getProperty("DATABASE_URL"),
-                                           System.getenv("DATABASE_URL"),
-                                           fileProps.getProperty("DATABASE_URL"));
-
+        String databaseUrl = loader.get("DATABASE_URL");
         if (databaseUrl != null) {
             applyDatabaseUrl(databaseUrl);
         } else {
-            String host = resolve("PGHOST", fileProps, "localhost");
-            String port = resolve("PGPORT", fileProps, "5432");
-            String name = resolve("PGDATABASE", fileProps, "market2m");
-            dbUser = resolve("PGUSER", fileProps, "market_app");
-            dbPassword = resolve("PGPASSWORD", fileProps, "");
+            String host = loader.get("PGHOST", "localhost");
+            String port = loader.get("PGPORT", "5432");
+            String name = loader.get("PGDATABASE", "market2m");
+            dbUser = loader.get("PGUSER", "market_app");
+            dbPassword = loader.get("PGPASSWORD", "");
             jdbcUrl = "jdbc:postgresql://" + host + ":" + port + "/" + name;
         }
 
-        String sslMode = resolve("PGSSLMODE", fileProps, null);
+        String sslMode = loader.get("PGSSLMODE");
         if (sslMode != null && !jdbcUrl.contains("sslmode=")) {
             jdbcUrl += (jdbcUrl.contains("?") ? "&" : "?") + "sslmode=" + sslMode;
         }
 
         // Schéma cible. Les tests utilisent un schéma dédié pour ne jamais
         // écrire dans les données d'exploitation.
-        String schema = resolve("PGSCHEMA", fileProps, null);
+        String schema = loader.get("PGSCHEMA");
         if (schema != null && schema.matches("[A-Za-z_][A-Za-z0-9_]*")) {
             dbSchema = schema;
         }
 
-        String size = resolve("DB_POOL_SIZE", fileProps, null);
-        if (size != null) {
-            try {
-                poolSize = Math.max(1, Integer.parseInt(size.trim()));
-            } catch (NumberFormatException ignored) {
-                // conserver la valeur par défaut
-            }
-        }
+        poolSize = Math.max(1, loader.getInt("DB_POOL_SIZE", poolSize));
     }
 
     /**
@@ -130,7 +126,7 @@ public final class Config {
                 props.load(in);
                 return props;
             } catch (IOException e) {
-                System.err.println("Impossible de lire " + userConfig + " : " + e.getMessage());
+                LOG.error("Impossible de lire " + userConfig + " : " + e.getMessage(), e);
             }
         }
 
@@ -140,7 +136,7 @@ public final class Config {
             try (InputStream in = Files.newInputStream(devConfig)) {
                 props.load(in);
             } catch (IOException e) {
-                System.err.println("Impossible de lire " + devConfig + " : " + e.getMessage());
+                LOG.error("Impossible de lire " + devConfig + " : " + e.getMessage(), e);
             }
         }
 
@@ -184,7 +180,7 @@ public final class Config {
         try {
             Files.createDirectories(dir);
         } catch (IOException e) {
-            System.err.println("Impossible de créer le dossier de données " + dir + " : " + e.getMessage());
+            LOG.error("Impossible de créer le dossier de données " + dir + " : " + e.getMessage(), e);
             return Paths.get(System.getProperty("user.dir"));
         }
         return dir;
@@ -231,7 +227,7 @@ public final class Config {
         try {
             Files.createDirectories(dir);
         } catch (IOException e) {
-            System.err.println("Impossible de créer le dossier tickets : " + e.getMessage());
+            LOG.error("Impossible de créer le dossier tickets : " + e.getMessage(), e);
             return APP_DATA_DIR;
         }
         return dir;

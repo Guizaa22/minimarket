@@ -1,5 +1,8 @@
 package util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import model.Utilisateur;
 import model.Utilisateur.Role;
 import java.time.LocalDateTime;
@@ -9,6 +12,8 @@ import java.time.LocalDateTime;
  * Pattern Singleton pour garantir une seule instance
  */
 public class SessionManager {
+    private static final Logger LOG = LoggerFactory.getLogger(SessionManager.class);
+
 
     // Instance unique (Singleton)
     private static SessionManager instance;
@@ -56,7 +61,7 @@ public class SessionManager {
         manager.loginTime = LocalDateTime.now();
         manager.sessionId = generateSessionId();
 
-        System.out.println("Session démarrée pour: " + user.getUsername() +
+        LOG.info("Session démarrée pour: " + user.getUsername() +
                 " (" + user.getRole() + ") à " + manager.loginTime);
     }
 
@@ -66,7 +71,7 @@ public class SessionManager {
     public static void endSession() {
         SessionManager manager = getInstance();
         if (manager.currentUser != null) {
-            System.out.println("Session terminée pour: " + manager.currentUser.getUsername());
+            LOG.info("Session terminée pour: " + manager.currentUser.getUsername());
         }
         manager.currentUser = null;
         manager.loginTime = null;
@@ -170,7 +175,7 @@ public class SessionManager {
         SessionManager manager = getInstance();
         if (manager.currentUser != null && manager.currentUser.getId() == user.getId()) {
             manager.currentUser = user;
-            System.out.println("Informations utilisateur mises à jour: " + user.getUsername());
+            LOG.info("Informations utilisateur mises à jour: " + user.getUsername());
         }
     }
 
@@ -198,16 +203,16 @@ public class SessionManager {
     public static void printSessionInfo() {
         SessionManager manager = getInstance();
         if (manager.currentUser != null) {
-            System.out.println("=== Session Info ===");
-            System.out.println("User: " + manager.currentUser.getUsername());
-            System.out.println("Role: " + manager.currentUser.getRole());
-            System.out.println("User ID: " + manager.currentUser.getId());
-            System.out.println("Login Time: " + manager.loginTime);
-            System.out.println("Session Duration: " + getSessionDuration() + " minutes");
-            System.out.println("Session ID: " + manager.sessionId);
-            System.out.println("===================");
+            LOG.info("=== Session Info ===");
+            LOG.info("User: " + manager.currentUser.getUsername());
+            LOG.info("Role: " + manager.currentUser.getRole());
+            LOG.info("User ID: " + manager.currentUser.getId());
+            LOG.info("Login Time: " + manager.loginTime);
+            LOG.info("Session Duration: " + getSessionDuration() + " minutes");
+            LOG.info("Session ID: " + manager.sessionId);
+            LOG.info("===================");
         } else {
-            System.out.println("Aucune session active");
+            LOG.info("Aucune session active");
         }
     }
 

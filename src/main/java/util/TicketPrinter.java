@@ -1,5 +1,8 @@
 package util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import model.DetailVente;
 import model.Vente;
 import java.io.FileWriter;
@@ -12,6 +15,8 @@ import java.util.List;
  * Classe utilitaire pour imprimer les tickets de vente
  */
 public class TicketPrinter {
+    private static final Logger LOG = LoggerFactory.getLogger(TicketPrinter.class);
+
     
     /**
      * Imprime un ticket de vente
@@ -35,11 +40,11 @@ public class TicketPrinter {
             for (DetailVente detail : details) {
                 if (detail == null) continue;
                 if (detail.getPrixVenteUnitaire() == null) {
-                    System.err.println("Avertissement: Prix de vente manquant pour un détail");
+                    LOG.error("Avertissement: Prix de vente manquant pour un détail");
                     continue;
                 }
                 if (detail.getProduit() == null) {
-                    System.err.println("Avertissement: Produit manquant pour un détail");
+                    LOG.error("Avertissement: Produit manquant pour un détail");
                     continue;
                 }
                 BigDecimal sousTotal = detail.getPrixVenteUnitaire().multiply(new BigDecimal(detail.getQuantite()));
@@ -69,11 +74,11 @@ public class TicketPrinter {
                 writer.write(ticket.toString());
             }
 
-            System.out.println("Ticket imprimé: " + target);
-            System.out.println(ticket.toString());
+            LOG.info("Ticket imprimé: " + target);
+            LOG.info(ticket.toString());
             
         } catch (IOException e) {
-            System.err.println("Erreur lors de l'impression du ticket: " + e.getMessage());
+            LOG.error("Erreur lors de l'impression du ticket: " + e.getMessage(), e);
         }
     }
     

@@ -1,5 +1,8 @@
 package util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -19,6 +22,8 @@ import dao.DBConnector;
  * chargé, ce qui explique l'absence totale d'index dans la base de production.
  */
 public final class DatabaseSetup {
+    private static final Logger LOG = LoggerFactory.getLogger(DatabaseSetup.class);
+
 
     private static final String SCHEMA_RESOURCE = "/database/schema_postgres.sql";
 
@@ -33,7 +38,7 @@ public final class DatabaseSetup {
     public static boolean initializeDatabase() {
         String script = readSchemaScript();
         if (script == null) {
-            System.err.println("✗ Script de schéma introuvable : " + SCHEMA_RESOURCE);
+            LOG.error("✗ Script de schéma introuvable : " + SCHEMA_RESOURCE);
             return false;
         }
 
@@ -51,12 +56,12 @@ public final class DatabaseSetup {
                 conn.setAutoCommit(true);
             }
 
-            System.out.println("✓ Schéma vérifié : " + Config.describe());
+            LOG.info("✓ Schéma vérifié : " + Config.describe());
             reportState();
             return true;
 
         } catch (SQLException e) {
-            System.err.println("✗ Initialisation de la base échouée : " + DBConnector.diagnose(e));
+            LOG.error("✗ Initialisation de la base échouée : " + DBConnector.diagnose(e));
             return false;
         }
     }
@@ -68,7 +73,7 @@ public final class DatabaseSetup {
             }
             return new String(in.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            System.err.println("✗ Lecture du schéma impossible : " + e.getMessage());
+            LOG.error("✗ Lecture du schéma impossible : " + e.getMessage(), e);
             return null;
         }
     }
@@ -82,12 +87,12 @@ public final class DatabaseSetup {
                  "       (SELECT COUNT(*) FROM produits), " +
                  "       (SELECT COUNT(*) FROM ventes)")) {
             if (rs.next()) {
-                System.out.println("  Utilisateurs : " + rs.getInt(1)
+                LOG.info("  Utilisateurs : " + rs.getInt(1)
                         + " | Produits : " + rs.getInt(2)
                         + " | Ventes : " + rs.getInt(3));
             }
         } catch (SQLException e) {
-            System.err.println("  (état de la base indisponible : " + e.getMessage() + ")");
+            LOG.error("  (état de la base indisponible : " + e.getMessage() + ")", e);
         }
     }
 
@@ -99,7 +104,7 @@ public final class DatabaseSetup {
              ResultSet rs = stmt.executeQuery(sql)) {
             return rs.next() && rs.getInt(1) > 0;
         } catch (SQLException e) {
-            System.err.println("Vérification du compte admin impossible : " + e.getMessage());
+            LOG.error("Vérification du compte admin impossible : " + e.getMessage(), e);
             return true; // ne pas proposer de créer un compte si l'état est inconnu
         }
     }
@@ -117,7 +122,7 @@ public final class DatabaseSetup {
             stmt.setString(2, SecurityUtil.hashPassword(password));
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Création du compte administrateur impossible : "
+            LOG.error("Création du compte administrateur impossible : "
                     + DBConnector.diagnose(e));
             return false;
         }

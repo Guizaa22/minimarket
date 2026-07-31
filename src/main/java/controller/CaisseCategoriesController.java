@@ -1,5 +1,8 @@
 package controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -29,6 +32,8 @@ import model.Produit;
  * Contrôleur pour l'interface de sélection de catégories
  */
 public class CaisseCategoriesController {
+    private static final Logger LOG = LoggerFactory.getLogger(CaisseCategoriesController.class);
+
 
     // ============================================
     // CONSTANTES
@@ -268,11 +273,10 @@ public class CaisseCategoriesController {
                 }
             }
 
-            System.out.println("✓ " + categories.size() + " catégorie(s) chargée(s)");
+            LOG.info("✓ " + categories.size() + " catégorie(s) chargée(s)");
 
         } catch (Exception e) {
-            System.err.println("Erreur lors du chargement des catégories: " + e.getMessage());
-            e.printStackTrace();
+            LOG.error("Erreur lors du chargement des catégories: " + e.getMessage(), e);
             afficherErreurChargement();
         }
     }
@@ -427,8 +431,7 @@ public class CaisseCategoriesController {
             stage.getScene().setRoot(root);
             stage.setTitle("Produits - " + categorie);
         } catch (IOException e) {
-            System.err.println("Erreur lors du chargement de la page catégorie: " + e.getMessage());
-            e.printStackTrace();
+            LOG.error("Erreur lors du chargement de la page catégorie: " + e.getMessage(), e);
             showAlert(Alert.AlertType.ERROR, "Erreur",
                     "Impossible d'ouvrir la catégorie: " + e.getMessage());
         }
@@ -574,7 +577,7 @@ public class CaisseCategoriesController {
      * Affiche une popup avec ComboBox pour choisir le produit tabac associé pour les "frak cigarettes"
      */
     private void afficherPopupChoixProduitTabac(Produit produitFrak, int quantite) {
-        System.out.println("Popup choix produit tabac pour frak cigarette: " + produitFrak.getNom());
+        LOG.info("Popup choix produit tabac pour frak cigarette: " + produitFrak.getNom());
         
         // Récupérer tous les produits tabac disponibles
         List<Produit> produitsTabac = produitDAO.findProduitsTabac();
@@ -654,7 +657,7 @@ public class CaisseCategoriesController {
         // Afficher le dialogue et traiter le résultat
         java.util.Optional<Produit> result = dialog.showAndWait();
         result.ifPresent(produitTabacSelectionne -> {
-            System.out.println("Produit tabac sélectionné: " + produitTabacSelectionne.getNom());
+            LOG.info("Produit tabac sélectionné: " + produitTabacSelectionne.getNom());
             ajouterAuPanierSilencieuxAvecTabacAssocie(produitFrak, quantite, produitTabacSelectionne.getId());
             produitInfoLabel.setText("✓ " + produitFrak.getNom() + " -> " + produitTabacSelectionne.getNom());
             produitInfoLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 13px;");
@@ -665,7 +668,7 @@ public class CaisseCategoriesController {
      * Affiche une popup pour choisir entre paquet et cigarette pour les produits tabac
      */
     private void afficherPopupChoixTabac(Produit produit, int quantite) {
-        System.out.println("Popup tabac affiché pour: " + produit.getNom() + " (isTabac: " + produit.isTabac() + ")");
+        LOG.info("Popup tabac affiché pour: " + produit.getNom() + " (isTabac: " + produit.isTabac() + ")");
         
         javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
         alert.setTitle("Type de vente - Tabac");
@@ -681,19 +684,19 @@ public class CaisseCategoriesController {
         java.util.Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent()) {
             if (result.get() == buttonTypePaquet) {
-                System.out.println("Choix: Paquet");
+                LOG.info("Choix: Paquet");
                 ajouterAuPanierSilencieux(produit, quantite, "paquet");
                 produitInfoLabel.setText("✓ " + produit.getNom() + " (Paquet) ajouté");
                 produitInfoLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 13px;");
             } else if (result.get() == buttonTypeCigarette) {
-                System.out.println("Choix: Cigarette");
+                LOG.info("Choix: Cigarette");
                 ajouterAuPanierSilencieux(produit, quantite, "cigarette");
                 produitInfoLabel.setText("✓ " + produit.getNom() + " (Cigarette) ajouté");
                 produitInfoLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 13px;");
             }
             // Si annulé, ne rien faire
         } else {
-            System.out.println("Popup annulé");
+            LOG.info("Popup annulé");
         }
     }
 

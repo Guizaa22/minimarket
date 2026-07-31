@@ -1,0 +1,45 @@
+# ============================================================
+# 2M Market - modèle de configuration
+# ============================================================
+#
+# NE PAS renseigner de mot de passe dans ce fichier : il est versionné
+# dans Git et embarqué dans le jar livré.
+#
+# Emplacement réel du fichier de configuration, contenant le mot de passe
+# et protégé par ACL :
+#
+#     %APPDATA%\2M-Market\database.properties
+#
+# Il est créé automatiquement par :
+#
+#     powershell -ExecutionPolicy Bypass -File tools\setup-database.ps1
+#
+# Les variables d'environnement et les propriétés système (-Dcle=valeur)
+# ont priorité sur ce fichier.
+# ============================================================
+
+# --- Connexion PostgreSQL, forme détaillée --------------------
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=market2m
+PGUSER=market_app
+# PGPASSWORD=  <-- à définir dans %APPDATA%\2M-Market\database.properties
+
+# --- Connexion PostgreSQL, forme URL --------------------------
+# Alternative à ce qui précède ; format fourni par Railway, Neon, Supabase...
+# DATABASE_URL=postgresql://utilisateur:motdepasse@hote:5432/base
+
+# --- TLS ------------------------------------------------------
+# Obligatoire dès que la base n'est pas sur le réseau local :
+# sans cela les identifiants circulent en clair.
+# PGSSLMODE=require
+
+# --- Pool de connexions ---------------------------------------
+# Nombre maximum de connexions simultanées. 3 à 5 suffisent pour un poste
+# de caisse ; augmenter seulement si plusieurs postes partagent la base.
+DB_POOL_SIZE=5
+
+# --- Schéma ---------------------------------------------------
+# Schéma PostgreSQL visé. « public » en exploitation ; les tests
+# automatisés utilisent « test_2m » et refusent de s'exécuter ailleurs.
+# PGSCHEMA=public

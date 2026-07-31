@@ -1,5 +1,8 @@
 package dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,6 +17,8 @@ import model.Produit;
  * DAO pour les opérations CRUD sur la table Produits
  */
 public class ProduitDAO {
+    private static final Logger LOG = LoggerFactory.getLogger(ProduitDAO.class);
+
 
     /**
      * Projection commune des produits.
@@ -49,27 +54,13 @@ public class ProduitDAO {
                 produits.add(mapResultSetToProduit(rs));
             }
         } catch (SQLException e) {
-            // Si la requête avec JOIN échoue (table categories n'existe pas ou category_id n'existe pas),
-            // essayer une requête simple sans JOIN
-            System.err.println("Erreur lors de la récupération des produits (tentative avec JOIN): " + e.getMessage());
-            System.err.println("Tentative avec requête simple...");
-            
-            try {
-                sql = "SELECT *, categorie AS categorie_affiche FROM produits ORDER BY nom";
-                try (Connection conn = DBConnector.getConnection();
-                     Statement stmt = conn.createStatement();
-                     ResultSet rs = stmt.executeQuery(sql)) {
-                    
-                    while (rs.next()) {
-                        produits.add(mapResultSetToProduit(rs));
-                    }
-                }
-            } catch (SQLException e2) {
-                System.err.println("Erreur lors de la récupération des produits (requête simple): " + e2.getMessage());
-                e2.printStackTrace();
-            }
+            // Plus de repli sur une requête sans jointure : elle renvoyait les
+            // produits sans categories.type, donc mal classés vis-à-vis du tabac,
+            // en masquant au passage la véritable cause de l'échec.
+            LOG.error("Récupération des produits impossible", e);
+            throw new exception.DatabaseException("Impossible de charger les produits", e);
         }
-        
+
         return produits;
     }
     
@@ -97,7 +88,7 @@ public class ProduitDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la recherche de produit: " + e.getMessage());
+            LOG.error("Erreur lors de la recherche de produit: " + e.getMessage(), e);
         }
 
         return null;
@@ -121,7 +112,7 @@ public class ProduitDAO {
                 return mapResultSetToProduit(rs);
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la recherche de produit par code-barres: " + e.getMessage());
+            LOG.error("Erreur lors de la recherche de produit par code-barres: " + e.getMessage(), e);
         }
         
         return null;
@@ -145,7 +136,7 @@ public class ProduitDAO {
                 return mapResultSetToProduit(rs);
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la recherche de produit par nom: " + e.getMessage());
+            LOG.error("Erreur lors de la recherche de produit par nom: " + e.getMessage(), e);
         }
         
         return null;
@@ -185,7 +176,7 @@ public class ProduitDAO {
                 produits.add(mapResultSetToProduit(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des produits à stock faible: " + e.getMessage());
+            LOG.error("Erreur lors de la récupération des produits à stock faible: " + e.getMessage(), e);
         }
         
         return produits;
@@ -197,90 +188,57 @@ public class ProduitDAO {
      * @return true si la création réussit, false sinon
      */
     public boolean create(Produit produit) {
-        // Vérifier si la colonne unite existe
-        boolean hasUnite = columnExists("unite");
-        boolean hasCategoryId = columnExists("category_id");
-        
-        // Construire la requête SQL dynamiquement
-        // Pour compatibilité avec anciennes bases de données
-        StringBuilder sqlBuilder = new StringBuilder("INSERT INTO produits (code_barre, nom, categorie");
-        if (hasCategoryId) {
-            sqlBuilder.append(", category_id");
-        }
-        sqlBuilder.append(", prix_achat_actuel, prix_vente_defaut, quantite_stock");
-        if (hasUnite) {
-            sqlBuilder.append(", unite");
-        }
-        sqlBuilder.append(", seuil_alerte) VALUES (?, ?, ?");
-        
-        // Compter les paramètres correctement
-        int paramCount = 3; // code_barre, nom, categorie
-        if (hasCategoryId) {
-            sqlBuilder.append(", ?");
-            paramCount++;
-        }
-        sqlBuilder.append(", ?, ?, ?"); // prix_achat, prix_vente, quantite_stock
-        paramCount += 3;
-        if (hasUnite) {
-            sqlBuilder.append(", ?");
-            paramCount++;
-        }
-        sqlBuilder.append(", ?"); // seuil_alerte
-        paramCount++;
-        sqlBuilder.append(")");
-        
-        String sql = sqlBuilder.toString();
-        
+        // Requête fixe : le schéma garantit la présence de category_id et unite.
+        // Elle était auparavant assemblée dynamiquement après deux appels à
+        // columnExists(), soit deux interrogations d'information_schema avant
+        // chaque insertion, pour gérer d'anciennes bases qui n'existent plus.
+        String sql = "INSERT INTO produits "
+                   + "(code_barre, nom, categorie, category_id, prix_achat_actuel, "
+                   + " prix_vente_defaut, quantite_stock, unite, seuil_alerte) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
         try (Connection conn = DBConnector.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            
-            int paramIndex = 1;
-            stmt.setString(paramIndex++, produit.getCodeBarre());
-            stmt.setString(paramIndex++, produit.getNom());
-            stmt.setString(paramIndex++, produit.getCategorie() != null ? produit.getCategorie() : "");
-            
-            // Si category_id existe, essayer de trouver l'ID de la catégorie
-            if (hasCategoryId) {
-                Integer categoryId = findCategoryIdByName(conn, produit.getCategorie());
-                if (categoryId != null) {
-                    stmt.setInt(paramIndex++, categoryId);
-                } else {
-                    stmt.setNull(paramIndex++, java.sql.Types.INTEGER);
-                }
+
+            stmt.setString(1, produit.getCodeBarre());
+            stmt.setString(2, produit.getNom());
+            stmt.setString(3, produit.getCategorie() != null ? produit.getCategorie() : "");
+
+            Integer categoryId = findCategoryIdByName(conn, produit.getCategorie());
+            if (categoryId != null) {
+                stmt.setInt(4, categoryId);
+            } else {
+                stmt.setNull(4, java.sql.Types.INTEGER);
             }
-            
-            stmt.setBigDecimal(paramIndex++, produit.getPrixAchatActuel());
-            stmt.setBigDecimal(paramIndex++, produit.getPrixVenteDefaut());
-            stmt.setInt(paramIndex++, produit.getQuantiteStock());
-            if (hasUnite) {
-                stmt.setString(paramIndex++, produit.getUnite() != null ? produit.getUnite() : "unité");
-            }
-            stmt.setInt(paramIndex++, produit.getSeuilAlerte());
-            
-            System.out.println("SQL: " + sql);
-            System.out.println("Paramètres: code_barre=" + produit.getCodeBarre() + ", nom=" + produit.getNom());
-            
+
+            stmt.setBigDecimal(5, produit.getPrixAchatActuel());
+            stmt.setBigDecimal(6, produit.getPrixVenteDefaut());
+            stmt.setInt(7, produit.getQuantiteStock());
+            stmt.setString(8, produit.getUnite() != null ? produit.getUnite() : "unité");
+            stmt.setInt(9, produit.getSeuilAlerte());
+
+            LOG.debug("Création du produit {} ({})", produit.getNom(), produit.getCodeBarre());
+
             int rowsAffected = stmt.executeUpdate();
-            
+
             if (rowsAffected > 0) {
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
                         produit.setId(rs.getInt(1));
-                        System.out.println("Produit créé avec succès, ID: " + produit.getId());
+                        LOG.info("Produit créé : {} (id={})", produit.getNom(), produit.getId());
                     }
                 }
                 return true;
             }
         } catch (SQLException e) {
-            System.err.println("========================================");
-            System.err.println("ERREUR lors de la création de produit:");
-            System.err.println("Message: " + e.getMessage());
-            System.err.println("Code SQL: " + e.getSQLState());
-            System.err.println("Code erreur SGBD: " + e.getErrorCode());
-            System.err.println("SQL: " + sql);
-            System.err.println("Produit: " + produit);
-            e.printStackTrace();
-            System.err.println("========================================");
+            LOG.error("========================================");
+            LOG.error("ERREUR lors de la création de produit:");
+            LOG.error("Message: " + e.getMessage(), e);
+            LOG.error("Code SQL: " + e.getSQLState());
+            LOG.error("Code erreur SGBD: " + e.getErrorCode());
+            LOG.error("SQL: " + sql);
+            LOG.error("Produit: " + produit);
+            LOG.error("========================================");
         }
         
         return false;
@@ -292,65 +250,48 @@ public class ProduitDAO {
      * @return true si la mise à jour réussit, false sinon
      */
     public boolean update(Produit produit) {
-        // Vérifier si les colonnes existent
-        boolean hasUnite = columnExists("unite");
-        boolean hasCategoryId = columnExists("category_id");
-        
-        // Construire la requête SQL dynamiquement
-        StringBuilder sqlBuilder = new StringBuilder("UPDATE produits SET code_barre = ?, nom = ?, categorie = ?");
-        if (hasCategoryId) {
-            sqlBuilder.append(", category_id = ?");
-        }
-        sqlBuilder.append(", prix_achat_actuel = ?, prix_vente_defaut = ?, quantite_stock = ?");
-        if (hasUnite) {
-            sqlBuilder.append(", unite = ?");
-        }
-        sqlBuilder.append(", seuil_alerte = ? WHERE id = ?");
-        
-        String sql = sqlBuilder.toString();
-        
+        // Requête fixe : voir le commentaire de create().
+        String sql = "UPDATE produits SET code_barre = ?, nom = ?, categorie = ?, "
+                   + "category_id = ?, prix_achat_actuel = ?, prix_vente_defaut = ?, "
+                   + "quantite_stock = ?, unite = ?, seuil_alerte = ?, "
+                   + "date_derniere_maj = CURRENT_TIMESTAMP "
+                   + "WHERE id = ?";
+
         try (Connection conn = DBConnector.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
-            int paramIndex = 1;
-            stmt.setString(paramIndex++, produit.getCodeBarre());
-            stmt.setString(paramIndex++, produit.getNom());
-            stmt.setString(paramIndex++, produit.getCategorie() != null ? produit.getCategorie() : "");
-            
-            // Si category_id existe, essayer de trouver l'ID de la catégorie
-            if (hasCategoryId) {
-                Integer categoryId = findCategoryIdByName(conn, produit.getCategorie());
-                if (categoryId != null) {
-                    stmt.setInt(paramIndex++, categoryId);
-                } else {
-                    stmt.setNull(paramIndex++, java.sql.Types.INTEGER);
-                }
+
+            stmt.setString(1, produit.getCodeBarre());
+            stmt.setString(2, produit.getNom());
+            stmt.setString(3, produit.getCategorie() != null ? produit.getCategorie() : "");
+
+            Integer categoryId = findCategoryIdByName(conn, produit.getCategorie());
+            if (categoryId != null) {
+                stmt.setInt(4, categoryId);
+            } else {
+                stmt.setNull(4, java.sql.Types.INTEGER);
             }
-            
-            stmt.setBigDecimal(paramIndex++, produit.getPrixAchatActuel());
-            stmt.setBigDecimal(paramIndex++, produit.getPrixVenteDefaut());
-            stmt.setInt(paramIndex++, produit.getQuantiteStock());
-            if (hasUnite) {
-                stmt.setString(paramIndex++, produit.getUnite() != null ? produit.getUnite() : "unité");
-            }
-            stmt.setInt(paramIndex++, produit.getSeuilAlerte());
-            stmt.setInt(paramIndex++, produit.getId());
-            
+
+            stmt.setBigDecimal(5, produit.getPrixAchatActuel());
+            stmt.setBigDecimal(6, produit.getPrixVenteDefaut());
+            stmt.setInt(7, produit.getQuantiteStock());
+            stmt.setString(8, produit.getUnite() != null ? produit.getUnite() : "unité");
+            stmt.setInt(9, produit.getSeuilAlerte());
+            stmt.setInt(10, produit.getId());
+
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected > 0) {
-                System.out.println("Produit mis à jour avec succès, ID: " + produit.getId());
+                LOG.info("Produit mis à jour : {} (id={})", produit.getNom(), produit.getId());
                 return true;
             }
         } catch (SQLException e) {
-            System.err.println("========================================");
-            System.err.println("ERREUR lors de la mise à jour de produit:");
-            System.err.println("Message: " + e.getMessage());
-            System.err.println("Code SQL: " + e.getSQLState());
-            System.err.println("Code erreur SGBD: " + e.getErrorCode());
-            System.err.println("SQL: " + sql);
-            System.err.println("Produit ID: " + produit.getId());
-            e.printStackTrace();
-            System.err.println("========================================");
+            LOG.error("========================================");
+            LOG.error("ERREUR lors de la mise à jour de produit:");
+            LOG.error("Message: " + e.getMessage(), e);
+            LOG.error("Code SQL: " + e.getSQLState());
+            LOG.error("Code erreur SGBD: " + e.getErrorCode());
+            LOG.error("SQL: " + sql);
+            LOG.error("Produit ID: " + produit.getId());
+            LOG.error("========================================");
         }
         
         return false;
@@ -365,7 +306,7 @@ public class ProduitDAO {
         try (Connection conn = DBConnector.getConnection()) {
             return isProduitUtilise(conn, id);
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la vérification d'utilisation du produit: " + e.getMessage());
+            LOG.error("Erreur lors de la vérification d'utilisation du produit: " + e.getMessage(), e);
             return false;
         }
     }
@@ -424,7 +365,7 @@ public class ProduitDAO {
                     stmt.setInt(1, id);
                     int detailsDeleted = stmt.executeUpdate();
                     if (detailsDeleted > 0) {
-                        System.out.println("✓ " + detailsDeleted + " détail(s) de vente supprimé(s) pour le produit ID " + id);
+                        LOG.info("✓ " + detailsDeleted + " détail(s) de vente supprimé(s) pour le produit ID " + id);
                     }
                 }
                 
@@ -434,7 +375,7 @@ public class ProduitDAO {
                     stmt.setInt(1, id);
                     int ajoutsDeleted = stmt.executeUpdate();
                     if (ajoutsDeleted > 0) {
-                        System.out.println("✓ " + ajoutsDeleted + " ajout(s) de stock supprimé(s) pour le produit ID " + id);
+                        LOG.info("✓ " + ajoutsDeleted + " ajout(s) de stock supprimé(s) pour le produit ID " + id);
                     }
                 }
             } else {
@@ -453,11 +394,11 @@ public class ProduitDAO {
                 
                 if (rowsAffected > 0) {
                     conn.commit();
-                    System.out.println("✓ Produit ID " + id + " supprimé avec succès" + (forceDelete ? " (suppression forcée)" : ""));
+                    LOG.info("✓ Produit ID " + id + " supprimé avec succès" + (forceDelete ? " (suppression forcée)" : ""));
                     return true;
                 } else {
                     conn.rollback();
-                    System.err.println("✗ Aucun produit trouvé avec l'ID " + id);
+                    LOG.error("✗ Aucun produit trouvé avec l'ID " + id);
                     return false;
                 }
             }
@@ -466,18 +407,17 @@ public class ProduitDAO {
                 try {
                     conn.rollback();
                 } catch (SQLException rollbackEx) {
-                    System.err.println("Erreur lors du rollback: " + rollbackEx.getMessage());
+                    LOG.error("Erreur lors du rollback: " + rollbackEx.getMessage(), rollbackEx);
                 }
             }
-            System.err.println("========================================");
-            System.err.println("ERREUR lors de la suppression de produit:");
-            System.err.println("Message: " + e.getMessage());
-            System.err.println("Code SQL: " + e.getSQLState());
-            System.err.println("Code erreur SGBD: " + e.getErrorCode());
-            System.err.println("Produit ID: " + id);
-            System.err.println("Force Delete: " + forceDelete);
-            e.printStackTrace();
-            System.err.println("========================================");
+            LOG.error("========================================");
+            LOG.error("ERREUR lors de la suppression de produit:");
+            LOG.error("Message: " + e.getMessage(), e);
+            LOG.error("Code SQL: " + e.getSQLState());
+            LOG.error("Code erreur SGBD: " + e.getErrorCode());
+            LOG.error("Produit ID: " + id);
+            LOG.error("Force Delete: " + forceDelete);
+            LOG.error("========================================");
             throw e; // Re-lancer l'exception pour que le contrôleur puisse l'afficher
         } finally {
             // Restaurer autoCommit puis rendre la connexion au pool.
@@ -486,7 +426,7 @@ public class ProduitDAO {
                     conn.setAutoCommit(true);
                     conn.close();
                 } catch (SQLException e) {
-                    System.err.println("Erreur lors de la réinitialisation de autoCommit: " + e.getMessage());
+                    LOG.error("Erreur lors de la réinitialisation de autoCommit: " + e.getMessage(), e);
                 }
             }
         }
@@ -528,12 +468,12 @@ public class ProduitDAO {
             if (stmt.executeUpdate() > 0) {
                 return true;
             }
-            System.err.println("✗ Stock non modifié pour le produit ID " + produitId
+            LOG.error("✗ Stock non modifié pour le produit ID " + produitId
                     + " (produit introuvable ou stock insuffisant pour un retrait de " + (-delta) + ")");
             return false;
 
         } catch (SQLException e) {
-            System.err.println("✗ Erreur lors de la mise à jour du stock : " + e.getMessage());
+            LOG.error("✗ Erreur lors de la mise à jour du stock : " + e.getMessage(), e);
             return false;
         }
     }
@@ -566,27 +506,26 @@ public class ProduitDAO {
                         if (rs.next()) {
                             int stockVerifie = rs.getInt("quantite_stock");
                             if (stockVerifie == quantite) {
-                                System.out.println("✓ Stock mis à jour: Produit ID=" + produitId + ", Nouveau stock=" + quantite);
+                                LOG.info("✓ Stock mis à jour: Produit ID=" + produitId + ", Nouveau stock=" + quantite);
                                 return true;
                             } else {
-                                System.err.println("✗ Erreur: Stock vérifié (" + stockVerifie + ") ne correspond pas au stock attendu (" + quantite + ")");
+                                LOG.error("✗ Erreur: Stock vérifié (" + stockVerifie + ") ne correspond pas au stock attendu (" + quantite + ")");
                                 return false;
                             }
                         } else {
-                            System.err.println("✗ Erreur: Produit ID " + produitId + " introuvable après mise à jour");
+                            LOG.error("✗ Erreur: Produit ID " + produitId + " introuvable après mise à jour");
                             return false;
                         }
                     }
                 }
             } else {
-                System.err.println("✗ Erreur: Aucune ligne mise à jour pour produit ID " + produitId);
+                LOG.error("✗ Erreur: Aucune ligne mise à jour pour produit ID " + produitId);
                 return false;
             }
         } catch (SQLException e) {
-            System.err.println("✗ Erreur lors de la mise à jour du stock: " + e.getMessage());
-            System.err.println("  Produit ID: " + produitId);
-            System.err.println("  Nouvelle quantité: " + quantite);
-            e.printStackTrace();
+            LOG.error("✗ Erreur lors de la mise à jour du stock: " + e.getMessage(), e);
+            LOG.error("  Produit ID: " + produitId);
+            LOG.error("  Nouvelle quantité: " + quantite);
             return false;
         }
     }
@@ -609,7 +548,7 @@ public class ProduitDAO {
                 return rs.getInt(1) > 0;
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la vérification du code-barres: " + e.getMessage());
+            LOG.error("Erreur lors de la vérification du code-barres: " + e.getMessage(), e);
         }
         
         return false;
@@ -646,7 +585,7 @@ public class ProduitDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Lecture de la table categories impossible : " + e.getMessage());
+            LOG.error("Lecture de la table categories impossible : " + e.getMessage(), e);
         }
 
         // 2. Rattrapage : catégories présentes uniquement dans la colonne texte.
@@ -664,13 +603,13 @@ public class ProduitDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Lecture des catégories depuis produits impossible : " + e.getMessage());
+            LOG.error("Lecture des catégories depuis produits impossible : " + e.getMessage(), e);
         }
 
         List<String> categories = new ArrayList<>(noms);
         categories.sort(String.CASE_INSENSITIVE_ORDER);
 
-        System.out.println("✓ " + categories.size() + " catégorie(s) : " + categories);
+        LOG.info("✓ " + categories.size() + " catégorie(s) : " + categories);
         return categories;
     }
     
@@ -684,12 +623,12 @@ public class ProduitDAO {
         List<Produit> produits = new ArrayList<>();
         
         if (categorieNom == null || categorieNom.trim().isEmpty()) {
-            System.err.println("Avertissement: Nom de catégorie vide ou null");
+            LOG.error("Avertissement: Nom de catégorie vide ou null");
             return produits;
         }
         
         String categorieTrim = categorieNom.trim();
-        System.out.println("Recherche de produits pour catégorie: '" + categorieTrim + "'");
+        LOG.info("Recherche de produits pour catégorie: '" + categorieTrim + "'");
         
         // Essayer d'abord avec la table categories (via category_id)
         try {
@@ -709,12 +648,12 @@ public class ProduitDAO {
                 }
                 
                 if (!produits.isEmpty()) {
-                    System.out.println("✓ Trouvé " + produits.size() + " produit(s) via JOIN pour catégorie: " + categorieTrim);
+                    LOG.info("✓ Trouvé " + produits.size() + " produit(s) via JOIN pour catégorie: " + categorieTrim);
                 return produits;
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Erreur avec requête JOIN (peut être normal si table categories n'existe pas): " + e.getMessage());
+            LOG.error("Erreur avec requête JOIN (peut être normal si table categories n'existe pas): " + e.getMessage(), e);
         }
         
         // Si aucune méthode avec JOIN n'a fonctionné, utiliser l'ancienne méthode avec juste la colonne categorie
@@ -731,10 +670,9 @@ public class ProduitDAO {
                     produits.add(mapResultSetToProduit(rs));
                 }
             
-            System.out.println("✓ Trouvé " + produits.size() + " produit(s) via colonne categorie pour: " + categorieTrim);
+            LOG.info("✓ Trouvé " + produits.size() + " produit(s) via colonne categorie pour: " + categorieTrim);
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des produits par catégorie: " + e.getMessage());
-            e.printStackTrace();
+            LOG.error("Erreur lors de la récupération des produits par catégorie: " + e.getMessage(), e);
         }
         
         return produits;
@@ -768,7 +706,7 @@ public class ProduitDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des produits par category_id: " + e.getMessage());
+            LOG.error("Erreur lors de la récupération des produits par category_id: " + e.getMessage(), e);
         }
 
         return produits;
@@ -838,27 +776,6 @@ public class ProduitDAO {
     }
     
     /**
-     * Vérifie si une colonne existe dans la table produits.
-     * Utilise information_schema (standard SQL) au lieu de PRAGMA (SQLite).
-     */
-    private boolean columnExists(String columnName) {
-        String sql = "SELECT 1 FROM information_schema.columns "
-                   + "WHERE table_name = 'produits' AND lower(column_name) = lower(?)";
-
-        try (Connection conn = DBConnector.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, columnName);
-            try (ResultSet rs = stmt.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) {
-            System.err.println("Vérification de la colonne " + columnName + " impossible : " + e.getMessage());
-            return false;
-        }
-    }
-    
-    /**
      * Trouve l'ID d'une catégorie par son nom
      * @param categoryName Le nom de la catégorie
      * @return L'ID de la catégorie, ou null si non trouvée
@@ -880,7 +797,7 @@ public class ProduitDAO {
             }
         } catch (SQLException e) {
             // La table categories n'existe peut-être pas, c'est OK
-            System.err.println("Impossible de trouver la catégorie: " + e.getMessage());
+            LOG.error("Impossible de trouver la catégorie: " + e.getMessage(), e);
         }
         
         return null;

@@ -1,5 +1,8 @@
 package controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -28,6 +31,8 @@ import util.FXMLUtils;
  * Contrôleur pour le dashboard administrateur
  */
 public class AdminDashboardController {
+    private static final Logger LOG = LoggerFactory.getLogger(AdminDashboardController.class);
+
     
     @FXML
     private Label welcomeLabel;
@@ -142,7 +147,7 @@ public class AdminDashboardController {
                             if (scanBuffer[0].length() >= 8) {
                                 event.consume();
                                 scanBuffer[0].setLength(0); // Reset buffer
-                                System.out.println("⚠️ Scan de code-barres bloqué dans le dashboard admin");
+                                LOG.info("⚠️ Scan de code-barres bloqué dans le dashboard admin");
                                 return;
                             }
                         } else {
@@ -168,7 +173,7 @@ public class AdminDashboardController {
                     }
                 });
                 
-                System.out.println("✓ Protection code-barres activée dans le dashboard admin");
+                LOG.info("✓ Protection code-barres activée dans le dashboard admin");
             }
         });
     }
@@ -229,8 +234,8 @@ public class AdminDashboardController {
             stage.setTitle("Gestion des Ventes");
 
         } catch (IOException e) {
-            System.err.println("Erreur lors du chargement de la gestion des ventes: " + e.getMessage());
-            System.err.println("Exception type: " + e.getClass().getName());
+            LOG.error("Erreur lors du chargement de la gestion des ventes: " + e.getMessage(), e);
+            LOG.error("Exception type: " + e.getClass().getName());
             showAlert(Alert.AlertType.ERROR, "Erreur", 
                      "Erreur lors du chargement de la gestion des ventes: " + e.getMessage());
         }
@@ -305,10 +310,10 @@ public class AdminDashboardController {
             notesJourLabel.setText(String.valueOf(notesJour));
             
         } catch (Exception e) {
-            System.err.println("Erreur lors du rafraîchissement des statistiques: " + e.getMessage());
-            System.err.println("Exception type: " + e.getClass().getName());
+            LOG.error("Erreur lors du rafraîchissement des statistiques: " + e.getMessage(), e);
+            LOG.error("Exception type: " + e.getClass().getName());
             if (e.getCause() != null) {
-                System.err.println("Cause: " + e.getCause().getMessage());
+                LOG.error("Cause: " + e.getCause().getMessage());
             }
         }
     }

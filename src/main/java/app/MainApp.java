@@ -1,5 +1,8 @@
 package app;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Optional;
 
 import dao.DBConnector;
@@ -20,11 +23,13 @@ import util.FXMLUtils;
  * Point d'entrée de l'application.
  */
 public class MainApp extends Application {
+    private static final Logger LOG = LoggerFactory.getLogger(MainApp.class);
+
 
     @Override
     public void start(Stage primaryStage) {
         try {
-            System.out.println("Démarrage de 2M Market...");
+            LOG.info("Démarrage de 2M Market...");
 
             if (!DBConnector.testConnection()) {
                 showFatalError(
@@ -67,14 +72,13 @@ public class MainApp extends Application {
                     primaryStage.setFullScreen(true);
                     primaryStage.setFullScreenExitHint("Appuyez sur Échap pour quitter le plein écran");
                 } catch (Exception e) {
-                    System.err.println("Plein écran indisponible : " + e.getMessage());
+                    LOG.error("Plein écran indisponible : " + e.getMessage(), e);
                 }
             });
 
-            System.out.println("Application démarrée.");
+            LOG.info("Application démarrée.");
 
         } catch (Exception e) {
-            e.printStackTrace();
             showFatalError("L'application n'a pas pu démarrer",
                     e.getClass().getSimpleName() + " : " + e.getMessage());
         }
@@ -140,7 +144,7 @@ public class MainApp extends Application {
     }
 
     private void showFatalError(String header, String content) {
-        System.err.println("ERREUR : " + header + "\n" + content);
+        LOG.error("ERREUR : " + header + "\n" + content);
         try {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("2M Market");

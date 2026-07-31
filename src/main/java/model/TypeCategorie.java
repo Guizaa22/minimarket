@@ -1,5 +1,8 @@
 package model;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Comportement métier d'une catégorie de produits.
  *
@@ -22,6 +25,8 @@ public enum TypeCategorie {
      * {@link #CIGARETTES_PAR_PAQUET} cigarettes par paquet.
      */
     FrakCigarette("Frak cigarette");
+
+    private static final Logger LOG = LoggerFactory.getLogger(TypeCategorie.class);
 
     /** Nombre de cigarettes contenues dans un paquet. */
     public static final int CIGARETTES_PAR_PAQUET = 20;
@@ -55,7 +60,7 @@ public enum TypeCategorie {
                 return type;
             }
         }
-        System.err.println("Type de catégorie inconnu en base : " + valeur + " — traité comme Standard");
+        LOG.warn("Type de catégorie inconnu en base : {} — traité comme Standard", valeur);
         return Standard;
     }
 

@@ -1,5 +1,8 @@
 package controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -34,6 +37,8 @@ import util.TicketPrinter;
  * Contrôleur principal de la caisse
  */
 public class CaisseController {
+    private static final Logger LOG = LoggerFactory.getLogger(CaisseController.class);
+
 
     // ============================================
     // COMPOSANTS FXML
@@ -308,33 +313,41 @@ public class CaisseController {
         }
 
         // Sauvegarder la vente et ses détails
-        System.out.println("Tentative d'enregistrement de la vente:");
-        System.out.println("  - Total: " + total);
-        System.out.println("  - Utilisateur ID: " + userId);
-        System.out.println("  - Nombre de détails: " + vente.getDetails().size());
+        LOG.info("Tentative d'enregistrement de la vente:");
+        LOG.info("  - Total: " + total);
+        LOG.info("  - Utilisateur ID: " + userId);
+        LOG.info("  - Nombre de détails: " + vente.getDetails().size());
         
-        boolean succes = venteDAO.create(vente);
+        try {
+            venteDAO.create(vente);
 
-        if (succes) {
-            // Imprimer le ticket
-            try {
-            TicketPrinter.imprimerTicket(vente, CategorieProduitsController.getPanierGlobal());
-            } catch (Exception e) {
-                System.err.println("Erreur lors de l'impression du ticket: " + e.getMessage());
-                // Ne pas bloquer si l'impression échoue
-            }
+        } catch (exception.StockInsuffisantException e) {
+            // Le panier est conservé : le caissier ajuste la quantité et réessaie.
+            afficherAlerte(Alert.AlertType.WARNING, "Stock insuffisant", e.getMessageUtilisateur());
+            return;
 
-            afficherAlerte(Alert.AlertType.INFORMATION, "Vente validée", "La vente a été enregistrée avec succès.");
-            
-            // Vider le panier
-            CategorieProduitsController.getPanierGlobal().clear();
-            updatePanierView();
-            updateTotal();
-        } else {
-            afficherAlerte(Alert.AlertType.ERROR, "Erreur", 
-                "Une erreur est survenue lors de l'enregistrement de la vente.\n" +
-                "Vérifiez la console pour plus de détails.");
+        } catch (exception.ApplicationException e) {
+            // Message déjà formulé pour l'utilisateur ; le détail technique est
+            // dans le journal. L'ancien code renvoyait « vérifiez la console »,
+            // inutilisable pour un commerçant.
+            afficherAlerte(Alert.AlertType.ERROR, "Vente non enregistrée", e.getMessageUtilisateur());
+            return;
         }
+
+        // Imprimer le ticket
+        try {
+            TicketPrinter.imprimerTicket(vente, CategorieProduitsController.getPanierGlobal());
+        } catch (Exception e) {
+            LOG.error("Erreur lors de l'impression du ticket", e);
+            // Ne pas bloquer si l'impression échoue : la vente est déjà enregistrée.
+        }
+
+        afficherAlerte(Alert.AlertType.INFORMATION, "Vente validée", "La vente a été enregistrée avec succès.");
+
+        // Vider le panier
+        CategorieProduitsController.getPanierGlobal().clear();
+        updatePanierView();
+        updateTotal();
     }
 
     @FXML
@@ -548,7 +561,6 @@ public class CaisseController {
             Stage stage = (Stage) categoriesButton.getScene().getWindow();
             util.FXMLUtils.changeScene(stage, "/view/CaisseCategories.fxml", "Catégories");
         } catch (Exception e) {
-            e.printStackTrace();
             afficherAlerte(Alert.AlertType.ERROR, "Erreur", "Impossible d'ouvrir les catégories: " + e.getMessage());
         }
     }
@@ -627,7 +639,7 @@ public class CaisseController {
      * Affiche une popup avec ComboBox pour choisir le produit tabac associé pour les "frak cigarettes"
      */
     private void afficherPopupChoixProduitTabac(Produit produitFrak, int quantite) {
-        System.out.println("Popup choix produit tabac pour frak cigarette: " + produitFrak.getNom());
+        LOG.info("Popup choix produit tabac pour frak cigarette: " + produitFrak.getNom());
         
         ProduitDAO produitDAO = new ProduitDAO();
         // Récupérer tous les produits tabac disponibles
@@ -708,7 +720,7 @@ public class CaisseController {
         // Afficher le dialogue et traiter le résultat
         Optional<Produit> result = dialog.showAndWait();
         result.ifPresent(produitTabacSelectionne -> {
-            System.out.println("Produit tabac sélectionné: " + produitTabacSelectionne.getNom());
+            LOG.info("Produit tabac sélectionné: " + produitTabacSelectionne.getNom());
             ajouterAuPanierDirectAvecTabacAssocie(produitFrak, quantite, produitTabacSelectionne.getId());
         });
     }
@@ -717,7 +729,7 @@ public class CaisseController {
      * Affiche une popup pour choisir entre paquet et cigarette pour les produits tabac
      */
     private void afficherPopupChoixTabac(Produit produit, int quantite) {
-        System.out.println("Popup tabac affiché pour: " + produit.getNom() + " (isTabac: " + produit.isTabac() + ")");
+        LOG.info("Popup tabac affiché pour: " + produit.getNom() + " (isTabac: " + produit.isTabac() + ")");
         
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Type de vente - Tabac");
@@ -733,15 +745,15 @@ public class CaisseController {
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent()) {
             if (result.get() == buttonTypePaquet) {
-                System.out.println("Choix: Paquet");
+                LOG.info("Choix: Paquet");
                 ajouterAuPanierDirect(produit, quantite, "paquet");
             } else if (result.get() == buttonTypeCigarette) {
-                System.out.println("Choix: Cigarette");
+                LOG.info("Choix: Cigarette");
                 ajouterAuPanierDirect(produit, quantite, "cigarette");
             }
             // Si annulé, ne rien faire
         } else {
-            System.out.println("Popup annulé");
+            LOG.info("Popup annulé");
         }
     }
     

@@ -1,5 +1,8 @@
 package dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,6 +16,8 @@ import model.CreditFournisseur;
  * DAO pour les opérations sur les crédits fournisseur
  */
 public class CreditFournisseurDAO {
+    private static final Logger LOG = LoggerFactory.getLogger(CreditFournisseurDAO.class);
+
     
     /**
      * Récupère le crédit d'un fournisseur
@@ -30,7 +35,7 @@ public class CreditFournisseurDAO {
                 return mapResultSetToCredit(rs);
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la recherche de crédit: " + e.getMessage());
+            LOG.error("Erreur lors de la recherche de crédit: " + e.getMessage(), e);
         }
         
         return null;
@@ -57,7 +62,7 @@ public class CreditFournisseurDAO {
             
             return rowsAffected > 0;
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la mise à jour du crédit: " + e.getMessage());
+            LOG.error("Erreur lors de la mise à jour du crédit: " + e.getMessage(), e);
         }
         
         return false;
@@ -77,7 +82,7 @@ public class CreditFournisseurDAO {
             
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la création de crédit: " + e.getMessage());
+            LOG.error("Erreur lors de la création de crédit: " + e.getMessage(), e);
         }
         
         return false;

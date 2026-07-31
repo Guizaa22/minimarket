@@ -1,5 +1,8 @@
 package dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import model.Categorie;
 import model.TypeCategorie;
 
@@ -15,6 +18,8 @@ import java.util.List;
  * DAO pour les opérations CRUD sur la table Categories
  */
 public class CategorieDAO {
+    private static final Logger LOG = LoggerFactory.getLogger(CategorieDAO.class);
+
     
     /**
      * Récupère toutes les catégories
@@ -32,7 +37,7 @@ public class CategorieDAO {
                 categories.add(mapResultSetToCategorie(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des catégories: " + e.getMessage());
+            LOG.error("Erreur lors de la récupération des catégories: " + e.getMessage(), e);
         }
         
         return categories;
@@ -56,7 +61,7 @@ public class CategorieDAO {
                 return mapResultSetToCategorie(rs);
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la recherche de catégorie: " + e.getMessage());
+            LOG.error("Erreur lors de la recherche de catégorie: " + e.getMessage(), e);
         }
         
         return null;
@@ -80,7 +85,7 @@ public class CategorieDAO {
                 return mapResultSetToCategorie(rs);
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la recherche de catégorie par nom: " + e.getMessage());
+            LOG.error("Erreur lors de la recherche de catégorie par nom: " + e.getMessage(), e);
         }
         
         return null;
@@ -117,13 +122,12 @@ public class CategorieDAO {
                 return true;
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la création de catégorie: " + e.getMessage());
-            e.printStackTrace();
+            LOG.error("Erreur lors de la création de catégorie: " + e.getMessage(), e);
             
             // Vérifier si c'est une erreur de contrainte unique (nom déjà existant)
             if (e.getMessage() != null && (e.getMessage().contains("UNIQUE constraint") || 
                 e.getMessage().contains("unique constraint"))) {
-                System.err.println("ERREUR: Une catégorie avec ce nom existe déjà.");
+                LOG.error("ERREUR: Une catégorie avec ce nom existe déjà.");
             }
         }
         
@@ -173,7 +177,7 @@ public class CategorieDAO {
                 stmt.setInt(2, categorie.getId());
                 int produits = stmt.executeUpdate();
                 if (produits > 0) {
-                    System.out.println("✓ " + produits + " produit(s) reclassé(s) sous « "
+                    LOG.info("✓ " + produits + " produit(s) reclassé(s) sous « "
                             + categorie.getNom() + " »");
                 }
             }
@@ -182,12 +186,12 @@ public class CategorieDAO {
             return true;
 
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la mise à jour de catégorie: " + e.getMessage());
+            LOG.error("Erreur lors de la mise à jour de catégorie: " + e.getMessage(), e);
             if (conn != null) {
                 try {
                     conn.rollback();
                 } catch (SQLException ex) {
-                    System.err.println("Erreur lors du rollback: " + ex.getMessage());
+                    LOG.error("Erreur lors du rollback: " + ex.getMessage(), ex);
                 }
             }
             return false;
@@ -197,7 +201,7 @@ public class CategorieDAO {
                     conn.setAutoCommit(true);
                     conn.close();
                 } catch (SQLException e) {
-                    System.err.println("Erreur lors de la libération de la connexion: " + e.getMessage());
+                    LOG.error("Erreur lors de la libération de la connexion: " + e.getMessage(), e);
                 }
             }
         }
@@ -263,7 +267,7 @@ public class CategorieDAO {
                 return rs.getInt(1) > 0;
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la vérification du nom de catégorie: " + e.getMessage());
+            LOG.error("Erreur lors de la vérification du nom de catégorie: " + e.getMessage(), e);
         }
         
         return false;

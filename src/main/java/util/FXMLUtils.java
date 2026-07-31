@@ -1,5 +1,8 @@
 package util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 
 import javafx.animation.FadeTransition;
@@ -13,6 +16,8 @@ import javafx.util.Duration;
  * Classe utilitaire pour charger les vues FXML
  */
 public class FXMLUtils {
+    private static final Logger LOG = LoggerFactory.getLogger(FXMLUtils.class);
+
     
     /**
      * Charge une vue FXML et retourne le Parent
@@ -50,10 +55,10 @@ public class FXMLUtils {
                 String globalCss = cssUrl.toExternalForm();
                 scene.getStylesheets().add(globalCss);
             } else {
-                System.err.println("Warning: CSS file /styles/global.css not found, continuing without styles");
+                LOG.error("Warning: CSS file /styles/global.css not found, continuing without styles");
             }
         } catch (Exception e) {
-            System.err.println("Warning: Could not load CSS file: " + e.getMessage());
+            LOG.error("Warning: Could not load CSS file: " + e.getMessage(), e);
         }
         
         stage.setScene(scene);

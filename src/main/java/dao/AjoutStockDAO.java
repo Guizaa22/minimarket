@@ -1,5 +1,8 @@
 package dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,6 +21,8 @@ import util.DayRange;
  * DAO pour les ajouts de stock avec informations fournisseur
  */
 public class AjoutStockDAO {
+    private static final Logger LOG = LoggerFactory.getLogger(AjoutStockDAO.class);
+
     
     /**
      * Crée un nouvel ajout de stock
@@ -74,7 +79,7 @@ public class AjoutStockDAO {
                 return true;
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la création d'ajout de stock: " + e.getMessage());
+            LOG.error("Erreur lors de la création d'ajout de stock: " + e.getMessage(), e);
         }
         
         return false;
@@ -98,10 +103,9 @@ public class AjoutStockDAO {
             while (rs.next()) {
                 ajouts.add(mapResultSetToAjoutStock(rs));
             }
-            System.out.println("Ajouts de stock trouvés pour l'employé " + idEmploye + " le " + date.toLocalDate() + ": " + ajouts.size());
+            LOG.info("Ajouts de stock trouvés pour l'employé " + idEmploye + " le " + date.toLocalDate() + ": " + ajouts.size());
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des ajouts: " + e.getMessage());
-            e.printStackTrace();
+            LOG.error("Erreur lors de la récupération des ajouts: " + e.getMessage(), e);
         }
         
         return ajouts;
@@ -125,7 +129,7 @@ public class AjoutStockDAO {
                 ajouts.add(mapResultSetToAjoutStock(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des ajouts: " + e.getMessage());
+            LOG.error("Erreur lors de la récupération des ajouts: " + e.getMessage(), e);
         }
         
         return ajouts;
@@ -146,7 +150,7 @@ public class AjoutStockDAO {
                 ajouts.add(mapResultSetToAjoutStock(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération de tous les ajouts: " + e.getMessage());
+            LOG.error("Erreur lors de la récupération de tous les ajouts: " + e.getMessage(), e);
         }
         
         return ajouts;
@@ -200,10 +204,10 @@ public class AjoutStockDAO {
                  Statement stmt = conn.createStatement()) {
                 stmt.execute("ALTER TABLE ajouts_stock ADD COLUMN type_ajout_tabac TEXT");
                 stmt.execute("ALTER TABLE ajouts_stock ADD COLUMN quantite_cigarettes INTEGER");
-                System.out.println("Colonnes tabac ajoutées à la table ajouts_stock");
+                LOG.info("Colonnes tabac ajoutées à la table ajouts_stock");
                 return true;
             } catch (SQLException e2) {
-                System.err.println("Erreur lors de l'ajout des colonnes tabac: " + e2.getMessage());
+                LOG.error("Erreur lors de l'ajout des colonnes tabac: " + e2.getMessage(), e2);
                 return false;
             }
         }

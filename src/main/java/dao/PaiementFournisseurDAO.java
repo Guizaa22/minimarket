@@ -1,5 +1,8 @@
 package dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import model.PaiementFournisseur;
 import util.DayRange;
 import java.math.BigDecimal;
@@ -12,6 +15,8 @@ import java.util.List;
  * DAO pour les paiements aux fournisseurs
  */
 public class PaiementFournisseurDAO {
+    private static final Logger LOG = LoggerFactory.getLogger(PaiementFournisseurDAO.class);
+
     
     /**
      * Crée un nouveau paiement
@@ -45,7 +50,7 @@ public class PaiementFournisseurDAO {
                 return true;
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la création de paiement: " + e.getMessage());
+            LOG.error("Erreur lors de la création de paiement: " + e.getMessage(), e);
         }
         
         return false;
@@ -69,7 +74,7 @@ public class PaiementFournisseurDAO {
                 paiements.add(mapResultSetToPaiement(rs));
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des paiements: " + e.getMessage());
+            LOG.error("Erreur lors de la récupération des paiements: " + e.getMessage(), e);
         }
         
         return paiements;
@@ -94,10 +99,9 @@ public class PaiementFournisseurDAO {
             while (rs.next()) {
                 paiements.add(mapResultSetToPaiement(rs));
             }
-            System.out.println("Paiements trouvés pour l'employé " + idEmploye + " le " + date.toLocalDate() + ": " + paiements.size());
+            LOG.info("Paiements trouvés pour l'employé " + idEmploye + " le " + date.toLocalDate() + ": " + paiements.size());
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des paiements: " + e.getMessage());
-            e.printStackTrace();
+            LOG.error("Erreur lors de la récupération des paiements: " + e.getMessage(), e);
         }
         
         return paiements;
@@ -121,7 +125,7 @@ public class PaiementFournisseurDAO {
                 return total != null ? total : BigDecimal.ZERO;
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors du calcul du total: " + e.getMessage());
+            LOG.error("Erreur lors du calcul du total: " + e.getMessage(), e);
         }
         
         return BigDecimal.ZERO;

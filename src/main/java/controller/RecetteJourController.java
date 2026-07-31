@@ -1,5 +1,8 @@
 package controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dao.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -20,6 +23,8 @@ import java.util.List;
  * Contrôleur pour la vue des recettes du jour
  */
 public class RecetteJourController {
+    private static final Logger LOG = LoggerFactory.getLogger(RecetteJourController.class);
+
     
     @FXML
     private DatePicker datePicker;
@@ -278,15 +283,15 @@ public class RecetteJourController {
                     }
                     return new javafx.beans.property.SimpleStringProperty(detailsStr.length() > 0 ? detailsStr.toString() : "Aucun détail");
                 } catch (Exception e) {
-                    System.err.println("Erreur lors de la récupération des détails de la vente " + vente.getId() + ": " + e.getMessage());
+                    LOG.error("Erreur lors de la récupération des détails de la vente " + vente.getId() + ": " + e.getMessage(), e);
                     return new javafx.beans.property.SimpleStringProperty("Erreur");
                 }
             });
             
             ventesTable.setItems(ventesList);
-            System.out.println("Table des ventes configurée avec " + ventesList.size() + " éléments");
+            LOG.info("Table des ventes configurée avec " + ventesList.size() + " éléments");
         } else {
-            System.err.println("ERREUR: Certains éléments de la table des ventes ne sont pas initialisés dans le FXML!");
+            LOG.error("ERREUR: Certains éléments de la table des ventes ne sont pas initialisés dans le FXML!");
         }
     }
     
@@ -313,14 +318,14 @@ public class RecetteJourController {
             return;
         }
 
-        System.out.println("Chargement des données pour l'employé ID: " + idEmploye + " le " + date);
+        LOG.info("Chargement des données pour l'employé ID: " + idEmploye + " le " + date);
         
         // Charger les ventes de l'employé pour la date
         List<Vente> ventes = venteDAO.findByUtilisateurAndDate(idEmploye, dateDebut, dateFin);
-        System.out.println("Nombre de ventes trouvées pour l'employé " + idEmploye + " le " + date + ": " + ventes.size());
+        LOG.info("Nombre de ventes trouvées pour l'employé " + idEmploye + " le " + date + ": " + ventes.size());
         ventesList.clear();
         ventesList.addAll(ventes);
-        System.out.println("Ventes ajoutées à la liste: " + ventesList.size());
+        LOG.info("Ventes ajoutées à la liste: " + ventesList.size());
         
         // Calculer le total des ventes de l'employé (depuis la liste filtrée)
         BigDecimal totalVentes = ventes.stream()
@@ -332,7 +337,7 @@ public class RecetteJourController {
         List<PaiementFournisseur> paiements = paiementDAO.findByEmployeAndDate(idEmploye, dateDebut);
         paiementsList.clear();
         paiementsList.addAll(paiements);
-        System.out.println("Paiements chargés: " + paiements.size());
+        LOG.info("Paiements chargés: " + paiements.size());
         if (paiementsTable != null) {
             paiementsTable.refresh();
         }
@@ -347,7 +352,7 @@ public class RecetteJourController {
         List<AjoutStock> ajouts = ajoutStockDAO.findByEmployeAndDate(idEmploye, dateDebut);
         ajoutsList.clear();
         ajoutsList.addAll(ajouts);
-        System.out.println("Ajouts de stock chargés: " + ajouts.size());
+        LOG.info("Ajouts de stock chargés: " + ajouts.size());
         if (ajoutsStockTable != null) {
             ajoutsStockTable.refresh();
         }
@@ -375,7 +380,7 @@ public class RecetteJourController {
         
         // Afficher les statistiques tabac dans les notes ou dans un label si disponible
         if (totalCigarettesAjoutees > 0 || totalPaquetsAjoutes > 0) {
-            System.out.println(String.format("Ajouts de stock tabac: %d paquets, %d cigarettes", 
+            LOG.info(String.format("Ajouts de stock tabac: %d paquets, %d cigarettes", 
                 totalPaquetsAjoutes, totalCigarettesAjoutees));
         }
         
@@ -383,7 +388,7 @@ public class RecetteJourController {
         List<DeplacementEmploye> deplacements = deplacementDAO.findByEmployeAndDate(idEmploye, dateDebut);
         deplacementsList.clear();
         deplacementsList.addAll(deplacements);
-        System.out.println("Déplacements chargés: " + deplacements.size());
+        LOG.info("Déplacements chargés: " + deplacements.size());
         if (deplacementsTable != null) {
             deplacementsTable.refresh();
         }
@@ -396,7 +401,7 @@ public class RecetteJourController {
         List<NoteJour> notes = noteDAO.findByEmployeAndDate(idEmploye, dateDebut);
         notesList.clear();
         notesList.addAll(notes);
-        System.out.println("Notes chargées: " + notes.size());
+        LOG.info("Notes chargées: " + notes.size());
         if (notesTable != null) {
             notesTable.refresh();
         }
@@ -405,7 +410,7 @@ public class RecetteJourController {
         if (ventesTable != null) {
             javafx.application.Platform.runLater(() -> {
                 ventesTable.refresh();
-                System.out.println("Table des ventes rafraîchie. Nombre d'éléments dans la table: " + ventesTable.getItems().size());
+                LOG.info("Table des ventes rafraîchie. Nombre d'éléments dans la table: " + ventesTable.getItems().size());
             });
         }
         
@@ -442,7 +447,6 @@ public class RecetteJourController {
         } catch (Exception e) {
             afficherAlerte(Alert.AlertType.ERROR, "Erreur", 
                 "Erreur lors de l'export PDF: " + e.getMessage());
-            e.printStackTrace();
         }
     }
     

@@ -1,5 +1,8 @@
 package controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -28,6 +31,8 @@ import util.SessionManager;
  * Contrôleur pour le dialogue d'ajout de notes
  */
 public class NoteDialogController {
+    private static final Logger LOG = LoggerFactory.getLogger(NoteDialogController.class);
+
     
     @FXML
     private ComboBox<NoteJour.TypeNote> typeNoteComboBox;
@@ -264,8 +269,7 @@ public class NoteDialogController {
             }
             afficherAlerteAvecAnimation(Alert.AlertType.ERROR, "Erreur", errorMsg);
             animerErreur(enregistrerButton);
-            System.err.println("Erreur détaillée lors de l'enregistrement de la note:");
-            e.printStackTrace();
+            LOG.error("Erreur détaillée lors de l'enregistrement de la note:");
         }
     }
     
