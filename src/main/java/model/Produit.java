@@ -17,6 +17,19 @@ public class Produit {
     private int seuilAlerte;
     /** Renseigné depuis categories.type ; null pour les produits sans catégorie. */
     private TypeCategorie typeCategorie;
+
+    /** Photo du produit, redimensionnée avant enregistrement. Null si absente. */
+    private byte[] image;
+    private String imageMime;
+
+    /**
+     * Prix d'une cigarette vendue à l'unité.
+     *
+     * Distinct de {@link #prixVenteDefaut}, qui est le prix du paquet : la
+     * vente au détail se fait avec une marge, elle n'est pas facturée au
+     * prorata du paquet.
+     */
+    private BigDecimal prixVenteCigarette;
     
     // Constructeurs
     public Produit() {
@@ -122,6 +135,73 @@ public class Produit {
     
     public boolean isStockFaible() {
         return quantiteStock <= seuilAlerte;
+    }
+
+    // ------------------------------------------------------------------
+    // Photo
+    // ------------------------------------------------------------------
+
+    public byte[] getImage() {
+        return image;
+    }
+
+    public void setImage(byte[] image) {
+        this.image = image;
+    }
+
+    public String getImageMime() {
+        return imageMime;
+    }
+
+    public void setImageMime(String imageMime) {
+        this.imageMime = imageMime;
+    }
+
+    public boolean hasImage() {
+        return image != null && image.length > 0;
+    }
+
+    // ------------------------------------------------------------------
+    // Tarification tabac
+    // ------------------------------------------------------------------
+
+    public BigDecimal getPrixVenteCigarette() {
+        return prixVenteCigarette;
+    }
+
+    public void setPrixVenteCigarette(BigDecimal prixVenteCigarette) {
+        this.prixVenteCigarette = prixVenteCigarette;
+    }
+
+    /** Prix du paquet : c'est le prix de vente par défaut. */
+    public BigDecimal getPrixPaquet() {
+        return prixVenteDefaut;
+    }
+
+    /**
+     * Prix unitaire selon l'unité facturée.
+     *
+     * En l'absence de prix cigarette renseigné, on retombe sur le prorata du
+     * paquet plutôt que de refuser la vente — quitte à sous-facturer
+     * légèrement, ce qui reste préférable à bloquer la caisse.
+     */
+    public BigDecimal prixPour(String uniteVente) {
+        if ("cigarette".equalsIgnoreCase(uniteVente)) {
+            if (prixVenteCigarette != null && prixVenteCigarette.signum() > 0) {
+                return prixVenteCigarette;
+            }
+            if (prixVenteDefaut != null) {
+                return prixVenteDefaut.divide(
+                        BigDecimal.valueOf(TypeCategorie.CIGARETTES_PAR_PAQUET),
+                        3, java.math.RoundingMode.HALF_UP);
+            }
+        }
+        return prixVenteDefaut;
+    }
+
+    /** true si le produit peut être vendu à la cigarette. */
+    public boolean vendableALaCigarette() {
+        return isTabac();
     }
     
     /**

@@ -194,8 +194,9 @@ public class ProduitDAO {
         // chaque insertion, pour gérer d'anciennes bases qui n'existent plus.
         String sql = "INSERT INTO produits "
                    + "(code_barre, nom, categorie, category_id, prix_achat_actuel, "
-                   + " prix_vente_defaut, quantite_stock, unite, seuil_alerte) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                   + " prix_vente_defaut, quantite_stock, unite, seuil_alerte, "
+                   + " prix_vente_cigarette, image, image_mime) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DBConnector.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -216,6 +217,7 @@ public class ProduitDAO {
             stmt.setInt(7, produit.getQuantiteStock());
             stmt.setString(8, produit.getUnite() != null ? produit.getUnite() : "unité");
             stmt.setInt(9, produit.getSeuilAlerte());
+            lierPrixCigaretteEtImage(stmt, 10, produit);
 
             LOG.debug("Création du produit {} ({})", produit.getNom(), produit.getCodeBarre());
 
@@ -254,6 +256,7 @@ public class ProduitDAO {
         String sql = "UPDATE produits SET code_barre = ?, nom = ?, categorie = ?, "
                    + "category_id = ?, prix_achat_actuel = ?, prix_vente_defaut = ?, "
                    + "quantite_stock = ?, unite = ?, seuil_alerte = ?, "
+                   + "prix_vente_cigarette = ?, image = ?, image_mime = ?, "
                    + "date_derniere_maj = CURRENT_TIMESTAMP "
                    + "WHERE id = ?";
 
@@ -276,7 +279,8 @@ public class ProduitDAO {
             stmt.setInt(7, produit.getQuantiteStock());
             stmt.setString(8, produit.getUnite() != null ? produit.getUnite() : "unité");
             stmt.setInt(9, produit.getSeuilAlerte());
-            stmt.setInt(10, produit.getId());
+            lierPrixCigaretteEtImage(stmt, 10, produit);
+            stmt.setInt(13, produit.getId());
 
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected > 0) {
@@ -730,6 +734,27 @@ public class ProduitDAO {
         return produitsTabac;
     }
     
+    /**
+     * Renseigne prix cigarette, image et type MIME à partir de l'index donné.
+     * Regroupé ici pour que create() et update() ne divergent pas.
+     */
+    private void lierPrixCigaretteEtImage(PreparedStatement stmt, int index, Produit produit)
+            throws SQLException {
+        if (produit.getPrixVenteCigarette() != null) {
+            stmt.setBigDecimal(index, produit.getPrixVenteCigarette());
+        } else {
+            stmt.setNull(index, java.sql.Types.NUMERIC);
+        }
+
+        if (produit.hasImage()) {
+            stmt.setBytes(index + 1, produit.getImage());
+            stmt.setString(index + 2, produit.getImageMime());
+        } else {
+            stmt.setNull(index + 1, java.sql.Types.BINARY);
+            stmt.setNull(index + 2, java.sql.Types.VARCHAR);
+        }
+    }
+
     private Produit mapResultSetToProduit(ResultSet rs) throws SQLException {
         // La base de données utilise snake_case
         String categorie = null;
@@ -760,6 +785,20 @@ public class ProduitDAO {
             unite,
             rs.getInt("seuil_alerte")
         );
+
+        // Photo et prix cigarette : absents des projections qui ne les
+        // sélectionnent pas, d'où la lecture défensive.
+        try {
+            produit.setImage(rs.getBytes("image"));
+            produit.setImageMime(rs.getString("image_mime"));
+        } catch (SQLException ignored) {
+            // colonne absente de cette projection
+        }
+        try {
+            produit.setPrixVenteCigarette(rs.getBigDecimal("prix_vente_cigarette"));
+        } catch (SQLException ignored) {
+            // colonne absente de cette projection
+        }
 
         // Type explicite issu du référentiel. Absent (produit sans catégorie ou
         // requête sans jointure), Produit retombe sur la déduction par libellé.

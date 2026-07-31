@@ -10,6 +10,10 @@ public class Categorie {
     /** Comportement métier ; ne dépend pas du libellé. */
     private TypeCategorie type = TypeCategorie.Standard;
 
+    /** Photo illustrant la catégorie sur l'écran de caisse. Null si absente. */
+    private byte[] image;
+    private String imageMime;
+
     // Constructeurs
     public Categorie() {
     }
@@ -47,6 +51,26 @@ public class Categorie {
     /** true si la catégorie relève du tabac (paquet ou vente à l'unité). */
     public boolean estTabac() {
         return getType().estTabac();
+    }
+
+    public byte[] getImage() {
+        return image;
+    }
+
+    public void setImage(byte[] image) {
+        this.image = image;
+    }
+
+    public String getImageMime() {
+        return imageMime;
+    }
+
+    public void setImageMime(String imageMime) {
+        this.imageMime = imageMime;
+    }
+
+    public boolean hasImage() {
+        return image != null && image.length > 0;
     }
 
     // Getters et Setters

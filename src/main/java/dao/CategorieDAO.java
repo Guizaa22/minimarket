@@ -97,7 +97,7 @@ public class CategorieDAO {
      * @return true si la création réussit, false sinon
      */
     public boolean create(Categorie categorie) {
-        String sql = "INSERT INTO categories (nom, description, type) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO categories (nom, description, type, image, image_mime) VALUES (?, ?, ?, ?, ?)";
         
         try (Connection conn = DBConnector.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -105,6 +105,7 @@ public class CategorieDAO {
             stmt.setString(1, categorie.getNom());
             stmt.setString(2, categorie.getDescription());
             stmt.setString(3, categorie.getType().name());
+            lierImage(stmt, 4, categorie);
 
             int rowsAffected = stmt.executeUpdate();
             
@@ -150,7 +151,7 @@ public class CategorieDAO {
      * Les deux écritures sont faites dans une seule transaction.
      */
     public boolean update(Categorie categorie) {
-        String sqlCategorie = "UPDATE categories SET nom = ?, description = ?, type = ? WHERE id = ?";
+        String sqlCategorie = "UPDATE categories SET nom = ?, description = ?, type = ?, image = ?, image_mime = ? WHERE id = ?";
         String sqlProduits  = "UPDATE produits SET categorie = ? WHERE category_id = ?";
 
         Connection conn = null;
@@ -163,7 +164,8 @@ public class CategorieDAO {
                 stmt.setString(1, categorie.getNom());
                 stmt.setString(2, categorie.getDescription());
                 stmt.setString(3, categorie.getType().name());
-                stmt.setInt(4, categorie.getId());
+                lierImage(stmt, 4, categorie);
+                stmt.setInt(6, categorie.getId());
                 misAJour = stmt.executeUpdate();
             }
 
@@ -276,6 +278,18 @@ public class CategorieDAO {
     /**
      * Mappe un ResultSet vers un objet Categorie
      */
+    /** Renseigne image et type MIME, ou NULL si la catégorie n'a pas de photo. */
+    private void lierImage(PreparedStatement stmt, int index, Categorie categorie)
+            throws SQLException {
+        if (categorie.hasImage()) {
+            stmt.setBytes(index, categorie.getImage());
+            stmt.setString(index + 1, categorie.getImageMime());
+        } else {
+            stmt.setNull(index, java.sql.Types.BINARY);
+            stmt.setNull(index + 1, java.sql.Types.VARCHAR);
+        }
+    }
+
     private Categorie mapResultSetToCategorie(ResultSet rs) throws SQLException {
         String type = null;
         try {
@@ -284,12 +298,21 @@ public class CategorieDAO {
             // colonne absente sur une base non encore migrée
         }
 
-        return new Categorie(
+        Categorie categorie = new Categorie(
             rs.getInt("id"),
             rs.getString("nom"),
             rs.getString("description"),
             TypeCategorie.depuisBase(type)
         );
+
+        try {
+            categorie.setImage(rs.getBytes("image"));
+            categorie.setImageMime(rs.getString("image_mime"));
+        } catch (SQLException ignored) {
+            // colonne absente de cette projection
+        }
+
+        return categorie;
     }
 }
 

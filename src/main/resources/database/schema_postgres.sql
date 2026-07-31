@@ -323,6 +323,50 @@ CREATE INDEX IF NOT EXISTS idx_produits_nom_lower  ON produits (LOWER(nom));
 CREATE INDEX IF NOT EXISTS idx_produits_stock_bas  ON produits (quantite_stock, seuil_alerte);
 CREATE INDEX IF NOT EXISTS idx_produits_categorie  ON produits (categorie);
 
+-- ============================================================
+-- Photos et tarification du tabac
+-- ============================================================
+--
+-- Les images sont stockées en base plutôt que sur disque : chaque poste de
+-- caisse les voit immédiatement, sans dossier partagé à configurer, et la
+-- future application mobile y accède par la même connexion. Le contenu est
+-- redimensionné côté application avant insertion (voir util/ImageUtil).
+--
+-- Exécuté dynamiquement : PostgreSQL analyse tout un lot avant de l'exécuter,
+-- une requête citant une colonne ajoutée dans le même lot échouerait à l'analyse.
+DO $$
+BEGIN
+    -- Photos
+    ALTER TABLE produits   ADD COLUMN IF NOT EXISTS image       BYTEA;
+    ALTER TABLE produits   ADD COLUMN IF NOT EXISTS image_mime  TEXT;
+    ALTER TABLE categories ADD COLUMN IF NOT EXISTS image       BYTEA;
+    ALTER TABLE categories ADD COLUMN IF NOT EXISTS image_mime  TEXT;
+
+    -- Prix de la cigarette vendue à l'unité.
+    -- prix_vente_defaut reste le prix du paquet ; la cigarette n'est pas
+    -- facturée au prorata (paquet / 20), les commerces appliquant une marge
+    -- sur la vente au détail.
+    ALTER TABLE produits ADD COLUMN IF NOT EXISTS prix_vente_cigarette NUMERIC(12,3);
+
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'produits_prix_cigarette_check') THEN
+        ALTER TABLE produits
+            ADD CONSTRAINT produits_prix_cigarette_check
+            CHECK (prix_vente_cigarette IS NULL OR prix_vente_cigarette >= 0);
+    END IF;
+
+    -- Le détail de vente mémorise l'unité facturée : sans cela, une ligne de
+    -- 7 « Marlboro » ne dit pas s'il s'agit de 7 paquets ou de 7 cigarettes,
+    -- et le ticket comme les statistiques deviennent ambigus.
+    ALTER TABLE detailsvente ADD COLUMN IF NOT EXISTS unite_vente TEXT NOT NULL DEFAULT 'unite';
+
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'detailsvente_unite_check') THEN
+        ALTER TABLE detailsvente
+            ADD CONSTRAINT detailsvente_unite_check
+            CHECK (unite_vente IN ('unite', 'paquet', 'cigarette'));
+    END IF;
+END
+$$;
+
 -- ------------------------------------------------------------
 -- Données de référence (idempotent, aucun mot de passe ici)
 -- ------------------------------------------------------------
