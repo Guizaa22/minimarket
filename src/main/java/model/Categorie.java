@@ -7,21 +7,48 @@ public class Categorie {
     private int id;
     private String nom;
     private String description;
-    
+    /** Comportement métier ; ne dépend pas du libellé. */
+    private TypeCategorie type = TypeCategorie.Standard;
+
     // Constructeurs
     public Categorie() {
     }
-    
+
     public Categorie(String nom) {
         this.nom = nom;
     }
-    
+
+    public Categorie(String nom, TypeCategorie type) {
+        this.nom = nom;
+        this.type = type != null ? type : TypeCategorie.Standard;
+    }
+
     public Categorie(int id, String nom, String description) {
         this.id = id;
         this.nom = nom;
         this.description = description;
     }
-    
+
+    public Categorie(int id, String nom, String description, TypeCategorie type) {
+        this.id = id;
+        this.nom = nom;
+        this.description = description;
+        this.type = type != null ? type : TypeCategorie.Standard;
+    }
+
+    public TypeCategorie getType() {
+        return type != null ? type : TypeCategorie.Standard;
+    }
+
+    public void setType(TypeCategorie type) {
+        this.type = type != null ? type : TypeCategorie.Standard;
+    }
+
+    /** true si la catégorie relève du tabac (paquet ou vente à l'unité). */
+    public boolean estTabac() {
+        return getType().estTabac();
+    }
+
     // Getters et Setters
     public int getId() {
         return id;

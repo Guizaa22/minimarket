@@ -13,6 +13,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -21,8 +22,10 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import model.Categorie;
+import model.TypeCategorie;
 import model.Produit;
 import util.SessionManager;
 
@@ -661,24 +664,55 @@ public class GestionStockController {
      */
     @FXML
     private void handleAjouterCategorie() {
-        TextInputDialog dialog = new TextInputDialog();
+        // Le type est choisi explicitement : il détermine le comportement de la
+        // caisse (vente au paquet, vente à l'unité). Il était auparavant déduit
+        // du nom de la catégorie, ce qui rendait le comportement dépendant de
+        // l'orthographe choisie.
+        Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Nouvelle Catégorie");
         dialog.setHeaderText("Ajouter une nouvelle catégorie");
-        dialog.setContentText("Nom de la catégorie:");
-        
-        dialog.showAndWait().ifPresent(nomCategorie -> {
-            if (nomCategorie != null && !nomCategorie.trim().isEmpty()) {
+
+        TextField nomField = new TextField();
+        nomField.setPromptText("Nom de la catégorie");
+
+        ComboBox<TypeCategorie> typeBox = new ComboBox<>();
+        typeBox.getItems().addAll(TypeCategorie.values());
+        typeBox.setValue(TypeCategorie.Standard);
+
+        Label aide = new Label(
+                "Standard : produit ordinaire\n"
+              + "Tabac : vendu au paquet, déclinable à l'unité\n"
+              + "Frak cigarette : cigarettes à l'unité, décrémentent le paquet associé");
+        aide.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
+
+        GridPane grille = new GridPane();
+        grille.setHgap(10);
+        grille.setVgap(10);
+        grille.addRow(0, new Label("Nom :"), nomField);
+        grille.addRow(1, new Label("Type :"), typeBox);
+        grille.add(aide, 0, 2, 2, 1);
+        dialog.getDialogPane().setContent(grille);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dialog.getDialogPane().setMinWidth(460);
+
+        if (dialog.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
+            return;
+        }
+
+        String nomCategorie = nomField.getText();
+        java.util.Optional.ofNullable(nomCategorie).ifPresent(nom -> {
+            if (!nom.trim().isEmpty()) {
                 // Vérifier si la catégorie existe déjà
-                Categorie existante = categorieDAO.findByNom(nomCategorie.trim());
+                Categorie existante = categorieDAO.findByNom(nom.trim());
                 if (existante != null) {
                     showAlert(Alert.AlertType.WARNING, "Catégorie existante",
                             "Cette catégorie existe déjà.");
                     categorieComboBox.setValue(existante);
                     return;
                 }
-                
+
                 // Créer la nouvelle catégorie
-                Categorie nouvelleCategorie = new Categorie(nomCategorie.trim());
+                Categorie nouvelleCategorie = new Categorie(nom.trim(), typeBox.getValue());
                 try {
                     if (categorieDAO.create(nouvelleCategorie)) {
                         showAlert(Alert.AlertType.INFORMATION, "Succès",

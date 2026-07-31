@@ -166,7 +166,8 @@ public class GestionTabacController {
                             int cigarettesVendues = detail.getQuantite();
                             totalCigarettes += cigarettesVendues;
                             // Calculer les paquets équivalents (arrondir vers le haut)
-                            int paquetsEquivalents = (cigarettesVendues + 19) / 20;
+                            int paquetsEquivalents =
+                                (cigarettesVendues + model.TypeCategorie.CIGARETTES_PAR_PAQUET - 1) / model.TypeCategorie.CIGARETTES_PAR_PAQUET;
                             totalPaquets += paquetsEquivalents;
                         } else if (produit.isTabac()) {
                             // Produit tabac normal
@@ -175,11 +176,11 @@ public class GestionTabacController {
                                 totalCigarettes += detail.getQuantite();
                             } else if ("paquet".equals(detail.getTypeVenteTabac())) {
                                 totalPaquets += detail.getQuantite();
-                                totalCigarettes += detail.getQuantite() * 20; // 1 paquet = 20 cigarettes
+                                totalCigarettes += detail.getQuantite() * model.TypeCategorie.CIGARETTES_PAR_PAQUET;
                             } else {
                                 // Ancien format (pas de typeVenteTabac), considérer comme paquets
                                 totalPaquets += detail.getQuantite();
-                                totalCigarettes += detail.getQuantite() * 20;
+                                totalCigarettes += detail.getQuantite() * model.TypeCategorie.CIGARETTES_PAR_PAQUET;
                             }
                         }
                     }

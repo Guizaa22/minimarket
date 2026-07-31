@@ -27,14 +27,67 @@ CREATE INDEX IF NOT EXISTS idx_utilisateurs_username ON utilisateurs (username);
 -- ------------------------------------------------------------
 -- Catégories
 -- ------------------------------------------------------------
+-- Le "type" détermine le comportement métier de la catégorie ; il ne dépend
+-- plus de son libellé. Auparavant, une catégorie était considérée comme du
+-- tabac si son nom contenait « tabac », « puff », « terrea » ou « cigarette » :
+-- renommer une catégorie changeait donc silencieusement la façon dont le stock
+-- était décrémenté.
+--   Standard      : produit ordinaire
+--   Tabac         : vendu au paquet, peut être décliné à l'unité
+--   FrakCigarette : cigarettes vendues à l'unité, décrémentent le paquet associé
 CREATE TABLE IF NOT EXISTS categories (
     id             SERIAL PRIMARY KEY,
     nom            TEXT        NOT NULL UNIQUE,
     description    TEXT,
+    type           TEXT        NOT NULL DEFAULT 'Standard'
+                               CHECK (type IN ('Standard', 'Tabac', 'FrakCigarette')),
     date_creation  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_categories_nom ON categories (nom);
+-- L'index sur « type » est créé dans le bloc de migration ci-dessous : sur une
+-- base antérieure, la colonne n'existe pas encore à ce stade.
+
+-- Migration d'une base antérieure à ce changement.
+--
+-- Le tout est exécuté dynamiquement : PostgreSQL analyse l'intégralité d'un lot
+-- d'instructions avant d'en exécuter la moindre, si bien qu'un UPDATE citant
+-- « type » échouerait à l'analyse alors que l'ALTER qui crée la colonne se
+-- trouve dans le même lot.
+DO $$
+BEGIN
+    ALTER TABLE categories ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'Standard';
+
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'categories_type_check') THEN
+        ALTER TABLE categories
+            ADD CONSTRAINT categories_type_check
+            CHECK (type IN ('Standard', 'Tabac', 'FrakCigarette'));
+    END IF;
+
+    -- Reprise unique de l'existant : l'ancienne heuristique sur le libellé sert
+    -- une dernière fois à initialiser le type. Limitée aux catégories encore en
+    -- 'Standard', pour ne pas écraser un choix fait depuis l'application.
+    EXECUTE $sql$
+        UPDATE categories
+           SET type = 'FrakCigarette'
+         WHERE type = 'Standard'
+           AND LOWER(nom) LIKE '%frak%'
+           AND LOWER(nom) LIKE '%cigarette%'
+    $sql$;
+
+    EXECUTE $sql$
+        UPDATE categories
+           SET type = 'Tabac'
+         WHERE type = 'Standard'
+           AND (LOWER(nom) LIKE '%tabac%'
+             OR LOWER(nom) LIKE '%puff%'
+             OR LOWER(nom) LIKE '%terrea%'
+             OR LOWER(nom) LIKE '%cigarette%')
+    $sql$;
+
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_categories_type ON categories (type)';
+END
+$$;
 
 -- ------------------------------------------------------------
 -- Produits

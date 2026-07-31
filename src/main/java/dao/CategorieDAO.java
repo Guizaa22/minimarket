@@ -1,6 +1,7 @@
 package dao;
 
 import model.Categorie;
+import model.TypeCategorie;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -91,14 +92,15 @@ public class CategorieDAO {
      * @return true si la création réussit, false sinon
      */
     public boolean create(Categorie categorie) {
-        String sql = "INSERT INTO categories (nom, description) VALUES (?, ?)";
+        String sql = "INSERT INTO categories (nom, description, type) VALUES (?, ?, ?)";
         
         try (Connection conn = DBConnector.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             
             stmt.setString(1, categorie.getNom());
             stmt.setString(2, categorie.getDescription());
-            
+            stmt.setString(3, categorie.getType().name());
+
             int rowsAffected = stmt.executeUpdate();
             
             if (rowsAffected > 0) {
@@ -144,7 +146,7 @@ public class CategorieDAO {
      * Les deux écritures sont faites dans une seule transaction.
      */
     public boolean update(Categorie categorie) {
-        String sqlCategorie = "UPDATE categories SET nom = ?, description = ? WHERE id = ?";
+        String sqlCategorie = "UPDATE categories SET nom = ?, description = ?, type = ? WHERE id = ?";
         String sqlProduits  = "UPDATE produits SET categorie = ? WHERE category_id = ?";
 
         Connection conn = null;
@@ -156,7 +158,8 @@ public class CategorieDAO {
             try (PreparedStatement stmt = conn.prepareStatement(sqlCategorie)) {
                 stmt.setString(1, categorie.getNom());
                 stmt.setString(2, categorie.getDescription());
-                stmt.setInt(3, categorie.getId());
+                stmt.setString(3, categorie.getType().name());
+                stmt.setInt(4, categorie.getId());
                 misAJour = stmt.executeUpdate();
             }
 
@@ -270,10 +273,18 @@ public class CategorieDAO {
      * Mappe un ResultSet vers un objet Categorie
      */
     private Categorie mapResultSetToCategorie(ResultSet rs) throws SQLException {
+        String type = null;
+        try {
+            type = rs.getString("type");
+        } catch (SQLException ignored) {
+            // colonne absente sur une base non encore migrée
+        }
+
         return new Categorie(
             rs.getInt("id"),
             rs.getString("nom"),
-            rs.getString("description")
+            rs.getString("description"),
+            TypeCategorie.depuisBase(type)
         );
     }
 }

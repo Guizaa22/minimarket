@@ -376,6 +376,59 @@ class RegressionIT {
                 "le message doit expliquer la cause : " + refus.getMessage());
     }
 
+    @Test
+    @Order(14)
+    @DisplayName("Le type de catégorie survit au renommage (plus de détection par le nom)")
+    void categoryTypeSurvivesRename() {
+        assumeTrue(dbAvailable);
+
+        CategorieDAO catDAO = new CategorieDAO();
+        // Nom volontairement dépourvu des mots « tabac » / « cigarette » :
+        // l'ancienne heuristique ne l'aurait jamais reconnu.
+        model.Categorie cat = new model.Categorie(
+                "CatType_" + suffix, model.TypeCategorie.Tabac);
+        assertTrue(catDAO.create(cat), "création de la catégorie tabac");
+
+        ProduitDAO dao = new ProduitDAO();
+        Produit p = new Produit("TESTTYP" + suffix, "Produit typé " + suffix, cat.getNom(),
+                new BigDecimal("5.000"), new BigDecimal("8.000"), 10, "unité", 2);
+        assertTrue(dao.create(p));
+
+        assertTrue(dao.findById(p.getId()).isTabac(),
+                "le produit doit être reconnu comme tabac via le type, "
+                + "alors que son libellé ne contient aucun mot-clé");
+
+        // Renommage vers un libellé tout aussi neutre : le type doit primer.
+        cat.setNom("Renomme_" + suffix);
+        assertTrue(catDAO.update(cat));
+
+        assertTrue(dao.findById(p.getId()).isTabac(),
+                "le renommage ne doit pas changer le comportement métier ; "
+                + "avec la détection par libellé, le produit cessait d'être du tabac");
+    }
+
+    @Test
+    @Order(15)
+    @DisplayName("Un libellé trompeur ne rend pas un produit « tabac »")
+    void misleadingNameDoesNotImplyTobacco() {
+        assumeTrue(dbAvailable);
+
+        CategorieDAO catDAO = new CategorieDAO();
+        // Contient « cigarette » mais déclaré Standard : le type doit gagner.
+        model.Categorie cat = new model.Categorie(
+                "CatCigarette_" + suffix, model.TypeCategorie.Standard);
+        assertTrue(catDAO.create(cat));
+
+        ProduitDAO dao = new ProduitDAO();
+        Produit p = new Produit("TESTMIS" + suffix, "Briquet " + suffix, cat.getNom(),
+                new BigDecimal("1.000"), new BigDecimal("2.000"), 10, "unité", 2);
+        assertTrue(dao.create(p));
+
+        assertFalse(dao.findById(p.getId()).isTabac(),
+                "le type explicite doit primer sur le libellé ; l'ancienne "
+                + "heuristique classait ce produit comme du tabac");
+    }
+
     /** Renvoie le category_id d'un produit, ou null. */
     private static Integer categoryIdOf(int produitId) {
         try (Connection conn = DBConnector.getConnection();

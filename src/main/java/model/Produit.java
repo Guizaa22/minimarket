@@ -15,6 +15,8 @@ public class Produit {
     private int quantiteStock;
     private String unite; // kg, grammes, unité, litre, etc.
     private int seuilAlerte;
+    /** Renseigné depuis categories.type ; null pour les produits sans catégorie. */
+    private TypeCategorie typeCategorie;
     
     // Constructeurs
     public Produit() {
@@ -123,24 +125,36 @@ public class Produit {
     }
     
     /**
-     * Vérifie si le produit est de type tabac (tabac, puff, terrea, etc.)
-     * Insensible à la casse et aux espaces
+     * Type de la catégorie du produit.
+     *
+     * Renseigné depuis {@code categories.type} lorsque le produit est rattaché au
+     * référentiel. Pour les produits importés sans catégorie, il est déduit du
+     * libellé — c'était auparavant le seul mécanisme, ce qui rendait le
+     * comportement dépendant de l'orthographe du nom de catégorie.
      */
-    public boolean isTabac() {
-        if (categorie == null) return false;
-        String catLower = categorie.trim().toLowerCase();
-        return catLower.contains("tabac") || catLower.contains("puff") || 
-               catLower.contains("terrea") || catLower.contains("cigarette");
+    public TypeCategorie getTypeCategorie() {
+        if (typeCategorie != null) {
+            return typeCategorie;
+        }
+        return TypeCategorie.devinerDepuisLibelle(categorie);
     }
-    
+
+    public void setTypeCategorie(TypeCategorie typeCategorie) {
+        this.typeCategorie = typeCategorie;
+    }
+
+    /** true si le produit relève du tabac (paquet ou vente à l'unité). */
+    public boolean isTabac() {
+        return getTypeCategorie().estTabac();
+    }
+
     /**
-     * Vérifie si le produit est un "frak cigarette" (cigarettes vendues à l'unité)
-     * Les produits "frak cigarette" sont liés à un produit tabac principal
+     * true si le produit correspond à des cigarettes vendues à l'unité.
+     * Ces produits n'ont pas de stock propre : la vente décrémente le paquet
+     * de tabac associé.
      */
     public boolean isFrakCigarette() {
-        if (categorie == null) return false;
-        String catLower = categorie.trim().toLowerCase();
-        return catLower.contains("frak") && catLower.contains("cigarette");
+        return getTypeCategorie() == TypeCategorie.FrakCigarette;
     }
     
     @Override

@@ -25,7 +25,8 @@ public class ProduitDAO {
      * produit différemment.
      */
     private static final String SELECT_PRODUIT =
-            "SELECT p.*, COALESCE(c.nom, p.categorie) AS categorie_affiche "
+            "SELECT p.*, COALESCE(c.nom, p.categorie) AS categorie_affiche, "
+          + "c.type AS categorie_type "
           + "FROM produits p LEFT JOIN categories c ON c.id = p.category_id";
 
 
@@ -35,15 +36,11 @@ public class ProduitDAO {
      */
     public List<Produit> findAll() {
         List<Produit> produits = new ArrayList<>();
-        
-        // Essayer d'abord avec la table categories (si elle existe)
-        String sql = """
-            SELECT p.*, COALESCE(c.nom, p.categorie) AS categorie_affiche
-            FROM produits p
-            LEFT JOIN categories c ON p.category_id = c.id
-            ORDER BY p.nom
-        """;
-        
+
+        // Projection commune : charge aussi categories.type, dont dépend
+        // findProduitsTabac() via isTabac().
+        String sql = SELECT_PRODUIT + " ORDER BY p.nom";
+
         try (Connection conn = DBConnector.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -177,14 +174,9 @@ public class ProduitDAO {
      */
     public List<Produit> findStockFaible() {
         List<Produit> produits = new ArrayList<>();
-        String sql = """
-            SELECT p.*, COALESCE(c.nom, p.categorie) AS categorie_affiche
-            FROM produits p
-            LEFT JOIN categories c ON p.category_id = c.id
-            WHERE quantite_stock <= seuil_alerte
-            ORDER BY quantite_stock ASC
-        """;
-        
+        String sql = SELECT_PRODUIT
+                   + " WHERE p.quantite_stock <= p.seuil_alerte ORDER BY p.quantite_stock ASC";
+
         try (Connection conn = DBConnector.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -284,7 +276,7 @@ public class ProduitDAO {
             System.err.println("ERREUR lors de la création de produit:");
             System.err.println("Message: " + e.getMessage());
             System.err.println("Code SQL: " + e.getSQLState());
-            System.err.println("Erreur SQLite: " + e.getErrorCode());
+            System.err.println("Code erreur SGBD: " + e.getErrorCode());
             System.err.println("SQL: " + sql);
             System.err.println("Produit: " + produit);
             e.printStackTrace();
@@ -354,7 +346,7 @@ public class ProduitDAO {
             System.err.println("ERREUR lors de la mise à jour de produit:");
             System.err.println("Message: " + e.getMessage());
             System.err.println("Code SQL: " + e.getSQLState());
-            System.err.println("Erreur SQLite: " + e.getErrorCode());
+            System.err.println("Code erreur SGBD: " + e.getErrorCode());
             System.err.println("SQL: " + sql);
             System.err.println("Produit ID: " + produit.getId());
             e.printStackTrace();
@@ -481,7 +473,7 @@ public class ProduitDAO {
             System.err.println("ERREUR lors de la suppression de produit:");
             System.err.println("Message: " + e.getMessage());
             System.err.println("Code SQL: " + e.getSQLState());
-            System.err.println("Erreur SQLite: " + e.getErrorCode());
+            System.err.println("Code erreur SGBD: " + e.getErrorCode());
             System.err.println("Produit ID: " + id);
             System.err.println("Force Delete: " + forceDelete);
             e.printStackTrace();
@@ -819,7 +811,7 @@ public class ProduitDAO {
             // Colonne unite peut ne pas exister dans certaines bases
         }
         
-        return new Produit(
+        Produit produit = new Produit(
             rs.getInt("id"),
             rs.getString("code_barre"),
             rs.getString("nom"),
@@ -830,6 +822,19 @@ public class ProduitDAO {
             unite,
             rs.getInt("seuil_alerte")
         );
+
+        // Type explicite issu du référentiel. Absent (produit sans catégorie ou
+        // requête sans jointure), Produit retombe sur la déduction par libellé.
+        try {
+            String type = rs.getString("categorie_type");
+            if (type != null) {
+                produit.setTypeCategorie(model.TypeCategorie.depuisBase(type));
+            }
+        } catch (SQLException ignored) {
+            // colonne absente de cette projection
+        }
+
+        return produit;
     }
     
     /**

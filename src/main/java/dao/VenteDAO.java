@@ -156,7 +156,8 @@ public class VenteDAO {
                         if (produitTabacAssocie != null) {
                             // Calculer combien de paquets à décrémenter (20 cigarettes = 1 paquet)
                             int totalCigarettes = d.getQuantite();
-                            int paquetsADecrémenter = (totalCigarettes + 19) / 20; // Arrondir vers le haut
+                            int paquetsADecrémenter =
+                                    (totalCigarettes + model.TypeCategorie.CIGARETTES_PAR_PAQUET - 1) / model.TypeCategorie.CIGARETTES_PAR_PAQUET;
                             
                             if (paquetsADecrémenter > 0) {
                                 // Vérifier le stock du produit tabac associé
@@ -229,7 +230,7 @@ public class VenteDAO {
             System.err.println("ERREUR création vente:");
             System.err.println("Message: " + e.getMessage());
             System.err.println("Code SQL: " + e.getSQLState());
-            System.err.println("Erreur SQLite: " + e.getErrorCode());
+            System.err.println("Code erreur SGBD: " + e.getErrorCode());
             System.err.println("Utilisateur ID: " + (vente != null ? vente.getUtilisateurId() : "null"));
             System.err.println("Total: " + (vente != null ? vente.getTotalVente() : "null"));
             System.err.println("Nombre de détails: " + (vente != null && vente.getDetails() != null ? vente.getDetails().size() : 0));
@@ -508,11 +509,13 @@ public class VenteDAO {
             FROM ventes v
             INNER JOIN detailsvente dv ON v.id = dv.id_vente
             INNER JOIN produits p ON dv.id_produit = p.id
-            WHERE LOWER(p.categorie) LIKE '%tabac%' 
-               OR LOWER(p.categorie) LIKE '%puff%' 
-               OR LOWER(p.categorie) LIKE '%terrea%'
-               OR LOWER(p.categorie) LIKE '%cigarette%'
-               OR (LOWER(p.categorie) LIKE '%frak%' AND LOWER(p.categorie) LIKE '%cigarette%')
+            LEFT JOIN categories c ON c.id = p.category_id
+            WHERE (c.type IN ('Tabac', 'FrakCigarette')
+                   OR (c.type IS NULL AND (
+                          LOWER(p.categorie) LIKE '%tabac%'
+                       OR LOWER(p.categorie) LIKE '%puff%'
+                       OR LOWER(p.categorie) LIKE '%terrea%'
+                       OR LOWER(p.categorie) LIKE '%cigarette%')))
             ORDER BY v.date_vente DESC
             """;
         
@@ -539,12 +542,14 @@ public class VenteDAO {
             FROM detailsvente dv
             INNER JOIN ventes v ON dv.id_vente = v.id
             INNER JOIN produits p ON dv.id_produit = p.id
+            LEFT JOIN categories c ON c.id = p.category_id
             WHERE v.date_vente BETWEEN ? AND ?
-              AND (LOWER(p.categorie) LIKE '%tabac%' 
-               OR LOWER(p.categorie) LIKE '%puff%' 
-               OR LOWER(p.categorie) LIKE '%terrea%'
-               OR LOWER(p.categorie) LIKE '%cigarette%'
-               OR (LOWER(p.categorie) LIKE '%frak%' AND LOWER(p.categorie) LIKE '%cigarette%'))
+              AND (c.type IN ('Tabac', 'FrakCigarette')
+                   OR (c.type IS NULL AND (
+                          LOWER(p.categorie) LIKE '%tabac%'
+                       OR LOWER(p.categorie) LIKE '%puff%'
+                       OR LOWER(p.categorie) LIKE '%terrea%'
+                       OR LOWER(p.categorie) LIKE '%cigarette%')))
             """;
         
         try (Connection conn = DBConnector.getConnection();
@@ -566,81 +571,6 @@ public class VenteDAO {
     }
     
     /**
-     * Trouve le produit tabac associé à un produit "frak cigarette"
-     * Cherche un produit tabac avec un nom similaire (sans "frak")
-     * @param conn La connexion à la base de données
-     * @param produitFrak Le produit "frak cigarette"
-     * @return Le produit tabac associé, ou null si non trouvé
-     */
-    private Produit trouverProduitTabacAssocie(Connection conn, Produit produitFrak) {
-        try {
-            String nomFrak = produitFrak.getNom().trim();
-            // Enlever "frak" du nom (insensible à la casse)
-            String nomRecherche = nomFrak.replaceAll("(?i)\\s*frak\\s*", "").trim();
-            
-            if (nomRecherche.isEmpty()) {
-                return null;
-            }
-            
-            ProduitDAO produitDAO = new ProduitDAO();
-            
-            // Chercher un produit tabac avec un nom similaire
-            // D'abord essayer une correspondance exacte (sans "frak")
-            String sql = """
-                SELECT p.id
-                FROM produits p
-                LEFT JOIN categories c ON p.category_id = c.id
-                WHERE LOWER(TRIM(p.nom)) = LOWER(?)
-                  AND (LOWER(COALESCE(c.nom, p.categorie)) LIKE '%tabac%' 
-                       OR LOWER(COALESCE(c.nom, p.categorie)) LIKE '%puff%'
-                       OR LOWER(COALESCE(c.nom, p.categorie)) LIKE '%terrea%')
-                  AND p.id != ?
-                LIMIT 1
-            """;
-            
-            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, nomRecherche);
-                stmt.setInt(2, produitFrak.getId());
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        int produitId = rs.getInt("id");
-                        return produitDAO.findById(produitId);
-                    }
-                }
-            }
-            
-            // Si pas trouvé, chercher avec LIKE (nom contient le nom recherché)
-            sql = """
-                SELECT p.id
-                FROM produits p
-                LEFT JOIN categories c ON p.category_id = c.id
-                WHERE LOWER(TRIM(p.nom)) LIKE LOWER(?)
-                  AND (LOWER(COALESCE(c.nom, p.categorie)) LIKE '%tabac%' 
-                       OR LOWER(COALESCE(c.nom, p.categorie)) LIKE '%puff%'
-                       OR LOWER(COALESCE(c.nom, p.categorie)) LIKE '%terrea%')
-                  AND p.id != ?
-                LIMIT 1
-            """;
-            
-            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, "%" + nomRecherche + "%");
-                stmt.setInt(2, produitFrak.getId());
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        int produitId = rs.getInt("id");
-                        return produitDAO.findById(produitId);
-                    }
-                }
-            }
-            
-        } catch (SQLException e) {
-            System.err.println("Erreur lors de la recherche du produit tabac associé: " + e.getMessage());
-        }
-        
-        return null;
-    }
-    
-    /**
      * Récupère les meilleurs produits de tabac (par quantité vendue)
      * @param limit Nombre de produits à retourner
      * @return Liste des statistiques des produits (nom, quantité totale, CA total)
@@ -654,11 +584,13 @@ public class VenteDAO {
             FROM detailsvente dv
             INNER JOIN ventes v ON dv.id_vente = v.id
             INNER JOIN produits p ON dv.id_produit = p.id
-            WHERE LOWER(p.categorie) LIKE '%tabac%' 
-               OR LOWER(p.categorie) LIKE '%puff%' 
-               OR LOWER(p.categorie) LIKE '%terrea%'
-               OR LOWER(p.categorie) LIKE '%cigarette%'
-               OR (LOWER(p.categorie) LIKE '%frak%' AND LOWER(p.categorie) LIKE '%cigarette%')
+            LEFT JOIN categories c ON c.id = p.category_id
+            WHERE (c.type IN ('Tabac', 'FrakCigarette')
+                   OR (c.type IS NULL AND (
+                          LOWER(p.categorie) LIKE '%tabac%'
+                       OR LOWER(p.categorie) LIKE '%puff%'
+                       OR LOWER(p.categorie) LIKE '%terrea%'
+                       OR LOWER(p.categorie) LIKE '%cigarette%')))
             GROUP BY p.id, p.nom
             ORDER BY quantite_totale DESC
             LIMIT ?
