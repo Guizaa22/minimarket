@@ -12,41 +12,41 @@
       <VBox spacing="20" AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
          <children>
             <!-- Header -->
-            <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-background-color: linear-gradient(to right, #2E7D32, #4CAF50); -fx-padding: 20;">
+            <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 20">
                <children>
-                  <Label text="📱 Ajout Rapide de Stock" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 24px;" />
+                  <Label text="📱 Ajout Rapide de Stock" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 24px" />
                   <Region HBox.hgrow="ALWAYS" />
-                  <Button text="◀ Retour" onAction="#handleRetour" style="-fx-background-color: #757575; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-pref-height: 50; -fx-pref-width: 120; -fx-cursor: hand; -fx-font-size: 16px;" />
+                  <Button text="◀ Retour" onAction="#handleRetour" style="-fx-font-weight: bold; -fx-background-radius: 8; -fx-pref-height: 50; -fx-pref-width: 120; -fx-cursor: hand; -fx-font-size: 16px" />
                </children>
             </HBox>
             
             <!-- Zone de scan -->
-            <VBox spacing="15" alignment="CENTER" style="-fx-padding: 30; -fx-background-color: #f9f9f9;">
+            <VBox spacing="15" alignment="CENTER" style="-fx-padding: 30">
                <children>
-                  <Label text="📷 Scanner le Code-Barres" style="-fx-font-weight: bold; -fx-font-size: 20px; -fx-text-fill: #333;" />
+                  <Label text="📷 Scanner le Code-Barres" style="-fx-font-weight: bold; -fx-font-size: 20px" />
                   
                   <TextField fx:id="codeBarreField" promptText="Scannez ou entrez le code-barres..." 
                              prefWidth="400" prefHeight="60" 
-                             style="-fx-font-size: 20px; -fx-background-radius: 10; -fx-padding: 15; -fx-background-color: white; -fx-border-color: #4CAF50; -fx-border-width: 2; -fx-border-radius: 10;" />
+                             style="-fx-font-size: 20px; -fx-background-radius: 10; -fx-padding: 15; -fx-border-width: 2; -fx-border-radius: 10" />
                   
                   <!-- Informations produit -->
-                  <VBox spacing="10" alignment="CENTER" prefWidth="500" style="-fx-padding: 20; -fx-background-color: white; -fx-background-radius: 15; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);">
+                  <VBox spacing="10" alignment="CENTER" prefWidth="500" style="-fx-padding: 20; -fx-background-radius: 15; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5)">
                      <children>
                         <Label fx:id="produitNomLabel" text="🔍 Scannez ou entrez un code-barres" 
-                               style="-fx-font-size: 18px; -fx-text-fill: #999;" />
-                        <Label fx:id="produitInfoLabel" text="" style="-fx-font-size: 14px; -fx-text-fill: #666;" />
+                               style="-fx-font-size: 18px" />
+                        <Label fx:id="produitInfoLabel" text="" style="-fx-font-size: 14px" />
                      </children>
                   </VBox>
                   
                   <!-- Contrôles de quantité -->
-                  <HBox spacing="20" alignment="CENTER" style="-fx-padding: 20;">
+                  <HBox spacing="20" alignment="CENTER" style="-fx-padding: 20">
                      <children>
-                        <Label text="Quantité:" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;" />
+                        <Label text="Quantité:" style="-fx-font-size: 18px; -fx-font-weight: bold" />
                         
                         <Button fx:id="moinsButton" text="➖" onAction="#handleMoins" />
                         
                         <TextField fx:id="quantiteField" text="1" prefWidth="100" prefHeight="60" 
-                                  style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-alignment: center; -fx-background-radius: 10; -fx-padding: 10;" />
+                                  style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-alignment: center; -fx-background-radius: 10; -fx-padding: 10" />
                         
                         <Button fx:id="plusButton" text="➕" onAction="#handlePlus" />
                      </children>
@@ -55,23 +55,23 @@
                   <!-- Bouton ajouter -->
                   <Button fx:id="ajouterButton" text="✅ Ajouter au Stock" onAction="#handleAjouter" 
                          prefWidth="400" prefHeight="70" 
-                         style="-fx-background-color: linear-gradient(to bottom, #4CAF50, #2E7D32); -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 20px; -fx-background-radius: 10; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 10, 0, 0, 5);" />
+                         style="-fx-font-weight: bold; -fx-font-size: 20px; -fx-background-radius: 10; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 10, 0, 0, 5)" />
                </children>
             </VBox>
             
             <!-- Historique -->
-            <VBox spacing="10" VBox.vgrow="ALWAYS" style="-fx-padding: 20; -fx-background-color: #f5f5f5;">
+            <VBox spacing="10" VBox.vgrow="ALWAYS" style="-fx-padding: 20">
                <children>
                   <HBox alignment="CENTER_LEFT" spacing="10">
                      <children>
-                        <Label text="📋 Historique des Ajouts" style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #333;" />
+                        <Label text="📋 Historique des Ajouts" style="-fx-font-weight: bold; -fx-font-size: 16px" />
                         <Region HBox.hgrow="ALWAYS" />
                         <Button text="🗑️ Effacer" onAction="#handleEffacerHistorique" 
-                               style="-fx-background-color: #f44336; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-pref-height: 30; -fx-pref-width: 100; -fx-cursor: hand;" />
+                               style="-fx-font-weight: bold; -fx-background-radius: 5; -fx-pref-height: 30; -fx-pref-width: 100; -fx-cursor: hand" />
                      </children>
                   </HBox>
                   
-                  <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background: transparent;">
+                  <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background: transparent">
                      <content>
                         <VBox fx:id="historiqueContainer" spacing="8" />
                      </content>

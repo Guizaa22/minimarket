@@ -153,14 +153,14 @@ public class VisualisationProduitsController {
         VBox priceBox = new VBox(5);
         priceBox.setAlignment(Pos.CENTER_LEFT);
         priceBox.setPadding(new Insets(8, 0, 8, 0));
-        priceBox.setStyle("-fx-background-color: rgba(76, 175, 80, 0.1); -fx-background-radius: 8; -fx-padding: 10;");
+        priceBox.setStyle("-fx-background-radius: 8; -fx-padding: 10;");
         
         HBox prixVenteBox = new HBox(8);
         prixVenteBox.setAlignment(Pos.CENTER_LEFT);
         Label prixVenteIcon = new Label("💰");
         prixVenteIcon.setStyle("-fx-font-size: 18px;");
         Label prixVenteLabel = new Label(String.format("Prix Vente: %.2f DT", produit.getPrixVenteDefaut()));
-        prixVenteLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2E7D32;");
+        prixVenteLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
         prixVenteBox.getChildren().addAll(prixVenteIcon, prixVenteLabel);
         
         HBox prixAchatBox = new HBox(8);
@@ -168,7 +168,7 @@ public class VisualisationProduitsController {
         Label prixAchatIcon = new Label("🏷️");
         prixAchatIcon.setStyle("-fx-font-size: 14px;");
         Label prixAchatLabel = new Label(String.format("Prix Achat: %.2f DT", produit.getPrixAchatActuel()));
-        prixAchatLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
+        prixAchatLabel.setStyle("-fx-font-size: 14px;");
         prixAchatBox.getChildren().addAll(prixAchatIcon, prixAchatLabel);
         
         priceBox.getChildren().addAll(prixVenteBox, prixAchatBox);
@@ -185,7 +185,7 @@ public class VisualisationProduitsController {
             Label codeIcon = new Label("📋");
             codeIcon.setStyle("-fx-font-size: 16px;");
             Label codeLabel = new Label("Code: " + produit.getCodeBarre());
-            codeLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;");
+            codeLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
             codeBox.getChildren().addAll(codeIcon, codeLabel);
             detailsContainer.getChildren().add(codeBox);
         }
@@ -197,7 +197,7 @@ public class VisualisationProduitsController {
             Label uniteIcon = new Label("📦");
             uniteIcon.setStyle("-fx-font-size: 16px;");
             Label uniteLabel = new Label("Unité: " + produit.getUnite());
-            uniteLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #555;");
+            uniteLabel.setStyle("-fx-font-size: 14px;");
             uniteBox.getChildren().addAll(uniteIcon, uniteLabel);
             detailsContainer.getChildren().add(uniteBox);
         }
@@ -208,7 +208,7 @@ public class VisualisationProduitsController {
         Label seuilIcon = new Label("⚠️");
         seuilIcon.setStyle("-fx-font-size: 16px;");
         Label seuilLabel = new Label("Seuil alerte: " + produit.getSeuilAlerte());
-        seuilLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #FF9800; -fx-font-weight: bold;");
+        seuilLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         seuilBox.getChildren().addAll(seuilIcon, seuilLabel);
         detailsContainer.getChildren().add(seuilBox);
 
@@ -223,41 +223,41 @@ public class VisualisationProduitsController {
         String stockMessage;
         
         if (produit.getQuantiteStock() == 0) {
-            stockColor = "-fx-background-color: rgba(244, 67, 54, 0.15);";
+            stockColor = "";
             stockIcon = "❌";
             stockMessage = "RUPTURE";
         } else if (produit.isStockFaible() || produit.getQuantiteStock() <= produit.getSeuilAlerte()) {
-            stockColor = "-fx-background-color: rgba(255, 152, 0, 0.15);";
+            stockColor = "";
             stockIcon = "⚠️";
             stockMessage = "FAIBLE";
         } else if (produit.getQuantiteStock() > 50) {
-            stockColor = "-fx-background-color: rgba(76, 175, 80, 0.15);";
+            stockColor = "";
             stockIcon = "✅";
             stockMessage = "BON";
         } else {
-            stockColor = "-fx-background-color: rgba(33, 150, 243, 0.15);";
+            stockColor = "";
             stockIcon = "📦";
             stockMessage = "MOYEN";
         }
         
-        stockContainerBox.setStyle(stockColor + " -fx-background-radius: 8;");
+        stockContainerBox.setStyle(stockColor + "-fx-background-radius: 8;");
         
         HBox stockQtyBox = new HBox(8);
         stockQtyBox.setAlignment(Pos.CENTER);
         Label stockIconLabel = new Label(stockIcon);
         stockIconLabel.setStyle("-fx-font-size: 20px;");
         Label stockQtyLabel = new Label("Stock: " + produit.getQuantiteStock());
-        stockQtyLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
+        stockQtyLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
         stockQtyBox.getChildren().addAll(stockIconLabel, stockQtyLabel);
         Label stockStatusLabel = new Label(stockMessage);
-        stockStatusLabel.setStyle("-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #666;");
+        stockStatusLabel.setStyle("-fx-font-size: 11px; -fx-font-weight: bold;");
         stockContainerBox.getChildren().addAll(stockQtyBox, stockStatusLabel);
 
         // Add Stock button - Inside the card
         Button actionButton = new Button("➕ Ajouter au Stock");
-        actionButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 10; -fx-cursor: hand;");
-        actionButton.setOnMouseEntered(e -> actionButton.setStyle("-fx-background-color: #66BB6A; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 10; -fx-cursor: hand;"));
-        actionButton.setOnMouseExited(e -> actionButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 10; -fx-cursor: hand;"));
+        actionButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 10; -fx-cursor: hand;");
+        actionButton.setOnMouseEntered(e -> actionButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 10; -fx-cursor: hand;"));
+        actionButton.setOnMouseExited(e -> actionButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 10; -fx-cursor: hand;"));
         actionButton.setOnAction(e -> ouvrirAjoutStock(produit));
         actionButton.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(actionButton, Priority.ALWAYS);
@@ -485,7 +485,7 @@ public class VisualisationProduitsController {
         // Conteneur principal
         VBox root = new VBox(20);
         root.setPadding(new Insets(30));
-        root.setStyle("-fx-background-color: white; -fx-background-radius: 15;");
+        root.setStyle("-fx-background-radius: 15;");
         root.setPrefWidth(600);
         root.setMaxWidth(600);
         
@@ -496,11 +496,11 @@ public class VisualisationProduitsController {
         headerBox.setAlignment(Pos.CENTER_LEFT);
         
         Label titreLabel = new Label("📦 " + produit.getNom());
-        titreLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2E7D32;");
+        titreLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
         
         Label categorieLabel = new Label("Catégorie: " + (produit.getCategorie() != null && !produit.getCategorie().isEmpty() 
             ? produit.getCategorie() : "Non catégorisé"));
-        categorieLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
+        categorieLabel.setStyle("-fx-font-size: 14px;");
         
         headerBox.getChildren().addAll(titreLabel, categorieLabel);
         
@@ -520,7 +520,7 @@ public class VisualisationProduitsController {
         codeIcon.setStyle("-fx-font-size: 20px;");
         Label codeLabel = new Label("Code-barres: " + (produit.getCodeBarre() != null && !produit.getCodeBarre().isEmpty() 
             ? produit.getCodeBarre() : "N/A"));
-        codeLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
+        codeLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
         codeBox.getChildren().addAll(codeIcon, codeLabel);
         
         // Unité
@@ -530,7 +530,7 @@ public class VisualisationProduitsController {
         uniteIcon.setStyle("-fx-font-size: 20px;");
         Label uniteLabel = new Label("Unité: " + (produit.getUnite() != null && !produit.getUnite().isEmpty() 
             ? produit.getUnite() : "unité"));
-        uniteLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #555;");
+        uniteLabel.setStyle("-fx-font-size: 16px;");
         uniteBox.getChildren().addAll(uniteIcon, uniteLabel);
         
         // Prix d'achat
@@ -539,7 +539,7 @@ public class VisualisationProduitsController {
         Label prixAchatIcon = new Label("🏷️");
         prixAchatIcon.setStyle("-fx-font-size: 20px;");
         Label prixAchatLabel = new Label("Prix d'achat: " + String.format("%.2f DT", produit.getPrixAchatActuel()));
-        prixAchatLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #555;");
+        prixAchatLabel.setStyle("-fx-font-size: 16px;");
         prixAchatBox.getChildren().addAll(prixAchatIcon, prixAchatLabel);
         
         // Prix de vente
@@ -548,7 +548,7 @@ public class VisualisationProduitsController {
         Label prixVenteIcon = new Label("💰");
         prixVenteIcon.setStyle("-fx-font-size: 20px;");
         Label prixVenteLabel = new Label("Prix de vente: " + String.format("%.2f DT", produit.getPrixVenteDefaut()));
-        prixVenteLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2E7D32;");
+        prixVenteLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
         prixVenteBox.getChildren().addAll(prixVenteIcon, prixVenteLabel);
         
         // Seuil d'alerte
@@ -557,7 +557,7 @@ public class VisualisationProduitsController {
         Label seuilIcon = new Label("⚠️");
         seuilIcon.setStyle("-fx-font-size: 20px;");
         Label seuilLabel = new Label("Seuil d'alerte: " + produit.getSeuilAlerte());
-        seuilLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #FF9800; -fx-font-weight: bold;");
+        seuilLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
         seuilBox.getChildren().addAll(seuilIcon, seuilLabel);
         
         infoBox.getChildren().addAll(codeBox, uniteBox, prixAchatBox, prixVenteBox, seuilBox);
@@ -578,24 +578,24 @@ public class VisualisationProduitsController {
         String stockMessage;
         
         if (produit.getQuantiteStock() == 0) {
-            stockColor = "-fx-background-color: rgba(244, 67, 54, 0.2);";
+            stockColor = "";
             stockIcon = "❌";
             stockMessage = "RUPTURE DE STOCK";
         } else if (produit.isStockFaible() || produit.getQuantiteStock() <= produit.getSeuilAlerte()) {
-            stockColor = "-fx-background-color: rgba(255, 152, 0, 0.2);";
+            stockColor = "";
             stockIcon = "⚠️";
             stockMessage = "STOCK FAIBLE";
         } else if (produit.getQuantiteStock() > 50) {
-            stockColor = "-fx-background-color: rgba(76, 175, 80, 0.2);";
+            stockColor = "";
             stockIcon = "✅";
             stockMessage = "STOCK BON";
         } else {
-            stockColor = "-fx-background-color: rgba(33, 150, 243, 0.2);";
+            stockColor = "";
             stockIcon = "📦";
             stockMessage = "STOCK MOYEN";
         }
         
-        stockBox.setStyle(stockColor + " -fx-background-radius: 10;");
+        stockBox.setStyle(stockColor + "-fx-background-radius: 10;");
         
         HBox stockQtyBox = new HBox(10);
         stockQtyBox.setAlignment(Pos.CENTER);
@@ -603,11 +603,11 @@ public class VisualisationProduitsController {
         stockIconLabel.setStyle("-fx-font-size: 32px;");
         Label stockQtyLabel = new Label("Stock actuel: " + produit.getQuantiteStock() + " " + 
             (produit.getUnite() != null && !produit.getUnite().isEmpty() ? produit.getUnite() : "unité(s)"));
-        stockQtyLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #333;");
+        stockQtyLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
         stockQtyBox.getChildren().addAll(stockIconLabel, stockQtyLabel);
         
         Label stockStatusLabel = new Label(stockMessage);
-        stockStatusLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #666;");
+        stockStatusLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         
         stockBox.getChildren().addAll(stockQtyBox, stockStatusLabel);
         
@@ -623,13 +623,13 @@ public class VisualisationProduitsController {
         
         // Bouton Ajouter au Stock
         Button ajouterStockButton = new Button("➕ Ajouter au Stock");
-        ajouterStockButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 16px; " +
+        ajouterStockButton.setStyle("-fx-font-size: 16px;" +
             "-fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 12 24; -fx-cursor: hand;");
         ajouterStockButton.setOnMouseEntered(e -> ajouterStockButton.setStyle(
-            "-fx-background-color: #66BB6A; -fx-text-fill: white; -fx-font-size: 16px; " +
+            "-fx-font-size: 16px;" +
             "-fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 12 24; -fx-cursor: hand;"));
         ajouterStockButton.setOnMouseExited(e -> ajouterStockButton.setStyle(
-            "-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 16px; " +
+            "-fx-font-size: 16px;" +
             "-fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 12 24; -fx-cursor: hand;"));
         ajouterStockButton.setOnAction(e -> {
             dialogStage.close();
@@ -638,13 +638,13 @@ public class VisualisationProduitsController {
         
         // Bouton Fermer
         Button fermerButton = new Button("✕ Fermer");
-        fermerButton.setStyle("-fx-background-color: #757575; -fx-text-fill: white; -fx-font-size: 16px; " +
+        fermerButton.setStyle("-fx-font-size: 16px;" +
             "-fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 12 24; -fx-cursor: hand;");
         fermerButton.setOnMouseEntered(e -> fermerButton.setStyle(
-            "-fx-background-color: #9E9E9E; -fx-text-fill: white; -fx-font-size: 16px; " +
+            "-fx-font-size: 16px;" +
             "-fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 12 24; -fx-cursor: hand;"));
         fermerButton.setOnMouseExited(e -> fermerButton.setStyle(
-            "-fx-background-color: #757575; -fx-text-fill: white; -fx-font-size: 16px; " +
+            "-fx-font-size: 16px;" +
             "-fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 12 24; -fx-cursor: hand;"));
         fermerButton.setOnAction(e -> dialogStage.close());
         

@@ -5,34 +5,28 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane styleClass="root" stylesheets="@/styles/global.css, @/styles/product-card.css" xmlns="http://javafx.com/javafx/23.0.1"
+<AnchorPane styleClass="root" xmlns="http://javafx.com/javafx/23.0.1"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="controller.VisualisationProduitsController">
-   <style>
-      -fx-background-image: url('/background/backgroundstock.jpg');
-      -fx-background-size: cover;
-      -fx-background-position: center center;
-      -fx-background-repeat: no-repeat;
-   </style>
    <children>
       <!-- Semi-transparent overlay for better readability and clarity -->
-      <AnchorPane style="-fx-background-color: rgba(255, 255, 255, 0.08);" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" mouseTransparent="true" />
+      <AnchorPane  AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" mouseTransparent="true" />
       
       <VBox spacing="15" AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
          <children>
             <!-- Header -->
-            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="header-bar" style="-fx-background-color: linear-gradient(to right, rgba(46, 125, 50, 0.95), rgba(76, 175, 80, 0.95)); -fx-padding: 15;">
+            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="header-bar" style="-fx-padding: 15">
                <children>
-                  <Label text="📦 Visualisation des Produits" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 20px;" />
+                  <Label text="📦 Visualisation des Produits" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 20px" />
                   <Region HBox.hgrow="ALWAYS" />
-                  <Label fx:id="totalProduitsLabel" text="Total: 0 produit(s)" textFill="WHITE" style="-fx-font-size: 14px; -fx-font-weight: bold;" />
+                  <Label fx:id="totalProduitsLabel" text="Total: 0 produit(s)" textFill="WHITE" style="-fx-font-size: 14px; -fx-font-weight: bold" />
                   <Button text="🔄 Rafraîchir" onAction="#handleRafraichir" styleClass="btn, btn-primary" />
                   <Button text="◀ Retour" onAction="#handleRetour" styleClass="btn, btn-secondary" />
                </children>
             </HBox>
             
             <!-- Barre de recherche et filtres -->
-            <VBox spacing="10" style="-fx-padding: 15; -fx-background-color: rgba(255, 255, 255, 0.92); -fx-background-radius: 10;">
+            <VBox spacing="10" style="-fx-padding: 15; -fx-background-radius: 10">
                <VBox.margin>
                   <Insets left="15" right="15" />
                </VBox.margin>
@@ -40,17 +34,17 @@
                   <HBox spacing="15" alignment="CENTER_LEFT">
                      <children>
                         <VBox spacing="2">
-                           <Label text="🔎 Recherche en direct:" style="-fx-font-weight: bold; -fx-font-size: 14px;" />
-                           <Label text="Filtre instantané" style="-fx-font-size: 10px; -fx-text-fill: #718096; -fx-font-style: italic;" />
+                           <Label text="🔎 Recherche en direct:" style="-fx-font-weight: bold; -fx-font-size: 14px" />
+                           <Label text="Filtre instantané" style="-fx-font-size: 10px; -fx-font-style: italic" />
                         </VBox>
                         <TextField fx:id="rechercheField" promptText="✨ Tapez pour filtrer..." prefWidth="280" styleClass="text-field" />
                         
-                        <Label text="📂 Catégorie:" style="-fx-font-weight: bold; -fx-font-size: 14px;" />
+                        <Label text="📂 Catégorie:" style="-fx-font-weight: bold; -fx-font-size: 14px" />
                         <ComboBox fx:id="categorieComboBox" prefWidth="200" />
                         
                         <Region HBox.hgrow="ALWAYS" />
                         
-                        <Label text="📋 Code-barres:" style="-fx-font-weight: bold; -fx-font-size: 14px;" />
+                        <Label text="📋 Code-barres:" style="-fx-font-weight: bold; -fx-font-size: 14px" />
                         <TextField fx:id="codeBarreRechercheField" promptText="Rechercher/Ajouter..." prefWidth="200" styleClass="text-field" />
                         <Button text="🔎 Rechercher" onAction="#rechercherParCodeBarre" styleClass="btn, btn-accent" />
                      </children>
@@ -59,9 +53,9 @@
             </VBox>
             
             <!-- Conteneur des produits avec scroll -->
-            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background: transparent; -fx-background-color: transparent;">
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background: transparent; -fx-background-color: transparent">
                <content>
-                  <FlowPane fx:id="produitsContainer" hgap="20.0" vgap="20.0" style="-fx-background-color: transparent; -fx-padding: 20;">
+                  <FlowPane fx:id="produitsContainer" hgap="20.0" vgap="20.0" style="-fx-background-color: transparent; -fx-padding: 20">
                      <padding>
                         <Insets bottom="20" left="20" right="20" top="20" />
                      </padding>

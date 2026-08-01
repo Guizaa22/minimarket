@@ -60,13 +60,21 @@ public class FXMLUtils {
         // Create scene with screen dimensions to ensure full screen works properly
         Scene scene = new Scene(root, bounds.getWidth(), bounds.getHeight());
 
-        // Feuilles communes à tous les écrans. L'ordre compte : modern.css
-        // affine ce que global.css a posé, il doit donc être chargé après.
+        // Feuilles communes, puis la feuille propre à l'écran, puis le thème.
+        //
+        // Ces feuilles étaient auparavant déclarées par l'attribut stylesheets
+        // du nœud racine de chaque FXML. Or une feuille posée sur un nœud prime
+        // sur celles de la scène : le thème était donc systématiquement battu,
+        // quel que soit son ordre de chargement. Chargées ici au niveau de la
+        // scène, elles rentrent dans la hiérarchie normale et le thème, ajouté
+        // en dernier, l'emporte.
         appliquerFeuille(scene, "/styles/global.css");
         appliquerFeuille(scene, "/styles/modern.css");
+        for (String feuille : feuillesDeLEcran(fxmlPath)) {
+            appliquerFeuille(scene, feuille);
+        }
 
         // Enregistre la scène et applique le thème retenu sur ce poste.
-        // Ajouté en dernier pour primer sur les feuilles précédentes.
         ui.ThemeManager.enregistrer(scene);
 
         stage.setScene(scene);
@@ -104,6 +112,42 @@ public class FXMLUtils {
         new javafx.animation.ParallelTransition(apparition, remontee).play();
     }
     
+    /**
+     * Feuille spécifique à un écran, le cas échéant.
+     *
+     * Reprend les correspondances qui figuraient dans l'attribut stylesheets
+     * de chaque FXML, désormais chargées au niveau de la scène pour que le
+     * thème puisse primer.
+     */
+    private static java.util.List<String> feuillesDeLEcran(String fxmlPath) {
+        if (fxmlPath == null) {
+            return java.util.List.of();
+        }
+        if (fxmlPath.contains("AdminDashboard")) {
+            return java.util.List.of("/styles/dashboard.css");
+        }
+        if (fxmlPath.contains("Caisse.fxml")) {
+            return java.util.List.of("/styles/caisse.css");
+        }
+        if (fxmlPath.contains("CaisseCategories")) {
+            return java.util.List.of("/styles/caissecategories.css");
+        }
+        if (fxmlPath.contains("GestionStock")) {
+            return java.util.List.of("/styles/gestionstock.css");
+        }
+        if (fxmlPath.contains("GestionUtilisateurs")) {
+            return java.util.List.of("/styles/gestionutilisateurs.css");
+        }
+        if (fxmlPath.contains("GestionVentes")) {
+            return java.util.List.of("/styles/gestion-ventes.css");
+        }
+        if (fxmlPath.contains("CategorieProduits") || fxmlPath.contains("GestionTabac")
+                || fxmlPath.contains("AjoutStock") || fxmlPath.contains("VisualisationProduits")) {
+            return java.util.List.of("/styles/product-card.css");
+        }
+        return java.util.List.of();
+    }
+
     /**
      * Ajoute une feuille de style à la scène si la ressource existe.
      * Une feuille absente est signalée mais n'empêche pas l'affichage.

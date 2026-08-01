@@ -291,16 +291,15 @@ public class GestionTabacController {
         nomLabel.setWrapText(true);
         
         Label categorieLabel = new Label("📂 " + (produit.getCategorie() != null ? produit.getCategorie() : "Tabac"));
-        categorieLabel.setStyle("-fx-text-fill: #7B1FA2; -fx-font-size: 12px; -fx-font-weight: bold;");
+        categorieLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: bold;");
         
         Label codeLabel = new Label("📋 " + produit.getCodeBarre());
-        codeLabel.setStyle("-fx-text-fill: #555; -fx-font-size: 12px;");
+        codeLabel.setStyle("-fx-font-size: 12px;");
         
         Label prixVenteLabel = new Label(String.format("💰 %.2f DT", produit.getPrixVenteDefaut()));
-        prixVenteLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #4CAF50;");
+        prixVenteLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
         
         Label prixAchatLabel = new Label(String.format("🏷️ Achat: %.2f DT", produit.getPrixAchatActuel()));
-        prixAchatLabel.setStyle("-fx-text-fill: #777;");
         
         HBox stockBox = new HBox(6);
         stockBox.setAlignment(Pos.CENTER_LEFT);
@@ -312,11 +311,10 @@ public class GestionTabacController {
         stockBox.getChildren().add(stockBadge);
         
         Label uniteLabel = new Label("📦 " + produit.getUnite());
-        uniteLabel.setStyle("-fx-text-fill: #555;");
         
         VBox seuilBox = new VBox(2);
         Label seuilLabel = new Label("⚠️ Seuil: " + produit.getSeuilAlerte());
-        seuilLabel.setStyle("-fx-text-fill: #FF9800; -fx-font-weight: bold;");
+        seuilLabel.setStyle("-fx-font-weight: bold;");
         seuilBox.getChildren().add(seuilLabel);
         
         card.getChildren().addAll(
@@ -348,17 +346,16 @@ public class GestionTabacController {
         VBox box = new VBox(10);
         box.setAlignment(Pos.CENTER);
         box.setPadding(new Insets(30));
-        box.setStyle("-fx-background-color: rgba(255,255,255,0.6); -fx-background-radius: 12;");
+        box.setStyle("-fx-background-radius: 12;");
         
         Label icon = new Label("🛑");
         icon.setStyle("-fx-font-size: 36px;");
         
         Label title = new Label("Aucun produit tabac disponible");
-        title.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #7B1FA2;");
+        title.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
         
         Label desc = new Label("Ajoutez des produits avec la catégorie Tabac, Puff, Terrea ou Cigarette pour les voir apparaître ici automatiquement.");
         desc.setWrapText(true);
-        desc.setStyle("-fx-text-fill: #555;");
         desc.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
         
         box.getChildren().addAll(icon, title, desc);

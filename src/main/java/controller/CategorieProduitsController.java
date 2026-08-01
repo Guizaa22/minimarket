@@ -72,13 +72,8 @@ public class CategorieProduitsController {
         javafx.application.Platform.runLater(() -> {
             if (produitsContainer.getScene() != null) {
                 String globalCss = getClass().getResource("/styles/global.css").toExternalForm();
-                String cardCss = getClass().getResource("/styles/product-card.css").toExternalForm();
-                if (!produitsContainer.getScene().getStylesheets().contains(globalCss)) {
-                    produitsContainer.getScene().getStylesheets().add(globalCss);
-                }
-                if (!produitsContainer.getScene().getStylesheets().contains(cardCss)) {
-                    produitsContainer.getScene().getStylesheets().add(cardCss);
-                }
+                // Feuilles chargees par FXMLUtils au niveau de la scene :
+                // les recharger ici les replacerait apres le theme.
             }
         });
     }

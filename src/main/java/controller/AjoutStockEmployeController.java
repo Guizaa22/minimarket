@@ -1043,11 +1043,8 @@ public class AjoutStockEmployeController {
         messageLabel.setVisible(true);
         
         if (type == Alert.AlertType.ERROR) {
-            messageLabel.setStyle("-fx-text-fill: #D32F2F;");
         } else if (type == Alert.AlertType.WARNING) {
-            messageLabel.setStyle("-fx-text-fill: #F57C00;");
         } else {
-            messageLabel.setStyle("-fx-text-fill: #2E7D32;");
         }
         
         // Masquer le label après 5 secondes
@@ -1085,7 +1082,7 @@ public class AjoutStockEmployeController {
         typeComboBox.setValue("Paquet");
         
         Label infoLabel = new Label("Pour les cigarettes, vous pouvez spécifier le nombre exact.");
-        infoLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
+        infoLabel.setStyle("-fx-font-size: 11px;");
         infoLabel.setWrapText(true);
         
         CheckBox cigaretteCheckBox = new CheckBox("Spécifier le nombre de cigarettes");

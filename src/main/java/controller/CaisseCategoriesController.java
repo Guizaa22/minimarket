@@ -102,10 +102,8 @@ public class CaisseCategoriesController {
         // Add global styles if not present
         javafx.application.Platform.runLater(() -> {
             if (categoriesContainer.getScene() != null) {
-                String globalCss = getClass().getResource("/styles/global.css").toExternalForm();
-                if (!categoriesContainer.getScene().getStylesheets().contains(globalCss)) {
-                    categoriesContainer.getScene().getStylesheets().add(globalCss);
-                }
+                // Feuilles chargees par FXMLUtils au niveau de la scene :
+                // les recharger ici les replacerait apres le theme.
             }
         });
     }
@@ -159,7 +157,7 @@ public class CaisseCategoriesController {
                                     ajouterAuPanierSilencieux(produit, 1, null);
                                     // Afficher juste un message discret
                                     produitInfoLabel.setText("✓ " + produit.getNom() + " ajouté au panier");
-                                    produitInfoLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 13px;");
+                                    produitInfoLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
                                 }
                                 // Effacer le champ après 1 seconde
                                 javafx.application.Platform.runLater(() -> {
@@ -178,10 +176,10 @@ public class CaisseCategoriesController {
                                 });
                             } else if (produit != null) {
                                 produitInfoLabel.setText("❌ Stock insuffisant: " + produit.getQuantiteStock());
-                                produitInfoLabel.setStyle("-fx-text-fill: #f44336; -fx-font-weight: bold; -fx-font-size: 13px;");
+                                produitInfoLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
                             } else {
                                 produitInfoLabel.setText("❌ Produit introuvable");
-                                produitInfoLabel.setStyle("-fx-text-fill: #f44336; -fx-font-weight: bold; -fx-font-size: 13px;");
+                                produitInfoLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
                             }
                         }
                         ajoutEnCours.set(false);
@@ -209,15 +207,15 @@ public class CaisseCategoriesController {
                         } else {
                             ajouterAuPanierSilencieux(produit, 1, null);
                             produitInfoLabel.setText("✓ " + produit.getNom() + " ajouté");
-                            produitInfoLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 13px;");
+                            produitInfoLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
                         }
                         rechercheField.clear();
                     } else if (produit != null) {
                         produitInfoLabel.setText("❌ Stock: " + produit.getQuantiteStock());
-                        produitInfoLabel.setStyle("-fx-text-fill: #f44336; -fx-font-weight: bold; -fx-font-size: 13px;");
+                        produitInfoLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
                     } else {
                         produitInfoLabel.setText("❌ Produit introuvable");
-                        produitInfoLabel.setStyle("-fx-text-fill: #f44336; -fx-font-weight: bold; -fx-font-size: 13px;");
+                        produitInfoLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
                     }
                 } else {
                     // Recherche normale (nom de produit)
@@ -318,13 +316,13 @@ public class CaisseCategoriesController {
         }
         if (visuel == null) {
             Label iconLabel = new Label(getCategoryIcon(categorie));
-            iconLabel.setStyle("-fx-font-size: " + ICON_SIZE + "px;");
+            iconLabel.setStyle("-fx-font-size:" + ICON_SIZE + "px;");
             visuel = iconLabel;
         }
         final javafx.scene.Node iconLabel = visuel;
 
         Label textLabel = new Label(categorie);
-        textLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");
+        textLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
         textLabel.setWrapText(true);
         textLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
 
@@ -395,13 +393,13 @@ public class CaisseCategoriesController {
 
         Label messageLabel = new Label("Aucune catégorie disponible");
         messageLabel.setStyle(
-                "-fx-font-size: 18px; " +
-                        "-fx-font-weight: bold; " +
-                        "-fx-text-fill: #999;"
+                "-fx-font-size: 18px;" +
+                        "-fx-font-weight: bold;" +
+                        ""
         );
 
         Label infoLabel = new Label("Ajoutez des produits avec des catégories dans la gestion des stocks");
-        infoLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
+        infoLabel.setStyle("-fx-font-size: 14px;");
         infoLabel.setWrapText(true);
         infoLabel.setMaxWidth(400);
         infoLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
@@ -423,13 +421,13 @@ public class CaisseCategoriesController {
 
         Label errorLabel = new Label("Erreur de chargement");
         errorLabel.setStyle(
-                "-fx-font-size: 18px; " +
-                        "-fx-font-weight: bold; " +
-                        "-fx-text-fill: #f44336;"
+                "-fx-font-size: 18px;" +
+                        "-fx-font-weight: bold;" +
+                        ""
         );
 
         Label infoLabel = new Label("Impossible de charger les catégories. Vérifiez la connexion à la base de données.");
-        infoLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
+        infoLabel.setStyle("-fx-font-size: 14px;");
         infoLabel.setWrapText(true);
         infoLabel.setMaxWidth(400);
         infoLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
@@ -480,7 +478,7 @@ public class CaisseCategoriesController {
             produitInfoLabel.setText("✓ " + produitTrouve.getNom() + " - " +
                     String.format("%.2f DT", produitTrouve.getPrixVenteDefaut()) +
                     " (Stock: " + produitTrouve.getQuantiteStock() + ")");
-            produitInfoLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 13px;");
+            produitInfoLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
 
             // Ajout automatique pour code-barres
             if (estCodeBarre(recherche)) {
@@ -488,7 +486,7 @@ public class CaisseCategoriesController {
             }
         } else {
             produitInfoLabel.setText("❌ Produit introuvable");
-            produitInfoLabel.setStyle("-fx-text-fill: #f44336; -fx-font-weight: bold; -fx-font-size: 13px;");
+            produitInfoLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
         }
     }
 
@@ -689,7 +687,7 @@ public class CaisseCategoriesController {
             LOG.info("Produit tabac sélectionné: " + produitTabacSelectionne.getNom());
             ajouterAuPanierSilencieuxAvecTabacAssocie(produitFrak, quantite, produitTabacSelectionne.getId());
             produitInfoLabel.setText("✓ " + produitFrak.getNom() + " -> " + produitTabacSelectionne.getNom());
-            produitInfoLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 13px;");
+            produitInfoLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
         });
     }
     
@@ -759,7 +757,7 @@ public class CaisseCategoriesController {
             if (nouvelleQuantite > produit.getQuantiteStock()) {
                 // Pas de popup, juste un message dans le label
                 produitInfoLabel.setText("❌ Stock insuffisant: " + produit.getQuantiteStock());
-                produitInfoLabel.setStyle("-fx-text-fill: #f44336; -fx-font-weight: bold; -fx-font-size: 13px;");
+                produitInfoLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
                 return;
             }
             detailExistant.setQuantite(nouvelleQuantite);
@@ -767,7 +765,7 @@ public class CaisseCategoriesController {
             // Vérifier que les prix sont valides
             if (produit.getPrixVenteDefaut() == null) {
                 produitInfoLabel.setText("❌ Prix manquant");
-                produitInfoLabel.setStyle("-fx-text-fill: #f44336; -fx-font-weight: bold; -fx-font-size: 13px;");
+                produitInfoLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
                 return;
             }
 
@@ -779,7 +777,7 @@ public class CaisseCategoriesController {
                 if (!produit.vendableALaCigarette()) {
                     produitInfoLabel.setText("❌ « " + produit.getNom()
                             + " » ne se vend qu'au paquet");
-                    produitInfoLabel.setStyle("-fx-text-fill: #f44336; -fx-font-weight: bold; -fx-font-size: 13px;");
+                    produitInfoLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
                     return;
                 }
                 prixUnitaire = produit.getPrixVenteCigarette();
@@ -832,7 +830,7 @@ public class CaisseCategoriesController {
             // Vérifier que les prix sont valides
             if (produitFrak.getPrixVenteDefaut() == null) {
                 produitInfoLabel.setText("❌ Prix manquant");
-                produitInfoLabel.setStyle("-fx-text-fill: #f44336; -fx-font-weight: bold; -fx-font-size: 13px;");
+                produitInfoLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
                 return;
             }
             

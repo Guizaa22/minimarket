@@ -5,17 +5,11 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
-<StackPane styleClass="root" stylesheets="@/styles/global.css" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.RecetteJourController">
+<StackPane styleClass="root" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.RecetteJourController">
    <children>
       <AnchorPane>
-         <style>
-            -fx-background-image: url('/background/backgroundcaisse.jpg');
-            -fx-background-size: cover;
-            -fx-background-position: center center;
-            -fx-background-repeat: no-repeat;
-         </style>
          <children>
-            <AnchorPane style="-fx-background-color: rgba(255, 255, 255, 0.08);" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" mouseTransparent="true" />
+            <AnchorPane  AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" mouseTransparent="true" />
             
             <VBox spacing="0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                <children>
@@ -43,58 +37,58 @@
                      </padding>
                      <children>
                         <!-- Sélection de date -->
-                        <HBox alignment="CENTER_LEFT" spacing="15" styleClass="card" style="-fx-background-color: rgba(255, 255, 255, 0.95);">
+                        <HBox alignment="CENTER_LEFT" spacing="15" styleClass="card" >
                            <padding>
                               <Insets bottom="15" left="20" right="20" top="15" />
                            </padding>
                            <children>
-                              <Label style="-fx-font-weight: bold; -fx-font-size: 16px;" text="📅 Date:" />
+                              <Label style="-fx-font-weight: bold; -fx-font-size: 16px" text="📅 Date:" />
                               <DatePicker fx:id="datePicker" />
                               <Button fx:id="rechercherButton" onAction="#handleRechercher" styleClass="btn, btn-primary" text="🔍 Rechercher" />
                            </children>
                         </HBox>
 
                         <!-- Résumé -->
-                        <HBox spacing="15" styleClass="card" style="-fx-background-color: rgba(255, 255, 255, 0.95);">
+                        <HBox spacing="15" styleClass="card" >
                            <padding>
                               <Insets bottom="20" left="20" right="20" top="20" />
                            </padding>
                            <children>
                               <VBox spacing="5" HBox.hgrow="ALWAYS">
                                  <children>
-                                    <Label style="-fx-font-size: 12px; -fx-text-fill: #666;" text="Total Ventes" />
-                                    <Label fx:id="totalVentesLabel" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2E7D32;" text="0.00 DT" />
+                                    <Label style="-fx-font-size: 12px" text="Total Ventes" />
+                                    <Label fx:id="totalVentesLabel" style="-fx-font-size: 24px; -fx-font-weight: bold" text="0.00 DT" />
                                  </children>
                               </VBox>
                               <VBox spacing="5" HBox.hgrow="ALWAYS">
                                  <children>
-                                    <Label style="-fx-font-size: 12px; -fx-text-fill: #666;" text="Paiements Fournisseurs" />
-                                    <Label fx:id="totalPaiementsLabel" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #D32F2F;" text="0.00 DT" />
+                                    <Label style="-fx-font-size: 12px" text="Paiements Fournisseurs" />
+                                    <Label fx:id="totalPaiementsLabel" style="-fx-font-size: 24px; -fx-font-weight: bold" text="0.00 DT" />
                                  </children>
                               </VBox>
                               <VBox spacing="5" HBox.hgrow="ALWAYS">
                                  <children>
-                                    <Label style="-fx-font-size: 12px; -fx-text-fill: #666;" text="Crédits Utilisés" />
-                                    <Label fx:id="totalCreditsLabel" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #F57C00;" text="0.00 DT" />
+                                    <Label style="-fx-font-size: 12px" text="Crédits Utilisés" />
+                                    <Label fx:id="totalCreditsLabel" style="-fx-font-size: 24px; -fx-font-weight: bold" text="0.00 DT" />
                                  </children>
                               </VBox>
                               <VBox spacing="5" HBox.hgrow="ALWAYS">
                                  <children>
-                                    <Label style="-fx-font-size: 12px; -fx-text-fill: #666;" text="Heures Travaillées" />
-                                    <Label fx:id="totalHeuresLabel" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1976D2;" text="0.00 h" />
+                                    <Label style="-fx-font-size: 12px" text="Heures Travaillées" />
+                                    <Label fx:id="totalHeuresLabel" style="-fx-font-size: 24px; -fx-font-weight: bold" text="0.00 h" />
                                  </children>
                               </VBox>
                               <VBox spacing="5" HBox.hgrow="ALWAYS">
                                  <children>
-                                    <Label style="-fx-font-size: 12px; -fx-text-fill: #666;" text="Recette Nette" />
-                                    <Label fx:id="recetteNetLabel" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #7B1FA2;" text="0.00 DT" />
+                                    <Label style="-fx-font-size: 12px" text="Recette Nette" />
+                                    <Label fx:id="recetteNetLabel" style="-fx-font-size: 24px; -fx-font-weight: bold" text="0.00 DT" />
                                  </children>
                               </VBox>
                            </children>
                         </HBox>
 
                         <!-- Tables -->
-                        <TabPane VBox.vgrow="ALWAYS" styleClass="card" style="-fx-background-color: rgba(255, 255, 255, 0.95);">
+                        <TabPane VBox.vgrow="ALWAYS" styleClass="card" >
                            <tabs>
                               <!-- Tab Paiements -->
                               <Tab text="💵 Paiements Fournisseurs">

@@ -8,7 +8,6 @@
 <AnchorPane xmlns="http://javafx.com/javafx/17.0.2-ea"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="controller.GestionUtilisateursController"
-            stylesheets="@/styles/gestionutilisateurs.css"
             styleClass="root">
 
    <children>
@@ -28,7 +27,7 @@
             <children>
                <!-- Icône & Titre -->
                <HBox alignment="CENTER_LEFT" spacing="15">
-                  <Label text="👥" style="-fx-font-size: 36px;"/>
+                  <Label text="👥" style="-fx-font-size: 36px"/>
                   <Label text="Gestion des Utilisateurs" styleClass="header-title">
                      <font>
                         <Font name="System Bold" size="32.0"/>
@@ -60,11 +59,11 @@
                  SECTION GAUCHE - FORMULAIRE UTILISATEUR
                  ======================================== -->
             <VBox spacing="20" styleClass="section-box"
-                  style="-fx-pref-width: 420; -fx-min-width: 400;">
+                  style="-fx-pref-width: 420; -fx-min-width: 400">
                <children>
                   <!-- Titre Formulaire -->
                   <HBox alignment="CENTER_LEFT" spacing="10">
-                     <Label text="✏️" style="-fx-font-size: 22px;"/>
+                     <Label text="✏️" style="-fx-font-size: 22px"/>
                      <Label fx:id="formTitleLabel" text="Nouvel Utilisateur" styleClass="section-title">
                         <font>
                            <Font name="System Bold" size="22.0"/>
@@ -73,7 +72,7 @@
                   </HBox>
 
                   <!-- Séparateur -->
-                  <Separator style="-fx-padding: 5 0;"/>
+                  <Separator style="-fx-padding: 5 0"/>
 
                   <!-- Formulaire -->
                   <VBox spacing="18" styleClass="form-container">
@@ -113,11 +112,11 @@
 
                      <!-- Note d'information -->
                      <HBox alignment="CENTER_LEFT" spacing="8"
-                           style="-fx-background-color: rgba(33, 150, 243, 0.1); -fx-padding: 12; -fx-background-radius: 8; -fx-border-color: rgba(33, 150, 243, 0.3); -fx-border-width: 1; -fx-border-radius: 8;">
-                        <Label text="ℹ️" style="-fx-font-size: 18px;"/>
+                           style="-fx-padding: 12; -fx-background-radius: 8; -fx-border-width: 1; -fx-border-radius: 8">
+                        <Label text="ℹ️" style="-fx-font-size: 18px"/>
                         <Label text="Laissez le mot de passe vide pour ne pas le modifier lors de l'édition"
                                wrapText="true"
-                               style="-fx-text-fill: #1976D2; -fx-font-size: 13px;"
+                               style="-fx-font-size: 13px"
                                HBox.hgrow="ALWAYS"/>
                      </HBox>
                   </VBox>
@@ -168,7 +167,7 @@
                      <children>
                         <!-- Titre -->
                         <HBox alignment="CENTER_LEFT" spacing="12" HBox.hgrow="ALWAYS">
-                           <Label text="📋" style="-fx-font-size: 22px;"/>
+                           <Label text="📋" style="-fx-font-size: 22px"/>
                            <Label text="Liste des Utilisateurs" styleClass="section-title">
                               <font>
                                  <Font name="System Bold" size="22.0"/>
@@ -186,7 +185,7 @@
                   </HBox>
 
                   <!-- Séparateur -->
-                  <Separator style="-fx-padding: 5 0;"/>
+                  <Separator style="-fx-padding: 5 0"/>
 
                   <!-- TableView des utilisateurs -->
                   <TableView fx:id="utilisateursTable" VBox.vgrow="ALWAYS">
@@ -199,30 +198,30 @@
 
                         <TableColumn fx:id="actionsColumn" text="Actions"
                                      prefWidth="150" minWidth="130"
-                                     style="-fx-alignment: CENTER;"/>
+                                     style="-fx-alignment: CENTER"/>
                      </columns>
 
                      <!-- Message si table vide -->
                      <placeholder>
-                        <VBox alignment="CENTER" spacing="15" style="-fx-padding: 50;">
-                           <Label text="👥" style="-fx-font-size: 64px; -fx-opacity: 0.3;"/>
+                        <VBox alignment="CENTER" spacing="15" style="-fx-padding: 50">
+                           <Label text="👥" style="-fx-font-size: 64px; -fx-opacity: 0.3"/>
                            <Label text="Aucun utilisateur trouvé"
-                                  style="-fx-font-size: 18px; -fx-text-fill: #a0aec0; -fx-font-weight: bold;"/>
+                                  style="-fx-font-size: 18px; -fx-font-weight: bold"/>
                            <Label text="Ajoutez votre premier utilisateur pour commencer"
-                                  style="-fx-font-size: 14px; -fx-text-fill: #cbd5e0;"/>
+                                  style="-fx-font-size: 14px"/>
                         </VBox>
                      </placeholder>
                   </TableView>
 
                   <!-- Séparateur -->
-                  <Separator style="-fx-padding: 5 0;"/>
+                  <Separator style="-fx-padding: 5 0"/>
 
                   <!-- Info en bas -->
                   <HBox alignment="CENTER_LEFT" spacing="10"
-                        style="-fx-background-color: rgba(245, 158, 11, 0.1); -fx-padding: 12; -fx-background-radius: 8; -fx-border-color: rgba(245, 158, 11, 0.3); -fx-border-width: 1; -fx-border-radius: 8;">
-                     <Label text="⚠️" style="-fx-font-size: 18px;"/>
+                        style="-fx-padding: 12; -fx-background-radius: 8; -fx-border-width: 1; -fx-border-radius: 8">
+                     <Label text="⚠️" style="-fx-font-size: 18px"/>
                      <Label text="La suppression d'un utilisateur est irréversible"
-                            style="-fx-text-fill: #d97706; -fx-font-size: 13px; -fx-font-weight: bold;"/>
+                            style="-fx-font-size: 13px; -fx-font-weight: bold"/>
                   </HBox>
                </children>
             </VBox>

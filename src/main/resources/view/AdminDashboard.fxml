@@ -12,19 +12,13 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane styleClass="root dashboard-root" stylesheets="@/styles/global.css, @/styles/dashboard.css" xmlns="http://javafx.com/javafx/23.0.1"
+<AnchorPane styleClass="root dashboard-root" xmlns="http://javafx.com/javafx/23.0.1"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="controller.AdminDashboardController">
-   <style>
-      -fx-background-image: url('/background/backgroundlogin.jpg');
-      -fx-background-size: cover;
-      -fx-background-position: center center;
-      -fx-background-repeat: no-repeat;
-   </style>
 
    <children>
       <!-- Semi-transparent overlay for better readability and clarity -->
-      <AnchorPane style="-fx-background-color: rgba(255, 255, 255, 0.08);" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" mouseTransparent="true" />
+      <AnchorPane  AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" mouseTransparent="true" />
       
       <VBox spacing="20"
             AnchorPane.topAnchor="0"
@@ -49,7 +43,7 @@
          <Separator/>
 
          <!-- DASHBOARD CONTENT -->
-         <VBox alignment="CENTER" spacing="30" VBox.vgrow="ALWAYS" style="-fx-padding: 30;">
+         <VBox alignment="CENTER" spacing="30" VBox.vgrow="ALWAYS" style="-fx-padding: 30">
             <children>
 
                <Label text="🏢 Dashboard Administrateur"

@@ -103,11 +103,11 @@ public class NoteDialogController {
             
             // Changer la couleur si proche de la limite
             if (length > 450) {
-                charCountLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #D32F2F; -fx-font-weight: bold;");
+                charCountLabel.setStyle("-fx-font-size: 11px; -fx-font-weight: bold;");
             } else if (length > 400) {
-                charCountLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #F57C00;");
+                charCountLabel.setStyle("-fx-font-size: 11px;");
             } else {
-                charCountLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #718096;");
+                charCountLabel.setStyle("-fx-font-size: 11px;");
             }
         });
         
@@ -286,7 +286,7 @@ public class NoteDialogController {
         
         // Changer temporairement la couleur de bordure
         String styleOriginal = node.getStyle();
-        node.setStyle(styleOriginal + "-fx-border-color: #D32F2F; -fx-border-width: 2;");
+        node.setStyle(styleOriginal + "-fx-border-width: 2;");
         
         new Thread(() -> {
             try {
@@ -342,7 +342,7 @@ public class NoteDialogController {
         
         // Style personnalisé pour l'alerte
         javafx.scene.Node alertNode = alert.getDialogPane();
-        alertNode.setStyle("-fx-background-color: white; -fx-background-radius: 12;");
+        alertNode.setStyle("-fx-background-radius: 12;");
         
         alert.showAndWait();
     }

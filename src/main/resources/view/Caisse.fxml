@@ -9,16 +9,10 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane styleClass="root" stylesheets="@/styles/global.css, @/styles/caisse.css" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.CaisseController">
-   <style>
-      -fx-background-image: url('/background/backgroundcaisse.jpg');
-      -fx-background-size: cover;
-      -fx-background-position: center center;
-      -fx-background-repeat: no-repeat;
-   </style>
+<AnchorPane styleClass="root" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.CaisseController">
    <children>
       <!-- Semi-transparent overlay for better readability and clarity -->
-      <AnchorPane style="-fx-background-color: rgba(255, 255, 255, 0.08);" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" mouseTransparent="true" />
+      <AnchorPane  AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" mouseTransparent="true" />
       
       <VBox spacing="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
@@ -27,7 +21,7 @@
                <children>
                   <Label styleClass="header-title" text="2M-Market - Caisse Employé" />
                   <Region HBox.hgrow="ALWAYS" />
-                  <Label fx:id="userLabel" style="-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: white;" text="👤 Utilisateur" />
+                  <Label fx:id="userLabel" style="-fx-font-weight: bold; -fx-font-size: 18px" text="👤 Utilisateur" />
                </children>
             </HBox>
             
@@ -35,12 +29,12 @@
             <HBox spacing="0.0" VBox.vgrow="ALWAYS">
                <children>
                   <!-- Left Panel - Panier -->
-                  <VBox spacing="15.0" style="-fx-background-color: rgba(249, 249, 249, 0.92); -fx-padding: 20; -fx-background-radius: 10;" HBox.hgrow="ALWAYS">
+                  <VBox spacing="15.0" style="-fx-padding: 20; -fx-background-radius: 10" HBox.hgrow="ALWAYS">
                      <children>
                         <Label styleClass="section-title" text="🛒 Panier Achat" />
-                        <ScrollPane fitToWidth="true" style="-fx-background: transparent; -fx-border-color: #e0e0e0; -fx-border-radius: 8;" VBox.vgrow="ALWAYS">
+                        <ScrollPane fitToWidth="true" style="-fx-background: transparent; -fx-border-radius: 8" VBox.vgrow="ALWAYS">
                            <content>
-                              <VBox fx:id="panierListContainer" spacing="15.0" style="-fx-padding: 15;" />
+                              <VBox fx:id="panierListContainer" spacing="15.0" style="-fx-padding: 15" />
                            </content>
                         </ScrollPane>
                         <HBox alignment="CENTER" spacing="15.0">
@@ -53,20 +47,20 @@
                   </VBox>
                   
                   <!-- Center Panel - Total & Payment -->
-                  <VBox alignment="CENTER" spacing="20.0" style="-fx-background-color: rgba(232, 232, 232, 0.95); -fx-background-radius: 15; -fx-padding: 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 15, 0, 0, 5);" HBox.hgrow="SOMETIMES" minWidth="350" maxWidth="450">
+                  <VBox alignment="CENTER" spacing="20.0" style="-fx-background-radius: 15; -fx-padding: 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 15, 0, 0, 5)" HBox.hgrow="SOMETIMES" minWidth="350" maxWidth="450">
                      <children>
                         <!-- Total Box -->
-                        <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: linear-gradient(to bottom, #424242, #212121); -fx-background-radius: 15; -fx-padding: 30; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 15, 0, 0, 5);" maxWidth="Infinity">
+                        <VBox alignment="CENTER" spacing="10.0" style="-fx-background-radius: 15; -fx-padding: 30; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 15, 0, 0, 5)" maxWidth="Infinity">
                            <children>
-                              <Label style="-fx-font-weight: bold; -fx-font-size: 20px; -fx-text-fill: white;" text="TOTAL" />
-                              <Label fx:id="totalLabel" style="-fx-font-weight: bold; -fx-font-size: 48px; -fx-text-fill: white;" text="€ 0,00" />
-                              <Label fx:id="tvaLabel" style="-fx-font-size: 16px; -fx-text-fill: #bdbdbd;" text="TVA: € 0,00" />
+                              <Label style="-fx-font-weight: bold; -fx-font-size: 20px" text="TOTAL" />
+                              <Label fx:id="totalLabel" style="-fx-font-weight: bold; -fx-font-size: 48px" text="€ 0,00" />
+                              <Label fx:id="tvaLabel" style="-fx-font-size: 16px" text="TVA: € 0,00" />
                            </children>
                         </VBox>
                         
                         <!-- Payment Options -->
                         <VBox spacing="15.0" alignment="CENTER" maxWidth="Infinity">
-                           <Label style="-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: #333;" text="Mode de Paiement" />
+                           <Label style="-fx-font-weight: bold; -fx-font-size: 18px" text="Mode de Paiement" />
                            <HBox spacing="15.0" alignment="CENTER">
                               <children>
                                  <Button fx:id="especesButton" mnemonicParsing="false" onAction="#handlePaiementEspeces" styleClass="btn, btn-primary" text="💵 Espèces" HBox.hgrow="ALWAYS" maxWidth="Infinity" prefHeight="60" />
@@ -79,10 +73,10 @@
                   </VBox>
                   
                   <!-- Right Panel - Actions -->
-                  <VBox alignment="CENTER" spacing="20.0" style="-fx-background-color: rgba(245, 245, 245, 0.95); -fx-background-radius: 15; -fx-padding: 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 15, 0, 0, 5);" HBox.hgrow="SOMETIMES" minWidth="300" maxWidth="400">
+                  <VBox alignment="CENTER" spacing="20.0" style="-fx-background-radius: 15; -fx-padding: 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 15, 0, 0, 5)" HBox.hgrow="SOMETIMES" minWidth="300" maxWidth="400">
                      <children>
-                        <Button fx:id="validerButton" mnemonicParsing="false" onAction="#handleValider" styleClass="btn, btn-primary" style="-fx-font-size: 20px; -fx-pref-height: 80;" text="✅ Valider &amp; Imprimer" maxWidth="Infinity" />
-                        <Button fx:id="annulerButton" mnemonicParsing="false" onAction="#handleAnnuler" styleClass="btn, btn-danger" style="-fx-font-size: 18px; -fx-pref-height: 70;" text="❌ Annuler Vente" maxWidth="Infinity" />
+                        <Button fx:id="validerButton" mnemonicParsing="false" onAction="#handleValider" styleClass="btn, btn-primary" style="-fx-font-size: 20px; -fx-pref-height: 80" text="✅ Valider &amp; Imprimer" maxWidth="Infinity" />
+                        <Button fx:id="annulerButton" mnemonicParsing="false" onAction="#handleAnnuler" styleClass="btn, btn-danger" style="-fx-font-size: 18px; -fx-pref-height: 70" text="❌ Annuler Vente" maxWidth="Infinity" />
                         
                         <Region VBox.vgrow="ALWAYS" />
                         

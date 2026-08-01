@@ -114,13 +114,8 @@ public class CaisseController {
         Platform.runLater(() -> {
             if (panierListContainer.getScene() != null) {
                 String globalCss = getClass().getResource("/styles/global.css").toExternalForm();
-                String caisseCss = getClass().getResource("/styles/caisse.css").toExternalForm();
-                if (!panierListContainer.getScene().getStylesheets().contains(globalCss)) {
-                    panierListContainer.getScene().getStylesheets().add(globalCss);
-                }
-                if (!panierListContainer.getScene().getStylesheets().contains(caisseCss)) {
-                    panierListContainer.getScene().getStylesheets().add(caisseCss);
-                }
+                // Feuilles chargees par FXMLUtils au niveau de la scene :
+                // les recharger ici les replacerait apres le theme.
             }
         });
     }
@@ -137,7 +132,7 @@ public class CaisseController {
 
         if (service.SessionContext.get().getPanier().getLignes().isEmpty()) {
             Label emptyLabel = new Label("Le panier est vide");
-            emptyLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #999; -fx-padding: 20;");
+            emptyLabel.setStyle("-fx-font-size: 16px; -fx-padding: 20;");
             panierListContainer.getChildren().add(emptyLabel);
             return;
         }
@@ -176,11 +171,11 @@ public class CaisseController {
         HBox.setHgrow(infoBox, Priority.ALWAYS);
 
         Label nomLabel = new Label(produit != null ? produit.getNom() : "Produit #" + detail.getProduitId());
-        nomLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #333;");
+        nomLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 16px;");
         nomLabel.setWrapText(true);
 
         Label codeLabel = new Label(produit != null ? produit.getCodeBarre() : "");
-        codeLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+        codeLabel.setStyle("-fx-font-size: 12px;");
 
         infoBox.getChildren().addAll(nomLabel, codeLabel);
 
@@ -190,19 +185,19 @@ public class CaisseController {
         quantiteContainer.setMinWidth(120);
         
         Label qteTitleLabel = new Label("Quantité");
-        qteTitleLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #999; -fx-font-weight: bold;");
+        qteTitleLabel.setStyle("-fx-font-size: 10px; -fx-font-weight: bold;");
         
         // Horizontal container for -/quantity/+ buttons
         HBox quantiteControls = new HBox(8);
         quantiteControls.setAlignment(Pos.CENTER);
         
         Label qteLabel = new Label(String.valueOf(detail.getQuantite()));
-        qteLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: #2E7D32; -fx-min-width: 35px; -fx-alignment: center;");
+        qteLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-min-width: 35px; -fx-alignment: center;");
 
         // Les libellés de prix sont déclarés ici pour que les boutons +/-
         // puissent les mettre à jour directement.
         Label prixTotalLabel = new Label(String.format("%.2f DT", detail.getSousTotal()));
-        prixTotalLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: #2E7D32;");
+        prixTotalLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 18px;");
 
         // Ne rafraîchit que la ligne concernée et le total. L'ancien code
         // appelait updatePanierView() à chaque +1, ce qui vidait et
@@ -253,7 +248,7 @@ public class CaisseController {
         prixContainer.setAlignment(Pos.CENTER_RIGHT);
         
         Label prixUnitLabel = new Label(String.format("%.2f DT /u", detail.getPrixVenteUnitaire()));
-        prixUnitLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+        prixUnitLabel.setStyle("-fx-font-size: 12px;");
 
         // prixTotalLabel est créé plus haut, avec les contrôles de quantité.
         prixContainer.getChildren().addAll(prixTotalLabel, prixUnitLabel);
@@ -431,14 +426,13 @@ public class CaisseController {
         
         VBox dialogRoot = new VBox(15);
         dialogRoot.setPadding(new Insets(20));
-        dialogRoot.setStyle("-fx-background-color: white;");
         
         // Label de titre
         Label titleLabel = new Label("✨ Recherche en temps réel");
-        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2E7D32;");
+        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
         
         Label subtitleLabel = new Label("Tapez pour voir les résultats instantanément (MAJ/min acceptés)");
-        subtitleLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #718096; -fx-font-style: italic;");
+        subtitleLabel.setStyle("-fx-font-size: 12px; -fx-font-style: italic;");
         
         // Champ de recherche
         javafx.scene.control.TextField rechercheField = new javafx.scene.control.TextField();
@@ -452,7 +446,7 @@ public class CaisseController {
         
         // Label pour le nombre de résultats
         Label countLabel = new Label("Tapez pour rechercher...");
-        countLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #4A5568;");
+        countLabel.setStyle("-fx-font-size: 12px;");
         
         // Cell factory pour afficher les produits joliment
         resultsListView.setCellFactory(lv -> new javafx.scene.control.ListCell<Produit>() {
@@ -472,7 +466,7 @@ public class CaisseController {
                         produit.getCodeBarre(), 
                         produit.getPrixVenteDefaut(), 
                         produit.getQuantiteStock()));
-                    detailsLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #718096;");
+                    detailsLabel.setStyle("-fx-font-size: 11px;");
                     
                     vbox.getChildren().addAll(nomLabel, detailsLabel);
                     setGraphic(vbox);
@@ -502,10 +496,10 @@ public class CaisseController {
             
             if (resultats.isEmpty()) {
                 countLabel.setText("❌ Aucun produit trouvé");
-                countLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #D32F2F;");
+                countLabel.setStyle("-fx-font-size: 12px;");
             } else {
                 countLabel.setText(String.format("✅ %d produit(s) trouvé(s)", resultats.size()));
-                countLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #2E7D32;");
+                countLabel.setStyle("-fx-font-size: 12px;");
             }
         });
         
@@ -514,7 +508,7 @@ public class CaisseController {
         buttonsBox.setAlignment(Pos.CENTER_RIGHT);
         
         Button ajouterBtn = new Button("✅ Ajouter au Panier");
-        ajouterBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20;");
+        ajouterBtn.setStyle("-fx-font-weight: bold; -fx-padding: 10 20;");
         ajouterBtn.setOnAction(e -> {
             Produit selected = resultsListView.getSelectionModel().getSelectedItem();
             if (selected != null) {
@@ -530,7 +524,7 @@ public class CaisseController {
         });
         
         Button annulerBtn = new Button("❌ Annuler");
-        annulerBtn.setStyle("-fx-background-color: #757575; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20;");
+        annulerBtn.setStyle("-fx-font-weight: bold; -fx-padding: 10 20;");
         annulerBtn.setOnAction(e -> dialogStage.close());
         
         buttonsBox.getChildren().addAll(annulerBtn, ajouterBtn);
@@ -622,7 +616,7 @@ public class CaisseController {
         resetButtonStyle(autreButton, "btn-accent");
 
         // Mettre en évidence le sélectionné
-        String selectedStyle = "-fx-border-color: white; -fx-border-width: 3; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 10, 0, 0, 0);";
+        String selectedStyle = "-fx-border-width: 3; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 10, 0, 0, 0);";
         
         if ("ESPÈCES".equals(modePaiement)) {
             especesButton.setStyle(especesButton.getStyle() + selectedStyle);
@@ -636,8 +630,7 @@ public class CaisseController {
     private void resetButtonStyle(Button btn, String styleClass) {
         btn.getStyleClass().clear();
         btn.getStyleClass().add("btn");
-        btn.getStyleClass().add(styleClass);
-        btn.setStyle(""); // Clear inline styles
+        btn.getStyleClass().add(styleClass); // Clear inline styles
     }
 
     // ============================================

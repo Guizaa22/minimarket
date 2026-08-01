@@ -6,15 +6,9 @@
 <?import javafx.scene.text.Font?>
 
 <AnchorPane xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.ConnexionController">
-   <style>
-      -fx-background-image: url('/background/backgroundlogin.jpg');
-      -fx-background-size: cover;
-      -fx-background-position: center center;
-      -fx-background-repeat: no-repeat;
-   </style>
    <children>
       <!-- Semi-transparent overlay for better readability and clarity -->
-      <AnchorPane style="-fx-background-color: rgba(255, 255, 255, 0.08);" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" mouseTransparent="true" />
+      <AnchorPane  AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" mouseTransparent="true" />
       
       <VBox alignment="CENTER" spacing="25.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
@@ -28,9 +22,9 @@
                   <Font size="16.0" />
                </font>
             </Label>
-            <VBox alignment="CENTER" spacing="20.0" style="-fx-background-color: rgba(255, 255, 255, 0.92); -fx-background-radius: 20; -fx-padding: 40; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 20, 0, 0, 10);">
+            <VBox alignment="CENTER" spacing="20.0" style="-fx-background-radius: 20; -fx-padding: 40; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 20, 0, 0, 10)">
                <children>
-                  <Label text="Connexion" textAlignment="CENTER" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2E7D32;">
+                  <Label text="Connexion" textAlignment="CENTER" style="-fx-font-size: 20px; -fx-font-weight: bold">
                      <font>
                         <Font name="System Bold" size="20.0" />
                      </font>
@@ -45,14 +39,14 @@
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                      </rowConstraints>
                      <children>
-                        <Label text="👤 Nom d'utilisateur:" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold;" />
+                        <Label text="👤 Nom d'utilisateur:" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold" />
                         <TextField fx:id="usernameField" onAction="#handleEnterKey" promptText="Entrez votre nom d'utilisateur" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-                        <Label text="🔒 Mot de passe:" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-weight: bold;" />
+                        <Label text="🔒 Mot de passe:" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-weight: bold" />
                         <PasswordField fx:id="passwordField" onAction="#handleLogin" promptText="Entrez votre mot de passe" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                      </children>
                   </GridPane>
                   <Button mnemonicParsing="false" onAction="#handleLogin" text="🔐 Se connecter" 
-                          style="-fx-background-color: linear-gradient(to bottom, #4CAF50, #2E7D32); -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16px; -fx-background-radius: 10; -fx-padding: 15 40; -fx-pref-width: 250; -fx-pref-height: 45; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 10, 0, 0, 5);" />
+                          style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-background-radius: 10; -fx-padding: 15 40; -fx-pref-width: 250; -fx-pref-height: 45; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 10, 0, 0, 5)" />
                </children>
             </VBox>
          </children>

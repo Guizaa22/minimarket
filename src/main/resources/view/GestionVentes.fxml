@@ -6,14 +6,7 @@
 <?import javafx.scene.chart.*?>
 <?import javafx.geometry.Insets?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="controller.GestionVentesController"
-            stylesheets="@/styles/gestion-ventes.css" styleClass="root">
-    <style>
-        -fx-background-image: url('/background/backgroundlogin.jpg');
-        -fx-background-size: cover;
-        -fx-background-position: center center;
-        -fx-background-repeat: no-repeat;
-    </style>
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="controller.GestionVentesController" styleClass="root">
 
     <!-- Header -->
     <top>
@@ -48,7 +41,7 @@
     <center>
         <StackPane>
             <!-- Overlay pour améliorer la lisibilité -->
-            <AnchorPane style="-fx-background-color: rgba(255, 255, 255, 0.05);" mouseTransparent="true" />
+            <AnchorPane  mouseTransparent="true" />
             <ScrollPane fitToWidth="true" styleClass="content-scroll">
                 <StackPane fx:id="contentPane" styleClass="content-container">
 
@@ -148,7 +141,7 @@
                     <HBox alignment="CENTER_LEFT" spacing="10" styleClass="table-header">
                         <Label text="🧾 Historique des Ventes" styleClass="section-title"/>
                         <Region HBox.hgrow="ALWAYS"/>
-                        <Label text="Filtrer par date:" style="-fx-text-fill: #333; -fx-font-size: 14px;"/>
+                        <Label text="Filtrer par date:" style="-fx-font-size: 14px"/>
                         <DatePicker fx:id="datePickerFilter" styleClass="date-picker"/>
                     </HBox>
 

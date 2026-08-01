@@ -330,7 +330,7 @@ public class GestionVentesController {
                     setStyle("");
                 } else {
                     setText(item.toString());
-                    setStyle("-fx-font-weight: bold; -fx-text-fill: #4CAF50; -fx-font-size: 16px;");
+                    setStyle("-fx-font-weight: bold; -fx-font-size: 16px;");
                     setAlignment(Pos.CENTER);
                 }
             }
@@ -346,7 +346,7 @@ public class GestionVentesController {
                     setStyle("");
                 } else {
                     setText(item);
-                    setStyle("-fx-font-weight: bold; -fx-text-fill: #2196F3; -fx-font-size: 16px;");
+                    setStyle("-fx-font-weight: bold; -fx-font-size: 16px;");
                     setAlignment(Pos.CENTER_RIGHT);
                 }
             }

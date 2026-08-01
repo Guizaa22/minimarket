@@ -57,8 +57,8 @@ public class ConnexionController {
                         String bgImage = getClass().getResource("/background/backgroundlogin.jpg").toExternalForm();
                         anchorPane.setStyle(
                             "-fx-background-image: url('" + bgImage + "'); " +
-                            "-fx-background-size: cover; " +
-                            "-fx-background-position: center; " +
+                            "-fx-background-size: cover;" +
+                            "-fx-background-position: center;" +
                             "-fx-background-repeat: no-repeat;"
                         );
                     }

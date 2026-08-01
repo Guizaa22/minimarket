@@ -90,76 +90,76 @@ public class AjoutStockMobileController {
         plusButton.setPrefSize(60, 60);
         moinsButton.setPrefSize(60, 60);
         plusButton.setStyle(
-            "-fx-background-color: #4CAF50; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-weight: bold; " +
-            "-fx-font-size: 24px; " +
-            "-fx-background-radius: 30; " +
-            "-fx-cursor: hand; " +
+            "" +
+            "" +
+            "-fx-font-weight: bold;" +
+            "-fx-font-size: 24px;" +
+            "-fx-background-radius: 30;" +
+            "-fx-cursor: hand;" +
             "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 8, 0, 0, 3);"
         );
         moinsButton.setStyle(
-            "-fx-background-color: #f44336; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-weight: bold; " +
-            "-fx-font-size: 24px; " +
-            "-fx-background-radius: 30; " +
-            "-fx-cursor: hand; " +
+            "" +
+            "" +
+            "-fx-font-weight: bold;" +
+            "-fx-font-size: 24px;" +
+            "-fx-background-radius: 30;" +
+            "-fx-cursor: hand;" +
             "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 8, 0, 0, 3);"
         );
         
         plusButton.setOnMouseEntered(e -> {
             plusButton.setStyle(
-                "-fx-background-color: #66BB6A; " +
-                "-fx-text-fill: white; " +
-                "-fx-font-weight: bold; " +
-                "-fx-font-size: 24px; " +
-                "-fx-background-radius: 30; " +
-                "-fx-cursor: hand; " +
-                "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 10, 0, 0, 4); " +
-                "-fx-scale-x: 1.1; " +
+                "" +
+                "" +
+                "-fx-font-weight: bold;" +
+                "-fx-font-size: 24px;" +
+                "-fx-background-radius: 30;" +
+                "-fx-cursor: hand;" +
+                "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 10, 0, 0, 4);" +
+                "-fx-scale-x: 1.1;" +
                 "-fx-scale-y: 1.1;"
             );
         });
         
         plusButton.setOnMouseExited(e -> {
             plusButton.setStyle(
-                "-fx-background-color: #4CAF50; " +
-                "-fx-text-fill: white; " +
-                "-fx-font-weight: bold; " +
-                "-fx-font-size: 24px; " +
-                "-fx-background-radius: 30; " +
-                "-fx-cursor: hand; " +
-                "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 8, 0, 0, 3); " +
-                "-fx-scale-x: 1.0; " +
+                "" +
+                "" +
+                "-fx-font-weight: bold;" +
+                "-fx-font-size: 24px;" +
+                "-fx-background-radius: 30;" +
+                "-fx-cursor: hand;" +
+                "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 8, 0, 0, 3);" +
+                "-fx-scale-x: 1.0;" +
                 "-fx-scale-y: 1.0;"
             );
         });
         
         moinsButton.setOnMouseEntered(e -> {
             moinsButton.setStyle(
-                "-fx-background-color: #d32f2f; " +
-                "-fx-text-fill: white; " +
-                "-fx-font-weight: bold; " +
-                "-fx-font-size: 24px; " +
-                "-fx-background-radius: 30; " +
-                "-fx-cursor: hand; " +
-                "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 10, 0, 0, 4); " +
-                "-fx-scale-x: 1.1; " +
+                "" +
+                "" +
+                "-fx-font-weight: bold;" +
+                "-fx-font-size: 24px;" +
+                "-fx-background-radius: 30;" +
+                "-fx-cursor: hand;" +
+                "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 10, 0, 0, 4);" +
+                "-fx-scale-x: 1.1;" +
                 "-fx-scale-y: 1.1;"
             );
         });
         
         moinsButton.setOnMouseExited(e -> {
             moinsButton.setStyle(
-                "-fx-background-color: #f44336; " +
-                "-fx-text-fill: white; " +
-                "-fx-font-weight: bold; " +
-                "-fx-font-size: 24px; " +
-                "-fx-background-radius: 30; " +
-                "-fx-cursor: hand; " +
-                "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 8, 0, 0, 3); " +
-                "-fx-scale-x: 1.0; " +
+                "" +
+                "" +
+                "-fx-font-weight: bold;" +
+                "-fx-font-size: 24px;" +
+                "-fx-background-radius: 30;" +
+                "-fx-cursor: hand;" +
+                "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 8, 0, 0, 3);" +
+                "-fx-scale-x: 1.0;" +
                 "-fx-scale-y: 1.0;"
             );
         });
@@ -186,7 +186,7 @@ public class AjoutStockMobileController {
         } else {
             masquerInfosProduit();
             produitNomLabel.setText("❌ Produit introuvable");
-            produitNomLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #f44336;");
+            produitNomLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
             produitInfoLabel.setText("Code-barres: " + codeBarre);
         }
     }
@@ -196,7 +196,7 @@ public class AjoutStockMobileController {
      */
     private void afficherInfosProduit(Produit produit) {
         produitNomLabel.setText("✅ " + produit.getNom());
-        produitNomLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #4CAF50;");
+        produitNomLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
         
         String info = String.format(
             "📋 Code: %s | 📂 %s | 📦 Stock: %d %s | ⚠️ Seuil: %d",
@@ -207,11 +207,11 @@ public class AjoutStockMobileController {
             produit.getSeuilAlerte()
         );
         produitInfoLabel.setText(info);
-        produitInfoLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
+        produitInfoLabel.setStyle("-fx-font-size: 14px;");
         
         // Colorer selon le stock
         if (produit.getQuantiteStock() <= produit.getSeuilAlerte()) {
-            produitInfoLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #f44336; -fx-font-weight: bold;");
+            produitInfoLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         }
     }
     
@@ -220,7 +220,7 @@ public class AjoutStockMobileController {
      */
     private void masquerInfosProduit() {
         produitNomLabel.setText("🔍 Scannez ou entrez un code-barres");
-        produitNomLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: #999;");
+        produitNomLabel.setStyle("-fx-font-size: 18px;");
         produitInfoLabel.setText("");
         produitActuel = null;
     }
@@ -319,11 +319,11 @@ public class AjoutStockMobileController {
         for (int i = 0; i < maxItems; i++) {
             Label item = new Label(historique.get(i));
             item.setStyle(
-                "-fx-font-size: 14px; " +
-                "-fx-padding: 8; " +
-                "-fx-background-color: #e8f5e9; " +
-                "-fx-background-radius: 5; " +
-                "-fx-border-color: #c8e6c9; " +
+                "-fx-font-size: 14px;" +
+                "-fx-padding: 8;" +
+                "" +
+                "-fx-background-radius: 5;" +
+                "" +
                 "-fx-border-radius: 5;"
             );
             item.setMaxWidth(Double.MAX_VALUE);
