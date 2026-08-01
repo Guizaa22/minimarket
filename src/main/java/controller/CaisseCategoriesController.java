@@ -667,37 +667,25 @@ public class CaisseCategoriesController {
     /**
      * Affiche une popup pour choisir entre paquet et cigarette pour les produits tabac
      */
+    /**
+     * Ouvre le dialogue de vente tabac : unité, quantité et total avant validation.
+     *
+     * Remplace l'ancienne Alert à deux boutons, qui ne demandait pas la quantité
+     * et proposait « Cigarette » même pour les produits sans prix unitaire.
+     */
     private void afficherPopupChoixTabac(Produit produit, int quantite) {
-        LOG.info("Popup tabac affiché pour: " + produit.getNom() + " (isTabac: " + produit.isTabac() + ")");
-        
-        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Type de vente - Tabac");
-        alert.setHeaderText("Choisissez le type de vente pour: " + produit.getNom());
-        alert.setContentText("Voulez-vous vendre en paquet ou en cigarette ?");
-        
-        ButtonType buttonTypePaquet = new ButtonType("Paquet");
-        ButtonType buttonTypeCigarette = new ButtonType("Cigarette");
-        ButtonType buttonTypeCancel = new ButtonType("Annuler", javafx.scene.control.ButtonBar.ButtonData.CANCEL_CLOSE);
-        
-        alert.getButtonTypes().setAll(buttonTypePaquet, buttonTypeCigarette, buttonTypeCancel);
-        
-        java.util.Optional<ButtonType> result = alert.showAndWait();
-        if (result.isPresent()) {
-            if (result.get() == buttonTypePaquet) {
-                LOG.info("Choix: Paquet");
-                ajouterAuPanierSilencieux(produit, quantite, "paquet");
-                produitInfoLabel.setText("✓ " + produit.getNom() + " (Paquet) ajouté");
-                produitInfoLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 13px;");
-            } else if (result.get() == buttonTypeCigarette) {
-                LOG.info("Choix: Cigarette");
-                ajouterAuPanierSilencieux(produit, quantite, "cigarette");
-                produitInfoLabel.setText("✓ " + produit.getNom() + " (Cigarette) ajouté");
-                produitInfoLabel.setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold; -fx-font-size: 13px;");
-            }
-            // Si annulé, ne rien faire
-        } else {
-            LOG.info("Popup annulé");
-        }
+        ui.DialogueVenteTabac.ouvrir(produit).ifPresent(choix -> {
+            ajouterAuPanierSilencieux(produit, choix.quantite, choix.uniteVente);
+
+            String libelle = choix.estCigarette()
+                    ? choix.quantite + " cigarette(s)"
+                    : choix.quantite + " paquet(s)";
+            ui.Toast.succes(produitInfoLabel, String.format(
+                    "%s — %s (%.3f DT)", produit.getNom(), libelle, choix.total));
+
+            LOG.info("Tabac ajouté : {} x{} {} = {} DT",
+                    produit.getNom(), choix.quantite, choix.uniteVente, choix.total);
+        });
     }
 
     /**
@@ -753,11 +741,27 @@ public class CaisseCategoriesController {
                 produitInfoLabel.setStyle("-fx-text-fill: #f44336; -fx-font-weight: bold; -fx-font-size: 13px;");
                 return;
             }
-            
+
+            // Tarif correspondant à l'unité vendue. Le prix du paquet était
+            // appliqué quel que soit le choix : une cigarette à l'unité était
+            // donc facturée au prix du paquet entier.
+            java.math.BigDecimal prixUnitaire;
+            if ("cigarette".equals(typeVenteFinal)) {
+                if (!produit.vendableALaCigarette()) {
+                    produitInfoLabel.setText("❌ « " + produit.getNom()
+                            + " » ne se vend qu'au paquet");
+                    produitInfoLabel.setStyle("-fx-text-fill: #f44336; -fx-font-weight: bold; -fx-font-size: 13px;");
+                    return;
+                }
+                prixUnitaire = produit.getPrixVenteCigarette();
+            } else {
+                prixUnitaire = produit.getPrixVenteDefaut();
+            }
+
             DetailVente detail = new DetailVente();
             detail.setProduitId(produit.getId());
             detail.setQuantite(quantite);
-            detail.setPrixVenteUnitaire(produit.getPrixVenteDefaut());
+            detail.setPrixVenteUnitaire(prixUnitaire);
             detail.setPrixAchatUnitaire(produit.getPrixAchatActuel() != null ? produit.getPrixAchatActuel() : java.math.BigDecimal.ZERO);
             detail.setProduit(produit);
             detail.setTypeVenteTabac(typeVenteFinal);

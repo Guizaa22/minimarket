@@ -133,12 +133,29 @@
                         </VBox>
 
                         <VBox spacing="6" HBox.hgrow="ALWAYS">
-                           <Label text="Prix de vente (€)" styleClass="form-label">
+                           <Label text="Prix de vente (DT)" styleClass="form-label">
                               <font>
                                  <Font name="System Bold" size="14.0"/>
                               </font>
                            </Label>
-                           <TextField fx:id="prixVenteField" promptText="0.00"/>
+                           <TextField fx:id="prixVenteField" promptText="0.000"/>
+                        </VBox>
+                     </HBox>
+
+                     <!-- Prix à la cigarette : visible uniquement pour une
+                          catégorie de type Tabac. Facultatif — tous les paquets
+                          ne se vendent pas au détail ; laissé vide, le produit
+                          ne se vend qu'au paquet. -->
+                     <HBox fx:id="ligneprixCigarette" spacing="12" managed="false" visible="false">
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                           <Label text="Prix à la cigarette (DT) — facultatif" styleClass="form-label">
+                              <font>
+                                 <Font name="System Bold" size="14.0"/>
+                              </font>
+                           </Label>
+                           <TextField fx:id="prixCigaretteField" promptText="laisser vide si vente au paquet uniquement"/>
+                           <Label fx:id="aideCigaretteLabel" styleClass="sous-titre"
+                                  text="1 paquet = 20 cigarettes. Renseigner ce prix active la vente à l'unité."/>
                         </VBox>
                      </HBox>
 

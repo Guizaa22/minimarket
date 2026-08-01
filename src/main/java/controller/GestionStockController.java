@@ -67,6 +67,13 @@ public class GestionStockController {
     @FXML
     private TextField prixVenteField;
 
+    /** Prix à la cigarette : affiché uniquement pour les catégories tabac. */
+    @FXML
+    private TextField prixCigaretteField;
+
+    @FXML
+    private javafx.scene.layout.HBox ligneprixCigarette;
+
     @FXML
     private TextField quantiteStockField;
 
@@ -145,6 +152,11 @@ public class GestionStockController {
         
         // Charger les catégories
         chargerCategories();
+
+        // Le prix à la cigarette n'a de sens que pour le tabac : la ligne
+        // n'apparaît que si la catégorie choisie est de type Tabac.
+        categorieComboBox.valueProperty().addListener(
+                (obs, avant, apres) -> majVisibilitePrixCigarette(apres));
 
         // Configuration des colonnes
         configureTableColumns();
@@ -615,6 +627,10 @@ public class GestionStockController {
         }
         prixAchatField.setText(produit.getPrixAchatActuel().toString());
         prixVenteField.setText(produit.getPrixVenteDefaut().toString());
+        if (prixCigaretteField != null) {
+            prixCigaretteField.setText(produit.getPrixVenteCigarette() != null
+                    ? produit.getPrixVenteCigarette().toPlainString() : "");
+        }
         quantiteStockField.setText(String.valueOf(produit.getQuantiteStock()));
         seuilAlerteField.setText(String.valueOf(produit.getSeuilAlerte()));
     }
@@ -628,6 +644,9 @@ public class GestionStockController {
         categorieComboBox.setValue(null);
         prixAchatField.clear();
         prixVenteField.clear();
+        if (prixCigaretteField != null) {
+            prixCigaretteField.clear();
+        }
         quantiteStockField.clear();
         seuilAlerteField.clear();
         produitsTable.getSelectionModel().clearSelection();
@@ -651,9 +670,45 @@ public class GestionStockController {
         int quantiteStock = Integer.parseInt(quantiteStockField.getText().trim());
         int seuilAlerte = Integer.parseInt(seuilAlerteField.getText().trim());
 
-        return new Produit(codeBarre, nom, categorieValeur, prixAchat, prixVente, quantiteStock, "unité", seuilAlerte);
+        Produit produit = new Produit(codeBarre, nom, categorieValeur, prixAchat, prixVente,
+                quantiteStock, "unité", seuilAlerte);
+
+        // Prix à la cigarette : facultatif, et uniquement pour le tabac.
+        // Laissé vide, il reste null et le produit ne se vend qu'au paquet —
+        // l'option « Cigarettes » n'apparaîtra pas en caisse.
+        if (categorieSelectionnee != null && categorieSelectionnee.estTabac()
+                && prixCigaretteField != null
+                && !prixCigaretteField.getText().trim().isEmpty()) {
+            try {
+                BigDecimal prixCigarette = new BigDecimal(prixCigaretteField.getText().trim());
+                if (prixCigarette.signum() > 0) {
+                    produit.setPrixVenteCigarette(prixCigarette);
+                }
+            } catch (NumberFormatException e) {
+                // Signalé par validerFormulaire() avant d'arriver ici.
+                LOG.warn("Prix cigarette illisible : {}", prixCigaretteField.getText());
+            }
+        }
+
+        return produit;
     }
     
+    /**
+     * Affiche ou masque la ligne « prix à la cigarette » selon la catégorie.
+     * managed est piloté en même temps que visible, faute de quoi la ligne
+     * masquée continuerait d'occuper sa place dans le formulaire.
+     */
+    private void majVisibilitePrixCigarette(Categorie categorie) {
+        boolean tabac = categorie != null && categorie.estTabac();
+        if (ligneprixCigarette != null) {
+            ligneprixCigarette.setVisible(tabac);
+            ligneprixCigarette.setManaged(tabac);
+        }
+        if (!tabac && prixCigaretteField != null) {
+            prixCigaretteField.clear();
+        }
+    }
+
     /**
      * Charge les catégories dans le ComboBox
      */

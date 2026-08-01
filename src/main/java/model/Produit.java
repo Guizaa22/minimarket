@@ -181,27 +181,35 @@ public class Produit {
     /**
      * Prix unitaire selon l'unité facturée.
      *
-     * En l'absence de prix cigarette renseigné, on retombe sur le prorata du
-     * paquet plutôt que de refuser la vente — quitte à sous-facturer
-     * légèrement, ce qui reste préférable à bloquer la caisse.
+     * @throws IllegalStateException si l'on demande un prix cigarette pour un
+     *         produit qui n'en a pas. Aucun repli sur le prorata du paquet :
+     *         tous les paquets ne se vendent pas à l'unité, et une division
+     *         automatique facturerait un tarif que le commerçant n'a jamais
+     *         fixé. L'interface n'offre l'option que si le prix existe, cette
+     *         exception ne doit donc jamais survenir en usage normal.
      */
     public BigDecimal prixPour(String uniteVente) {
         if ("cigarette".equalsIgnoreCase(uniteVente)) {
-            if (prixVenteCigarette != null && prixVenteCigarette.signum() > 0) {
-                return prixVenteCigarette;
+            if (!vendableALaCigarette()) {
+                throw new IllegalStateException(
+                        "« " + nom + " » n'a pas de prix à la cigarette : "
+                        + "ce produit ne se vend qu'au paquet.");
             }
-            if (prixVenteDefaut != null) {
-                return prixVenteDefaut.divide(
-                        BigDecimal.valueOf(TypeCategorie.CIGARETTES_PAR_PAQUET),
-                        3, java.math.RoundingMode.HALF_UP);
-            }
+            return prixVenteCigarette;
         }
         return prixVenteDefaut;
     }
 
-    /** true si le produit peut être vendu à la cigarette. */
+    /**
+     * true si le produit peut être vendu à la cigarette.
+     *
+     * La vente au détail est facultative et se décide produit par produit :
+     * renseigner un prix cigarette l'active, le laisser vide la désactive.
+     */
     public boolean vendableALaCigarette() {
-        return isTabac();
+        return isTabac()
+                && prixVenteCigarette != null
+                && prixVenteCigarette.signum() > 0;
     }
     
     /**
