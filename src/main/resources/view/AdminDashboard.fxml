@@ -3,222 +3,180 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
 
-<AnchorPane styleClass="root dashboard-root" xmlns="http://javafx.com/javafx/23.0.1"
+<!--
+    Tableau de bord administrateur.
+
+    Les modules de gestion étaient auparavant des boutons dispersés en bas de
+    page, sur deux rangées mal alignées. Ils forment désormais une barre
+    latérale : liste verticale, largeur fixe, ordre stable d'un écran à
+    l'autre — l'œil retrouve toujours le même bouton au même endroit.
+
+    Les indicateurs occupent la zone principale et restent cliquables.
+-->
+<BorderPane xmlns="http://javafx.com/javafx/17.0.2-ea"
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="controller.AdminDashboardController">
+            fx:controller="controller.AdminDashboardController"
+            styleClass="root">
 
-   <children>
-      <!-- Semi-transparent overlay for better readability and clarity -->
-      <AnchorPane  AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" mouseTransparent="true" />
-      
-      <VBox spacing="20"
-            AnchorPane.topAnchor="0"
-            AnchorPane.bottomAnchor="0"
-            AnchorPane.leftAnchor="0"
-            AnchorPane.rightAnchor="0">
+   <!-- ============================================================
+        BARRE LATÉRALE — modules de gestion
+        ============================================================ -->
+   <left>
+      <VBox fx:id="barreLaterale" styleClass="barre-laterale" spacing="6" minWidth="264" prefWidth="264">
+         <padding>
+            <Insets top="18" right="14" bottom="18" left="14"/>
+         </padding>
+         <children>
+            <Label text="MODULES" styleClass="barre-laterale-titre"/>
 
-         <!-- HEADER -->
-         <HBox alignment="CENTER_LEFT" spacing="15" styleClass="dashboard-header">
-            <children>
-               <Label fx:id="welcomeLabel"
-                      text="Bienvenue, Admin"
-                      styleClass="dashboard-header-label" />
-               <Region HBox.hgrow="ALWAYS" />
-               <Button fx:id="deconnexionButton"
-                       text="🚪 Déconnexion"
-                       onAction="#handleDeconnexion"
-                       styleClass="dashboard-logout-button" />
-            </children>
-         </HBox>
+            <Button fx:id="gestionStockButton"
+                    text="Gestion de Stock"
+                    onAction="#handleGestionStock"
+                    styleClass="bouton-lateral"
+                    maxWidth="Infinity"/>
 
-         <Separator/>
+            <Button fx:id="gestionUtilisateursButton"
+                    text="Gestion Utilisateurs"
+                    onAction="#handleGestionUtilisateurs"
+                    styleClass="bouton-lateral"
+                    maxWidth="Infinity"/>
 
-         <!-- DASHBOARD CONTENT -->
-         <VBox alignment="CENTER" spacing="30" VBox.vgrow="ALWAYS" style="-fx-padding: 30">
-            <children>
+            <Button fx:id="gestionVentesButton"
+                    text="Gestion des Ventes"
+                    onAction="#handleGestionVentes"
+                    styleClass="bouton-lateral"
+                    maxWidth="Infinity"/>
 
-               <Label text="🏢 Dashboard Administrateur"
-                      styleClass="dashboard-title"
-                      textAlignment="CENTER" />
+            <Button fx:id="gestionTabacButton"
+                    text="Caisse Tabac"
+                    onAction="#handleGestionTabac"
+                    styleClass="bouton-lateral"
+                    maxWidth="Infinity"/>
 
-               <VBox alignment="CENTER" spacing="30" styleClass="dashboard-container">
-                  <children>
-                     <Label text="📊 Modules de Gestion" styleClass="dashboard-section-title" />
-                     
-                     <HBox alignment="CENTER" spacing="20">
-                        <children>
-                           <VBox fx:id="carteProduits" alignment="CENTER_LEFT" spacing="8" styleClass="dashboard-stat-card">
-                              <children>
-                                 <Label text="📦 Produits en stock" styleClass="dashboard-stat-title" />
-                                 <Label fx:id="totalProduitsStatLabel" text="0" styleClass="dashboard-stat-value" />
-                                 <Label text="Articles disponibles" styleClass="dashboard-stat-subtitle" />
-                              </children>
-                           </VBox>
-                           
-                           <VBox fx:id="carteRuptures" alignment="CENTER_LEFT" spacing="8" styleClass="dashboard-stat-card">
-                              <children>
-                                 <Label text="⚠️ Ruptures" styleClass="dashboard-stat-title" />
-                                 <Label fx:id="rupturesStatLabel" text="0" styleClass="dashboard-stat-value-warning" />
-                                 <Label text="Produits à réapprovisionner" styleClass="dashboard-stat-subtitle" />
-                              </children>
-                           </VBox>
-                           
-                           <VBox fx:id="carteVentes" alignment="CENTER_LEFT" spacing="8" styleClass="dashboard-stat-card">
-                              <children>
-                                 <Label text="💰 Ventes aujourd'hui" styleClass="dashboard-stat-title" />
-                                 <Label fx:id="ventesJourStatLabel" text="0 DT" styleClass="dashboard-stat-value-accent" />
-                                 <Label text="Chiffre d'affaires du jour" styleClass="dashboard-stat-subtitle" />
-                              </children>
-                           </VBox>
-                           
-                           <VBox fx:id="carteFournisseurs" alignment="CENTER_LEFT" spacing="8" styleClass="dashboard-stat-card">
-                              <children>
-                                 <Label text="🏢 Fournisseurs" styleClass="dashboard-stat-title" />
-                                 <Label fx:id="totalFournisseursLabel" text="0" styleClass="dashboard-stat-value" />
-                                 <Label text="Total fournisseurs" styleClass="dashboard-stat-subtitle" />
-                              </children>
-                           </VBox>
-                        </children>
-                     </HBox>
-                     
-                     <HBox alignment="CENTER" spacing="20">
-                        <children>
-                           <VBox fx:id="carteCredits" alignment="CENTER_LEFT" spacing="8" styleClass="dashboard-stat-card">
-                              <children>
-                                 <Label text="💳 Crédits totaux" styleClass="dashboard-stat-title" />
-                                 <Label fx:id="totalCreditsLabel" text="0 DT" styleClass="dashboard-stat-value-accent" />
-                                 <Label text="Crédits fournisseurs" styleClass="dashboard-stat-subtitle" />
-                              </children>
-                           </VBox>
-                           
-                           <VBox fx:id="cartePaiements" alignment="CENTER_LEFT" spacing="8" styleClass="dashboard-stat-card">
-                              <children>
-                                 <Label text="💸 Paiements aujourd'hui" styleClass="dashboard-stat-title" />
-                                 <Label fx:id="paiementsJourLabel" text="0 DT" styleClass="dashboard-stat-value-warning" />
-                                 <Label text="Sorties de caisse" styleClass="dashboard-stat-subtitle" />
-                              </children>
-                           </VBox>
-                           
-                           <VBox fx:id="carteNotes" alignment="CENTER_LEFT" spacing="8" styleClass="dashboard-stat-card">
-                              <children>
-                                 <Label text="📝 Notes aujourd'hui" styleClass="dashboard-stat-title" />
-                                 <Label fx:id="notesJourLabel" text="0" styleClass="dashboard-stat-value" />
-                                 <Label text="Notes enregistrées" styleClass="dashboard-stat-subtitle" />
-                              </children>
-                           </VBox>
-                        </children>
-                     </HBox>
-                     
-                     <HBox alignment="CENTER" spacing="30" styleClass="dashboard-buttons-container">
-                        <children>
+            <Button fx:id="visualisationProduitsButton"
+                    text="Visualisation Produits"
+                    onAction="#handleVisualisationProduits"
+                    styleClass="bouton-lateral"
+                    maxWidth="Infinity"/>
 
-                           <!-- GESTION STOCK -->
-                           <VBox alignment="CENTER" spacing="12">
-                              <children>
-                                 <Button fx:id="gestionStockButton"
-                                         text="📦 Gestion de Stock"
-                                         onAction="#handleGestionStock"
-                                         styleClass="dashboard-button dashboard-button-primary" />
-                                 <Label text="Gérer les produits et le stock" 
-                                        styleClass="dashboard-button-label"
-                                        textAlignment="CENTER" 
-                                        wrapText="true" 
-                                        maxWidth="350" />
-                              </children>
-                           </VBox>
+            <Separator/>
 
-                           <!-- GESTION UTILISATEURS -->
-                           <VBox alignment="CENTER" spacing="12">
-                              <children>
-                                 <Button fx:id="gestionUtilisateursButton"
-                                         text="👥 Gestion Utilisateurs"
-                                         onAction="#handleGestionUtilisateurs"
-                                         styleClass="dashboard-button dashboard-button-accent" />
-                                 <Label text="Gérer les utilisateurs" 
-                                        styleClass="dashboard-button-label"
-                                        textAlignment="CENTER" 
-                                        wrapText="true" 
-                                        maxWidth="350" />
-                              </children>
-                           </VBox>
+            <Label text="SUIVI" styleClass="barre-laterale-titre"/>
 
-                           <!-- GESTION DES VENTES -->
-                           <VBox alignment="CENTER" spacing="12">
-                              <children>
-                                 <Button fx:id="gestionVentesButton"
-                                         text="💰 Gestion des Ventes"
-                                         onAction="#handleGestionVentes"
-                                         styleClass="dashboard-button dashboard-button-warning" />
-                                 <Label text="Consulter les ventes" 
-                                        styleClass="dashboard-button-label"
-                                        textAlignment="CENTER" 
-                                        wrapText="true" 
-                                        maxWidth="350" />
-                              </children>
-                           </VBox>
+            <Button fx:id="auditButton"
+                    text="Journal d'audit"
+                    onAction="#handleAudit"
+                    styleClass="bouton-lateral"
+                    maxWidth="Infinity"/>
 
-                           <!-- GESTION TABAC -->
-                           <VBox alignment="CENTER" spacing="12">
-                              <children>
-                                 <Button fx:id="gestionTabacButton"
-                                         text="🚬 Caisse Tabac"
-                                         onAction="#handleGestionTabac"
-                                         styleClass="dashboard-button dashboard-button-purple" />
-                                 <Label text="Ventes Tabac/Puff/Terrea" 
-                                        styleClass="dashboard-button-label"
-                                        textAlignment="CENTER" 
-                                        wrapText="true" 
-                                        maxWidth="350" />
-                              </children>
-                           </VBox>
+            <!-- Repousse la déconnexion en bas : elle ne doit pas voisiner
+                 avec les modules, où un appui accidentel fermerait la session. -->
+            <Region VBox.vgrow="ALWAYS"/>
 
-                           <!-- VISUALISATION PRODUITS -->
-                           <VBox alignment="CENTER" spacing="12">
-                              <children>
-                                 <Button fx:id="visualisationProduitsButton"
-                                         text="👁️ Visualisation Produits"
-                                         onAction="#handleVisualisationProduits"
-                                         styleClass="dashboard-button dashboard-button-cyan" />
-                                 <Label text="Voir tous les produits"
-                                        styleClass="dashboard-button-label"
-                                        textAlignment="CENTER"
-                                        wrapText="true"
-                                        maxWidth="350" />
-
-                                 <!-- Journal d'audit : qui a modifié quoi, et quand.
-                                      Les données existaient déjà, aucun écran ne
-                                      permettait de les consulter. -->
-                                 <Button fx:id="auditButton"
-                                         text="🗒 Journal d'audit"
-                                         onAction="#handleAudit"
-                                         styleClass="dashboard-button dashboard-button-cyan" />
-                                 <Label text="Historique des actions (ajout, modification, suppression)"
-                                        styleClass="dashboard-button-label"
-                                        textAlignment="CENTER"
-                                        wrapText="true"
-                                        maxWidth="350" />
-                              </children>
-                           </VBox>
-                        </children>
-                     </HBox>
-                  </children>
-               </VBox>
-            </children>
-
-            <padding>
-               <Insets top="20" bottom="20" left="20" right="20"/>
-            </padding>
-         </VBox>
-
+            <Button fx:id="deconnexionButton"
+                    text="Déconnexion"
+                    onAction="#handleDeconnexion"
+                    styleClass="bouton-lateral, bouton-lateral-sortie"
+                    maxWidth="Infinity"/>
+         </children>
       </VBox>
-   </children>
-</AnchorPane>
+   </left>
+
+   <!-- ============================================================
+        ZONE PRINCIPALE — indicateurs
+        ============================================================ -->
+   <center>
+      <ScrollPane fitToWidth="true" styleClass="zone-principale">
+         <content>
+            <VBox spacing="18">
+               <padding>
+                  <Insets top="22" right="26" bottom="26" left="26"/>
+               </padding>
+               <children>
+                  <Label fx:id="welcomeLabel" text="Tableau de bord" styleClass="titre"/>
+                  <Label text="Appuyez sur un indicateur pour en voir le détail."
+                         styleClass="sous-titre"/>
+
+                  <!-- FlowPane : les cartes se réorganisent selon la largeur
+                       disponible, au lieu de déborder sur un écran étroit. -->
+                  <FlowPane hgap="16" vgap="16">
+                     <children>
+                        <VBox fx:id="carteProduits" alignment="CENTER_LEFT" spacing="6"
+                              styleClass="dashboard-stat-card" minWidth="228">
+                           <children>
+                              <Label text="Produits en stock" styleClass="dashboard-stat-title"/>
+                              <Label fx:id="totalProduitsStatLabel" text="0" styleClass="dashboard-stat-value"/>
+                              <Label text="Articles disponibles" styleClass="sous-titre"/>
+                           </children>
+                        </VBox>
+
+                        <VBox fx:id="carteRuptures" alignment="CENTER_LEFT" spacing="6"
+                              styleClass="dashboard-stat-card" minWidth="228">
+                           <children>
+                              <Label text="Ruptures" styleClass="dashboard-stat-title"/>
+                              <Label fx:id="rupturesStatLabel" text="0" styleClass="dashboard-stat-value-warning"/>
+                              <Label text="Produits à réapprovisionner" styleClass="sous-titre"/>
+                           </children>
+                        </VBox>
+
+                        <VBox fx:id="carteVentes" alignment="CENTER_LEFT" spacing="6"
+                              styleClass="dashboard-stat-card" minWidth="228">
+                           <children>
+                              <Label text="Ventes aujourd'hui" styleClass="dashboard-stat-title"/>
+                              <Label fx:id="ventesJourStatLabel" text="0 DT" styleClass="dashboard-stat-value-accent"/>
+                              <Label text="Chiffre d'affaires du jour" styleClass="sous-titre"/>
+                           </children>
+                        </VBox>
+
+                        <VBox fx:id="carteFournisseurs" alignment="CENTER_LEFT" spacing="6"
+                              styleClass="dashboard-stat-card" minWidth="228">
+                           <children>
+                              <Label text="Fournisseurs" styleClass="dashboard-stat-title"/>
+                              <Label fx:id="totalFournisseursLabel" text="0" styleClass="dashboard-stat-value"/>
+                              <Label text="Total fournisseurs" styleClass="sous-titre"/>
+                           </children>
+                        </VBox>
+
+                        <VBox fx:id="carteCredits" alignment="CENTER_LEFT" spacing="6"
+                              styleClass="dashboard-stat-card" minWidth="228">
+                           <children>
+                              <Label text="Crédits totaux" styleClass="dashboard-stat-title"/>
+                              <Label fx:id="totalCreditsLabel" text="0 DT" styleClass="dashboard-stat-value-accent"/>
+                              <Label text="Crédits fournisseurs" styleClass="sous-titre"/>
+                           </children>
+                        </VBox>
+
+                        <VBox fx:id="cartePaiements" alignment="CENTER_LEFT" spacing="6"
+                              styleClass="dashboard-stat-card" minWidth="228">
+                           <children>
+                              <Label text="Paiements aujourd'hui" styleClass="dashboard-stat-title"/>
+                              <Label fx:id="paiementsJourLabel" text="0 DT" styleClass="dashboard-stat-value-warning"/>
+                              <Label text="Sorties de caisse" styleClass="sous-titre"/>
+                           </children>
+                        </VBox>
+
+                        <VBox fx:id="carteNotes" alignment="CENTER_LEFT" spacing="6"
+                              styleClass="dashboard-stat-card" minWidth="228">
+                           <children>
+                              <Label text="Notes aujourd'hui" styleClass="dashboard-stat-title"/>
+                              <Label fx:id="notesJourLabel" text="0" styleClass="dashboard-stat-value"/>
+                              <Label text="Notes enregistrées" styleClass="sous-titre"/>
+                           </children>
+                        </VBox>
+                     </children>
+                  </FlowPane>
+               </children>
+            </VBox>
+         </content>
+      </ScrollPane>
+   </center>
+
+</BorderPane>

@@ -380,3 +380,79 @@
     -fx-padding: 8 20 8 20;
     -fx-spacing: 10;
 }
+
+
+/* ------------------------------------------------------------
+   Barre latérale du tableau de bord
+   ------------------------------------------------------------
+   Les modules étaient des boutons dispersés en bas de page, sur deux
+   rangées mal alignées. En colonne, à largeur fixe et dans un ordre
+   stable, l'œil retrouve toujours le même bouton au même endroit. */
+
+.barre-laterale {
+    -fx-background-color: #02102E;
+    -fx-border-color: transparent #2a3a72 transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}
+
+.barre-laterale-titre {
+    -fx-text-fill: #7c7cac;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 10 6 4 6;
+}
+
+/* Aligné à gauche : en colonne, un texte centré rend la lecture
+   verticale irrégulière. Hauteur confortable au doigt. */
+.bouton-lateral {
+    -fx-background-color: transparent;
+    -fx-text-fill: #C9CFE8;
+    -fx-font-size: 14px;
+    -fx-font-weight: normal;
+    -fx-alignment: center-left;
+    -fx-padding: 13 16;
+    -fx-min-height: 46px;
+    -fx-background-radius: 9;
+    -fx-border-radius: 9;
+    -fx-border-width: 0;
+    -fx-cursor: hand;
+}
+
+.bouton-lateral:hover {
+    -fx-background-color: #16295E;
+    -fx-text-fill: #F2F4FC;
+}
+
+.bouton-lateral:pressed {
+    -fx-background-color: #2E6BE6;
+    -fx-text-fill: white;
+}
+
+/* La déconnexion est isolée en bas de colonne : un appui accidentel
+   à côté d'un module fermerait la session en pleine vente. */
+.bouton-lateral-sortie {
+    -fx-text-fill: #E38A8A;
+}
+
+.bouton-lateral-sortie:hover {
+    -fx-background-color: #C0392B;
+    -fx-text-fill: white;
+}
+
+.zone-principale {
+    -fx-background-color: transparent;
+}
+
+.zone-principale > .viewport {
+    -fx-background-color: transparent;
+}
+
+.dashboard-stat-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.dashboard-stat-card {
+    -fx-padding: 18 20;
+    -fx-min-height: 118;
+}
