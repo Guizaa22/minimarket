@@ -175,10 +175,34 @@ public class CategorieProduitsController {
         headerBox.getStyleClass().add("product-card-header");
         headerBox.setPadding(new Insets(0, 0, 8, 0));
         
-        Label catLabel = new Label(produit.getCategorie() != null && !produit.getCategorie().isEmpty() 
+        Label catLabel = new Label(produit.getCategorie() != null && !produit.getCategorie().isEmpty()
             ? produit.getCategorie() : "Non catégorisé");
         catLabel.getStyleClass().add("product-category");
         headerBox.getChildren().add(catLabel);
+
+        // Photo du produit, quand elle existe. En vitrine, une image se
+        // reconnaît nettement plus vite qu'un nom lu de biais.
+        if (produit.hasImage()) {
+            javafx.scene.image.Image image = util.ImageUtil.versImageFx(produit.getImage());
+            if (image != null) {
+                javafx.scene.image.ImageView vue = new javafx.scene.image.ImageView(image);
+                vue.setFitWidth(CARD_WIDTH - 24);
+                vue.setFitHeight(104);
+                vue.setPreserveRatio(true);
+                vue.setSmooth(true);
+
+                javafx.scene.shape.Rectangle masque =
+                        new javafx.scene.shape.Rectangle(CARD_WIDTH - 24, 104);
+                masque.setArcWidth(14);
+                masque.setArcHeight(14);
+                vue.setClip(masque);
+
+                HBox cadreImage = new HBox(vue);
+                cadreImage.setAlignment(Pos.CENTER);
+                cadreImage.setPadding(new Insets(0, 0, 8, 0));
+                card.getChildren().add(cadreImage);
+            }
+        }
 
         // ============================================
         // CONTENT: Main Product Information
@@ -283,11 +307,14 @@ public class CategorieProduitsController {
         configurerEffetsHoverCarte(card);
 
         // ============================================
-        // DOUBLE-CLICK to add to cart
+        // DOUBLE-TAP : saisie de la quantité
         // ============================================
+        // Un appui simple ajoute une unité, un double appui ouvre le pavé
+        // numérique. Sans cela, mettre quinze bouteilles au panier demande
+        // quinze appuis sur la même carte.
         card.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
-                ajouterAuPanier(produit);
+                ouvrirSaisieQuantite(produit);
             }
         });
 
@@ -384,6 +411,76 @@ public class CategorieProduitsController {
             incrementerQuantitePanier(detailExistant, produit);
         } else {
             ajouterNouveauProduitAuPanier(produit);
+        }
+
+        updatePanierCount();
+    }
+
+    /**
+     * Double appui : saisie d'une quantité au pavé numérique.
+     *
+     * Pour le tabac, le dialogue dédié s'ouvre à la place : il faut d'abord
+     * savoir si l'on vend des paquets ou des cigarettes, la quantité seule
+     * étant ambiguë.
+     */
+    private void ouvrirSaisieQuantite(Produit produit) {
+        if (produit == null) {
+            return;
+        }
+
+        if (produit.isTabac()) {
+            ui.DialogueVenteTabac.ouvrir(produit).ifPresent(choix -> {
+                ajouterQuantiteAuPanier(produit, choix.quantite, choix.uniteVente, choix.prixUnitaire);
+                ui.Toast.succes(panierCountLabel, String.format("%s — %d %s (%.3f DT)",
+                        produit.getNom(), choix.quantite,
+                        choix.estCigarette() ? "cigarette(s)" : "paquet(s)", choix.total));
+            });
+            return;
+        }
+
+        ui.PaveNumerique.demanderEntier("Quantité", produit.getNom(), 1).ifPresent(quantite -> {
+            if (quantite > produit.getQuantiteStock()) {
+                ui.Toast.avertissement(panierCountLabel, String.format(
+                        "Stock limité : %d « %s » disponible(s).",
+                        produit.getQuantiteStock(), produit.getNom()));
+                return;
+            }
+            ajouterQuantiteAuPanier(produit, quantite, null, produit.getPrixVenteDefaut());
+            ui.Toast.succes(panierCountLabel,
+                    quantite + " × " + produit.getNom() + " ajouté(s)");
+        });
+    }
+
+    /**
+     * Ajoute une quantité au panier, en regroupant avec la ligne existante
+     * du même produit et de la même unité de vente.
+     */
+    private void ajouterQuantiteAuPanier(Produit produit, int quantite,
+                                         String uniteVente, java.math.BigDecimal prixUnitaire) {
+        javafx.collections.ObservableList<DetailVente> panier =
+                service.SessionContext.get().getPanier().getLignes();
+
+        DetailVente existant = panier.stream()
+                .filter(d -> d.getProduitId() == produit.getId())
+                .filter(d -> java.util.Objects.equals(d.getTypeVenteTabac(), uniteVente))
+                .findFirst()
+                .orElse(null);
+
+        if (existant != null) {
+            existant.setQuantite(existant.getQuantite() + quantite);
+            // Remplacement de l'élément : une simple mutation ne notifierait
+            // pas les vues abonnées à la liste.
+            panier.set(panier.indexOf(existant), existant);
+        } else {
+            DetailVente detail = new DetailVente();
+            detail.setProduitId(produit.getId());
+            detail.setProduit(produit);
+            detail.setQuantite(quantite);
+            detail.setPrixVenteUnitaire(prixUnitaire);
+            detail.setPrixAchatUnitaire(produit.getPrixAchatActuel() != null
+                    ? produit.getPrixAchatActuel() : java.math.BigDecimal.ZERO);
+            detail.setTypeVenteTabac(uniteVente);
+            panier.add(detail);
         }
 
         updatePanierCount();

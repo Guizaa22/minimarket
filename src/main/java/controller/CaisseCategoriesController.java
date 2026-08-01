@@ -265,10 +265,18 @@ public class CaisseCategoriesController {
                 return;
             }
 
-            // Créer un bouton pour chaque catégorie
+            // Les photos vivent sur l'objet Categorie ; findAllCategories() ne
+            // renvoie que des noms. On indexe le référentiel pour les retrouver,
+            // en tolérant l'absence d'entrée pour les catégories héritées de
+            // l'ancienne colonne texte, qui n'ont pas de photo.
+            java.util.Map<String, model.Categorie> parNom = new java.util.HashMap<>();
+            for (model.Categorie c : new dao.CategorieDAO().findAll()) {
+                parNom.put(c.getNom(), c);
+            }
+
             for (String categorie : categories) {
                 if (categorie != null && !categorie.trim().isEmpty()) {
-                    Button categoryButton = createCategoryButton(categorie);
+                    Button categoryButton = createCategoryButton(categorie, parNom.get(categorie));
                     categoriesContainer.getChildren().add(categoryButton);
                 }
             }
@@ -284,15 +292,36 @@ public class CaisseCategoriesController {
     /**
      * Crée un bouton pour une catégorie
      */
-    private Button createCategoryButton(String categorie) {
+    private Button createCategoryButton(String categorie, model.Categorie referentiel) {
         // Créer un VBox pour contenir l'icône et le texte
         VBox content = new VBox(8);
         content.setAlignment(Pos.CENTER);
 
-        // Icône selon la catégorie
-        String icon = getCategoryIcon(categorie);
-        Label iconLabel = new Label(icon);
-        iconLabel.setStyle("-fx-font-size: " + ICON_SIZE + "px;");
+        // Photo si la catégorie en a une, émoji sinon : une grille où seules
+        // certaines catégories ont une image doit rester homogène.
+        javafx.scene.Node visuel = null;
+        if (referentiel != null && referentiel.hasImage()) {
+            javafx.scene.image.Image image = util.ImageUtil.versImageFx(referentiel.getImage());
+            if (image != null) {
+                javafx.scene.image.ImageView vue = new javafx.scene.image.ImageView(image);
+                vue.setFitWidth(96);
+                vue.setFitHeight(96);
+                vue.setPreserveRatio(true);
+                vue.setSmooth(true);
+                // Coins arrondis, pour s'accorder à la carte qui la contient.
+                javafx.scene.shape.Rectangle masque = new javafx.scene.shape.Rectangle(96, 96);
+                masque.setArcWidth(16);
+                masque.setArcHeight(16);
+                vue.setClip(masque);
+                visuel = vue;
+            }
+        }
+        if (visuel == null) {
+            Label iconLabel = new Label(getCategoryIcon(categorie));
+            iconLabel.setStyle("-fx-font-size: " + ICON_SIZE + "px;");
+            visuel = iconLabel;
+        }
+        final javafx.scene.Node iconLabel = visuel;
 
         Label textLabel = new Label(categorie);
         textLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");

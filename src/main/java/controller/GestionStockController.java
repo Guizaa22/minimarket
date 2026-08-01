@@ -742,7 +742,10 @@ public class GestionStockController {
                 "Standard : produit ordinaire\n"
               + "Tabac : vendu au paquet, déclinable à l'unité\n"
               + "Frak cigarette : cigarettes à l'unité, décrémentent le paquet associé");
-        aide.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
+        aide.getStyleClass().add("sous-titre");
+
+        // Photo de la catégorie, affichée sur les tuiles de l'écran caisse.
+        ui.SelecteurImage selecteurImage = new ui.SelecteurImage("Photo de la catégorie");
 
         GridPane grille = new GridPane();
         grille.setHgap(10);
@@ -750,7 +753,9 @@ public class GestionStockController {
         grille.addRow(0, new Label("Nom :"), nomField);
         grille.addRow(1, new Label("Type :"), typeBox);
         grille.add(aide, 0, 2, 2, 1);
+        grille.add(selecteurImage, 0, 3, 2, 1);
         dialog.getDialogPane().setContent(grille);
+        dialog.setOnShown(ev -> ui.ThemeManager.enregistrer(dialog.getDialogPane().getScene()));
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dialog.getDialogPane().setMinWidth(460);
 
@@ -772,6 +777,10 @@ public class GestionStockController {
 
                 // Créer la nouvelle catégorie
                 Categorie nouvelleCategorie = new Categorie(nom.trim(), typeBox.getValue());
+                if (selecteurImage.aUneImage()) {
+                    nouvelleCategorie.setImage(selecteurImage.getDonnees());
+                    nouvelleCategorie.setImageMime(selecteurImage.getMime());
+                }
                 try {
                     if (categorieDAO.create(nouvelleCategorie)) {
                         showAlert(Alert.AlertType.INFORMATION, "Succès",

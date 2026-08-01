@@ -265,57 +265,71 @@ public class AdminDashboardController {
         }
     }
 
+    /** Chiffres du tableau de bord, collectés en une passe. */
+    private static final class Statistiques {
+        long produitsDisponibles;
+        long ruptures;
+        BigDecimal ventesJour = BigDecimal.ZERO;
+        int totalFournisseurs;
+        BigDecimal totalCredits = BigDecimal.ZERO;
+        BigDecimal paiementsJour = BigDecimal.ZERO;
+        int notesJour;
+    }
+
+    /**
+     * Rafraîchit les indicateurs.
+     *
+     * Les requêtes s'exécutent hors du fil JavaFX : elles étaient auparavant
+     * enchaînées à l'ouverture de l'écran, qui restait figé le temps de la
+     * dizaine d'allers-retours — d'autant plus visible avec la base sur le
+     * réseau.
+     */
     private void rafraichirStatistiques() {
-        try {
-            // Statistiques produits
-            List<Produit> produits = produitDAO.findAll();
-            long produitsDisponibles = produits.stream()
-                    .filter(p -> p.getQuantiteStock() > 0)
-                    .count();
-            long ruptures = produits.stream()
-                    .filter(p -> p.getQuantiteStock() == 0)
-                    .count();
-            totalProduitsStatLabel.setText(String.valueOf(produitsDisponibles));
-            rupturesStatLabel.setText(String.valueOf(ruptures));
-            
-            // Statistiques ventes
-            LocalDateTime debutJour = LocalDateTime.now()
-                    .with(LocalTime.MIN);
-            LocalDateTime finJour = LocalDateTime.now()
-                    .with(LocalTime.MAX);
-            BigDecimal ventesJour = venteDAO.getTotalRecettes(debutJour, finJour);
-            ventesJourStatLabel.setText(String.format("%.2f DT", ventesJour));
-            
-            // Statistiques fournisseurs
-            int totalFournisseurs = fournisseurDAO.findAll().size();
-            totalFournisseursLabel.setText(String.valueOf(totalFournisseurs));
-            
-            // Total crédits fournisseurs
-            BigDecimal totalCredits = BigDecimal.ZERO;
-            List<model.Fournisseur> fournisseurs = fournisseurDAO.findAll();
-            for (model.Fournisseur f : fournisseurs) {
-                model.CreditFournisseur credit = creditFournisseurDAO.findByFournisseurId(f.getId());
-                if (credit != null) {
-                    totalCredits = totalCredits.add(credit.getMontant());
-                }
+        ui.TacheFond.executer(welcomeLabel, this::collecterStatistiques, stats -> {
+            totalProduitsStatLabel.setText(String.valueOf(stats.produitsDisponibles));
+            rupturesStatLabel.setText(String.valueOf(stats.ruptures));
+            ventesJourStatLabel.setText(String.format("%.2f DT", stats.ventesJour));
+            totalFournisseursLabel.setText(String.valueOf(stats.totalFournisseurs));
+            totalCreditsLabel.setText(String.format("%.2f DT", stats.totalCredits));
+            paiementsJourLabel.setText(String.format("%.2f DT", stats.paiementsJour));
+            notesJourLabel.setText(String.valueOf(stats.notesJour));
+
+            // Les ruptures méritent d'être signalées à l'ouverture : c'est
+            // l'information qui appelle une action immédiate.
+            if (stats.ruptures > 0) {
+                ui.Toast.avertissement(welcomeLabel,
+                        stats.ruptures + " produit(s) en rupture de stock.");
             }
-            totalCreditsLabel.setText(String.format("%.2f DT", totalCredits));
-            
-            // Paiements du jour
-            BigDecimal paiementsJour = paiementFournisseurDAO.getTotalByDate(LocalDateTime.now());
-            paiementsJourLabel.setText(String.format("%.2f DT", paiementsJour));
-            
-            // Notes du jour
-            int notesJour = noteJourDAO.findByDate(LocalDateTime.now()).size();
-            notesJourLabel.setText(String.valueOf(notesJour));
-            
-        } catch (Exception e) {
-            LOG.error("Erreur lors du rafraîchissement des statistiques: " + e.getMessage(), e);
-            LOG.error("Exception type: " + e.getClass().getName());
-            if (e.getCause() != null) {
-                LOG.error("Cause: " + e.getCause().getMessage());
+        });
+    }
+
+    /** Exécuté en arrière-plan : aucune manipulation de l'interface ici. */
+    private Statistiques collecterStatistiques() {
+        Statistiques stats = new Statistiques();
+
+        List<Produit> produits = produitDAO.findAll();
+        stats.produitsDisponibles = produits.stream().filter(p -> p.getQuantiteStock() > 0).count();
+        stats.ruptures = produits.stream().filter(p -> p.getQuantiteStock() == 0).count();
+
+        LocalDateTime debutJour = LocalDateTime.now().with(LocalTime.MIN);
+        LocalDateTime finJour = LocalDateTime.now().with(LocalTime.MAX);
+        stats.ventesJour = venteDAO.getTotalRecettes(debutJour, finJour);
+
+        // Une seule lecture des fournisseurs : elle était faite deux fois,
+        // puis suivie d'une requête de crédit par fournisseur.
+        List<model.Fournisseur> fournisseurs = fournisseurDAO.findAll();
+        stats.totalFournisseurs = fournisseurs.size();
+        for (model.Fournisseur f : fournisseurs) {
+            model.CreditFournisseur credit = creditFournisseurDAO.findByFournisseurId(f.getId());
+            if (credit != null) {
+                stats.totalCredits = stats.totalCredits.add(credit.getMontant());
             }
         }
+
+        stats.paiementsJour = paiementFournisseurDAO.getTotalByDate(LocalDateTime.now());
+        stats.notesJour = noteJourDAO.findByDate(LocalDateTime.now()).size();
+
+        return stats;
     }
 }
 
