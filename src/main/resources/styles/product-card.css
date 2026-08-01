@@ -22,7 +22,7 @@
 
 .product-card:hover {
     -fx-background-color: linear-gradient(to bottom, #FFFFFF, #F5F7FA);
-    -fx-border-color: #4CAF50;
+    -fx-border-color: #2E6BE6;
     -fx-border-width: 2.5px;
     -fx-effect: dropshadow(three-pass-box, rgba(76, 175, 80, 0.25), 20, 0, 0, 8);
     -fx-scale-x: 1.03;
@@ -59,7 +59,7 @@
 .product-price {
     -fx-font-size: 28px;
     -fx-font-weight: 800;
-    -fx-text-fill: #2E7D32;
+    -fx-text-fill: #0441bd;
     -fx-padding: 8 0 4 0;
     -fx-effect: dropshadow(one-pass-box, rgba(46, 125, 50, 0.2), 2, 0, 0, 1);
 }
@@ -131,7 +131,7 @@
 
 /* Stock Status Colors */
 .stock-high {
-    -fx-text-fill: #2E7D32;
+    -fx-text-fill: #0441bd;
     -fx-background-color: rgba(76, 175, 80, 0.15);
     -fx-border-color: rgba(76, 175, 80, 0.3);
     -fx-border-width: 1;
@@ -179,7 +179,7 @@
    ============================================ */
 
 .product-add-btn {
-    -fx-background-color: linear-gradient(to bottom, #4CAF50, #2E7D32);
+    -fx-background-color: linear-gradient(to bottom, #2E6BE6, #0441bd);
     -fx-text-fill: #FFFFFF;
     -fx-font-weight: 700;
     -fx-font-size: 14px;
@@ -192,7 +192,7 @@
 }
 
 .product-add-btn:hover {
-    -fx-background-color: linear-gradient(to bottom, #66BB6A, #4CAF50);
+    -fx-background-color: linear-gradient(to bottom, #5B8FF0, #2E6BE6);
     -fx-effect: dropshadow(three-pass-box, rgba(46, 125, 50, 0.4), 12, 0, 0, 6);
     -fx-scale-x: 1.05;
     -fx-scale-y: 1.05;

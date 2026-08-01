@@ -14,7 +14,7 @@
 
 /* Header Styles */
 .header {
-    -fx-background-color: linear-gradient(to right, #2E7D32, #4CAF50);
+    -fx-background-color: linear-gradient(to right, #0441bd, #2E6BE6);
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 15, 0, 0, 4);
 }
 
@@ -86,7 +86,7 @@
 }
 
 .tab-button.active {
-    -fx-background-color: linear-gradient(to bottom, #4CAF50, #2E7D32);
+    -fx-background-color: linear-gradient(to bottom, #2E6BE6, #0441bd);
     -fx-text-fill: white;
     -fx-border-width: 0;
 }
@@ -144,7 +144,7 @@
 
 .badge-green {
     -fx-background-color: rgba(76, 175, 80, 0.2);
-    -fx-text-fill: #4CAF50;
+    -fx-text-fill: #2E6BE6;
 }
 
 .badge-blue {
@@ -182,7 +182,7 @@
     -fx-font-weight: bold;
 }
 
-.value-green { -fx-text-fill: #4CAF50; }
+.value-green { -fx-text-fill: #2E6BE6; }
 .value-blue { -fx-text-fill: #2196F3; }
 .value-purple { -fx-text-fill: #9C27B0; }
 .value-orange { -fx-text-fill: #FF9800; }
@@ -238,7 +238,7 @@
 }
 
 .btn-search {
-    -fx-background-color: #4CAF50;
+    -fx-background-color: #2E6BE6;
     -fx-text-fill: white;
     -fx-background-radius: 8px;
     -fx-padding: 10 20 10 20;
@@ -255,14 +255,14 @@
 }
 
 .sales-table .column-header {
-    -fx-background-color: linear-gradient(to right, #2E7D32, #4CAF50);
+    -fx-background-color: linear-gradient(to right, #0441bd, #2E6BE6);
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-padding: 15;
 }
 
 .sales-table .column-header-background {
-    -fx-background-color: linear-gradient(to right, #2E7D32, #4CAF50);
+    -fx-background-color: linear-gradient(to right, #0441bd, #2E6BE6);
 }
 
 .sales-table .table-row-cell {
@@ -276,7 +276,7 @@
 }
 
 .sales-table .table-row-cell:hover {
-    -fx-background-color: #e8f5e9;
+    -fx-background-color: #E9EDF8;
 }
 
 /* Products Table */
@@ -311,7 +311,7 @@
     -fx-pref-width: 300;
 }
 
-.report-green { -fx-border-color: #4CAF50; -fx-border-width: 2; }
+.report-green { -fx-border-color: #2E6BE6; -fx-border-width: 2; }
 .report-blue { -fx-border-color: #2196F3; -fx-border-width: 2; }
 .report-purple { -fx-border-color: #9C27B0; -fx-border-width: 2; }
 .report-orange { -fx-border-color: #FF9800; -fx-border-width: 2; }
@@ -325,7 +325,7 @@
     -fx-font-weight: bold;
 }
 
-.report-green .report-title { -fx-text-fill: #4CAF50; }
+.report-green .report-title { -fx-text-fill: #2E6BE6; }
 .report-blue .report-title { -fx-text-fill: #2196F3; }
 .report-purple .report-title { -fx-text-fill: #9C27B0; }
 .report-orange .report-title { -fx-text-fill: #FF9800; }
@@ -344,7 +344,7 @@
     -fx-pref-width: Infinity;
 }
 
-.btn-green { -fx-background-color: #4CAF50; }
+.btn-green { -fx-background-color: #2E6BE6; }
 .btn-blue { -fx-background-color: #2196F3; }
 .btn-purple { -fx-background-color: #9C27B0; }
 .btn-orange { -fx-background-color: #FF9800; }

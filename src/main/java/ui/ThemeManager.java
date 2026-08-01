@@ -88,6 +88,13 @@ public final class ThemeManager {
     /**
      * Enregistre une scène et lui applique le thème courant.
      * À appeler à chaque création de scène.
+     *
+     * La feuille de thème est maintenue en dernière position : plusieurs
+     * contrôleurs ajoutent leur propre CSS après coup (caisse.css,
+     * dashboard.css...), et en CSS JavaFX la dernière feuille l'emporte. Sans
+     * ce réordonnancement, le thème était systématiquement recouvert sur ces
+     * écrans — il semblait ne pas fonctionner alors qu'il était simplement
+     * écrasé.
      */
     public static void enregistrer(Scene scene) {
         if (scene == null) {
@@ -95,6 +102,39 @@ public final class ThemeManager {
         }
         scenes.add(scene);
         appliquer(scene, courant);
+
+        scene.getStylesheets().addListener(
+                (javafx.collections.ListChangeListener<String>) changement -> {
+                    while (changement.next()) {
+                        if (changement.wasAdded() && !enReordonnancement) {
+                            javafx.application.Platform.runLater(
+                                    () -> remettreThemeEnDernier(scene));
+                        }
+                    }
+                });
+    }
+
+    /** Évite que le réordonnancement ne se redéclenche lui-même. */
+    private static boolean enReordonnancement = false;
+
+    /** Replace la feuille de thème en fin de liste pour qu'elle prime. */
+    private static void remettreThemeEnDernier(Scene scene) {
+        String url = ressource(courant.feuille);
+        if (url == null || scene.getStylesheets().isEmpty()) {
+            return;
+        }
+        int position = scene.getStylesheets().indexOf(url);
+        if (position < 0 || position == scene.getStylesheets().size() - 1) {
+            return; // absente, ou déjà en dernier
+        }
+
+        enReordonnancement = true;
+        try {
+            scene.getStylesheets().remove(url);
+            scene.getStylesheets().add(url);
+        } finally {
+            enReordonnancement = false;
+        }
     }
 
     /** Bascule sombre / clair et met à jour toutes les scènes ouvertes. */

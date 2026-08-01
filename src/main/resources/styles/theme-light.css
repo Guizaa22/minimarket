@@ -271,7 +271,7 @@
 
 .stock-badge { -fx-background-radius: 14; -fx-padding: 5 14; -fx-font-size: 12px; -fx-font-weight: bold; }
 .stock-badge-low { -fx-background-color: #FDE8E6; -fx-text-fill: -danger; }
-.stock-badge-ok  { -fx-background-color: #E4F4EC; -fx-text-fill: -succes; }
+.stock-badge-ok  { -fx-background-color: #E3EAFA; -fx-text-fill: -succes; }
 
 .total-container {
     -fx-background-color: #E8EEFC;
@@ -303,4 +303,43 @@
 .separator .line {
     -fx-border-color: -bordure;
     -fx-border-width: 1 0 0 0;
+}
+
+/* ------------------------------------------------------------
+   En-têtes hérités des écrans
+   ------------------------------------------------------------
+   Chaque FXML porte déjà son propre bandeau coloré. Depuis l'ajout de la
+   barre supérieure commune, deux bandeaux se superposaient. Ceux des écrans
+   sont donc aplatis : ils conservent leurs boutons et leur titre, mais
+   perdent leur fond, leur ombre et leur hauteur de « barre ».
+
+   Résultat : un seul bandeau en haut de l'application, celui qui porte
+   l'enseigne, l'employé connecté et le sélecteur de thème. */
+
+.header, .header-bar, .header-box, .dashboard-header,
+.caisse-header, .top-bar, .header-content {
+    -fx-background-color: transparent;
+    -fx-background-image: null;
+    -fx-effect: null;
+    -fx-border-width: 0;
+    -fx-padding: 14 20 6 20;
+    -fx-min-height: 0;
+    -fx-pref-height: -1;
+}
+
+.header .label, .header-bar .label, .header-box .label,
+.dashboard-header .label, .caisse-header .label {
+    -fx-text-fill: -texte-fort;
+}
+
+.header-title, .dashboard-header-label, .header-subtitle {
+    -fx-text-fill: -texte-fort;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+.header-subtitle {
+    -fx-text-fill: -texte-discret;
+    -fx-font-size: 13px;
+    -fx-font-weight: normal;
 }

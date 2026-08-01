@@ -880,32 +880,36 @@ public class CaisseController {
         service.SessionContext.get().getPanier().getLignes().remove(detail);
     }
 
+    /**
+     * Modifie la quantité d'une ligne du panier.
+     *
+     * Passe par le pavé numérique : la boîte de saisie texte employée
+     * auparavant supposait un clavier, absent d'une caisse tactile.
+     */
     private void modifierQuantiteItem(DetailVente detail) {
-        TextInputDialog dialog = new TextInputDialog(String.valueOf(detail.getQuantite()));
-        dialog.setTitle("Modifier Quantité");
-        dialog.setHeaderText("Nouvelle quantité pour " + detail.getProduit().getNom() + ":");
-        dialog.setContentText("Quantité:");
+        String nom = detail.getProduit() != null
+                ? detail.getProduit().getNom() : "Produit";
 
-        Optional<String> result = dialog.showAndWait();
-        result.ifPresent(qtyStr -> {
-            try {
-                int qty = Integer.parseInt(qtyStr);
-                if (qty > 0) {
-                    if (qty <= detail.getProduit().getQuantiteStock()) {
-                        detail.setQuantite(qty);
-                        // Trigger update
-                        int index = service.SessionContext.get().getPanier().getLignes().indexOf(detail);
-                        service.SessionContext.get().getPanier().getLignes().set(index, detail);
-                    } else {
-                        afficherAlerte(Alert.AlertType.WARNING, "Stock insuffisant", "Stock disponible: " + detail.getProduit().getQuantiteStock());
+        ui.PaveNumerique.demanderEntier("Quantité", nom, detail.getQuantite())
+                .ifPresent(quantite -> {
+                    Produit produit = detail.getProduit();
+
+                    // Les cigarettes à l'unité n'ont pas de stock propre :
+                    // c'est le paquet associé qui est décrémenté.
+                    boolean controlerStock = produit != null && !produit.isFrakCigarette();
+                    if (controlerStock && quantite > produit.getQuantiteStock()) {
+                        ui.Toast.avertissement(validerButton, String.format(
+                                "Stock limité : %d « %s » disponible(s).",
+                                produit.getQuantiteStock(), nom));
+                        return;
                     }
-                } else {
-                    retirerDuPanier(detail);
-                }
-            } catch (NumberFormatException e) {
-                afficherAlerte(Alert.AlertType.ERROR, "Erreur", "Veuillez entrer un nombre valide.");
-            }
-        });
+
+                    detail.setQuantite(quantite);
+                    // Remplacement de l'élément : une simple mutation ne
+                    // notifierait pas les vues abonnées à la liste.
+                    var lignes = service.SessionContext.get().getPanier().getLignes();
+                    lignes.set(lignes.indexOf(detail), detail);
+                });
     }
 
     private BigDecimal calculerTotal() {

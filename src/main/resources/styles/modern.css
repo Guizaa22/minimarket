@@ -15,9 +15,9 @@
     -fx-font-family: "Segoe UI", "Inter", system-ui, sans-serif;
 
     /* Palette : un vert d'enseigne, des gris neutres, des accents d'état. */
-    -couleur-primaire:        #1B7A3E;
-    -couleur-primaire-claire: #24A353;
-    -couleur-primaire-sombre: #145C2F;
+    -couleur-primaire:        #0441bd;
+    -couleur-primaire-claire: #2E6BE6;
+    -couleur-primaire-sombre: #041547;
     -couleur-danger:          #C62828;
     -couleur-avertissement:   #EF6C00;
     -couleur-info:            #1565C0;
@@ -110,7 +110,7 @@
 .panier-card:hover,
 .product-card:hover {
     -fx-border-color: -couleur-primaire-claire;
-    -fx-effect: dropshadow(gaussian, rgba(27,122,62,0.18), 12, 0, 0, 3);
+    -fx-effect: dropshadow(gaussian, rgba(4,65,189,0.18), 12, 0, 0, 3);
 }
 
 /* Carte produit : léger soulèvement au survol, pour distinguer
@@ -159,11 +159,11 @@
 }
 
 .table-row-cell:hover {
-    -fx-background-color: #EDF6F0;
+    -fx-background-color: #EDF1FA;
 }
 
 .table-row-cell:selected {
-    -fx-background-color: #D8EEE0;
+    -fx-background-color: #D5DFF6;
     -fx-text-fill: -texte-fort;
 }
 
@@ -212,7 +212,7 @@
 }
 
 .stock-badge-ok {
-    -fx-background-color: #E8F5E9;
+    -fx-background-color: #E9EDF8;
     -fx-text-fill: -couleur-primaire;
 }
 
@@ -229,10 +229,10 @@
 }
 
 .total-container {
-    -fx-background-color: #F0F7F2;
+    -fx-background-color: #EDF1FA;
     -fx-background-radius: 12;
     -fx-border-radius: 12;
-    -fx-border-color: #C9E4D3;
+    -fx-border-color: #C6D3F0;
     -fx-border-width: 1;
     -fx-padding: 18 24;
 }

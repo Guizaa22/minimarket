@@ -289,14 +289,31 @@ public class CategorieProduitsController {
         stockContainer.getChildren().add(stockLabel);
 
         // Action Button - Prominent and at bottom
-        Button ajouterButton = new Button("✅ Ajouter");
+        Button ajouterButton = new Button("Ajouter");
         ajouterButton.getStyleClass().addAll("btn", "btn-primary");
         ajouterButton.setMaxWidth(Double.MAX_VALUE);
-        ajouterButton.setMinHeight(40);
+        ajouterButton.setMinHeight(46);
         ajouterButton.setAlignment(Pos.CENTER);
+        HBox.setHgrow(ajouterButton, Priority.ALWAYS);
         ajouterButton.setOnAction(e -> ajouterAuPanier(produit));
 
-        footerBox.getChildren().addAll(stockContainer, ajouterButton);
+        // Bouton de multiplication : ouvre le pavé pour saisir directement une
+        // quantité. Le double appui fait la même chose, mais rien ne l'indique
+        // à l'écran — sur une caisse tactile, une action invisible n'existe pas.
+        Button multiplierButton = new Button("×N");
+        multiplierButton.getStyleClass().addAll("btn", "btn-secondary");
+        multiplierButton.setMinHeight(46);
+        multiplierButton.setMinWidth(58);
+        multiplierButton.setAlignment(Pos.CENTER);
+        multiplierButton.setTooltip(new javafx.scene.control.Tooltip(
+                "Saisir une quantité"));
+        multiplierButton.setOnAction(e -> ouvrirSaisieQuantite(produit));
+
+        HBox actions = new HBox(8, ajouterButton, multiplierButton);
+        actions.setAlignment(Pos.CENTER);
+        actions.setMaxWidth(Double.MAX_VALUE);
+
+        footerBox.getChildren().addAll(stockContainer, actions);
 
         // ============================================
         // ASSEMBLE CARD
