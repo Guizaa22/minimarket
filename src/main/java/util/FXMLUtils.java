@@ -46,9 +46,16 @@ public class FXMLUtils {
         // ni employé connecté ni navigation.
         Parent root = contenu;
         if (!fxmlPath.contains("Connexion")) {
-            javafx.scene.layout.BorderPane cadre = new javafx.scene.layout.BorderPane();
-            cadre.setTop(ui.BarreHaut.creer(title));
-            cadre.setCenter(contenu);
+            javafx.scene.layout.HBox barre = ui.BarreHaut.creer(title);
+
+            // Empilement vertical strict : la barre puis le contenu, qui prend
+            // toute la hauteur restante. Les racines FXML sont des AnchorPane
+            // aux ancrages absolus ; posées dans un BorderPane elles pouvaient
+            // déborder de la zone disponible et passer sous la barre.
+            javafx.scene.layout.VBox cadre = new javafx.scene.layout.VBox(barre, contenu);
+            javafx.scene.layout.VBox.setVgrow(contenu, javafx.scene.layout.Priority.ALWAYS);
+            barre.setMinHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
+            barre.setMaxHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
             root = cadre;
         }
         root.setOpacity(0);

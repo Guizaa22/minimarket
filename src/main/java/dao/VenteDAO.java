@@ -371,6 +371,32 @@ public class VenteDAO {
     /**
      * Ventes par utilisateur pour une date spécifique
      */
+    /**
+     * Ventes d'une journée, tous employés confondus.
+     * Utilisée par le tableau de bord administrateur, qui doit voir l'activité
+     * du magasin et non celle d'un seul poste.
+     */
+    public List<Vente> findByDate(LocalDateTime jour) {
+        List<Vente> ventes = new ArrayList<>();
+        String sql = "SELECT * FROM ventes WHERE " + DayRange.where("date_vente")
+                   + " ORDER BY date_vente DESC";
+
+        try (Connection conn = DBConnector.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            DayRange.bind(stmt, 1, jour);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    ventes.add(mapResultSetToVente(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOG.error("Lecture des ventes du jour impossible", e);
+            throw new exception.DatabaseException("Impossible de charger les ventes du jour", e);
+        }
+        return ventes;
+    }
+
     public List<Vente> findByUtilisateurAndDate(int utilisateurId, LocalDateTime dateDebut, LocalDateTime dateFin) {
         List<Vente> ventes = new ArrayList<>();
         // Intervalle semi-ouvert [jour, lendemain[ : compatible index, contrairement

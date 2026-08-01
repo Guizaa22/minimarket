@@ -55,6 +55,9 @@ public class AdminDashboardController {
     
     @FXML
     private Button deconnexionButton;
+
+    @FXML
+    private Button auditButton;
     
     @FXML
     private Label totalProduitsStatLabel;
@@ -103,6 +106,7 @@ public class AdminDashboardController {
         paiementFournisseurDAO = new PaiementFournisseurDAO();
         noteJourDAO = new NoteJourDAO();
         rafraichirStatistiques();
+        rendreCartesCliquables();
         
         // 🔒 BLOQUER LE CODE-BARRES DANS LE DASHBOARD ADMIN
         // Empêcher les scans de code-barres de causer des problèmes dans le dashboard
@@ -263,6 +267,109 @@ public class AdminDashboardController {
             showAlert(Alert.AlertType.ERROR, "Erreur", 
                      "Erreur lors du chargement de la visualisation des produits: " + e.getMessage());
         }
+    }
+
+    // Cartes d'indicateurs : chacune ouvre le détail de ce qu'elle résume.
+    @FXML private javafx.scene.layout.VBox carteProduits;
+    @FXML private javafx.scene.layout.VBox carteRuptures;
+    @FXML private javafx.scene.layout.VBox carteVentes;
+    @FXML private javafx.scene.layout.VBox carteFournisseurs;
+    @FXML private javafx.scene.layout.VBox carteCredits;
+    @FXML private javafx.scene.layout.VBox cartePaiements;
+    @FXML private javafx.scene.layout.VBox carteNotes;
+
+    /**
+     * Rend les cartes cliquables.
+     *
+     * Un chiffre seul ne dit pas ce qu'il recouvre : « 3 ruptures » appelle
+     * immédiatement la question de savoir lesquelles. Chaque carte ouvre donc
+     * le détail correspondant.
+     */
+    private void rendreCartesCliquables() {
+        activer(carteProduits,     "Produits en stock",   this::detailProduits);
+        activer(carteRuptures,     "Ruptures de stock",   this::detailRuptures);
+        activer(carteVentes,       "Ventes du jour",      this::detailVentes);
+        activer(carteFournisseurs, "Fournisseurs",        this::detailFournisseurs);
+        activer(carteCredits,      "Crédits fournisseur", this::detailCredits);
+        activer(cartePaiements,    "Paiements du jour",   this::detailPaiements);
+        activer(carteNotes,        "Notes du jour",       this::detailNotes);
+    }
+
+    private void activer(javafx.scene.layout.VBox carte, String titre, Runnable action) {
+        if (carte == null) {
+            return;
+        }
+        carte.setCursor(javafx.scene.Cursor.HAND);
+        carte.setOnMouseClicked(e -> action.run());
+        javafx.scene.control.Tooltip.install(carte,
+                new javafx.scene.control.Tooltip("Voir le détail : " + titre));
+
+        // Léger relief au survol : indique que la carte est actionnable.
+        carte.setOnMouseEntered(e -> {
+            carte.setScaleX(1.03);
+            carte.setScaleY(1.03);
+        });
+        carte.setOnMouseExited(e -> {
+            carte.setScaleX(1.0);
+            carte.setScaleY(1.0);
+        });
+    }
+
+    // ------------------------------------------------------------------
+    // Détails ouverts depuis les cartes
+    // ------------------------------------------------------------------
+
+    private void detailProduits() {
+        ui.TacheFond.executer(carteProduits, () -> produitDAO.findAll(),
+                produits -> ui.DialogueDetail.produits(carteProduits,
+                        "Produits en stock", produits));
+    }
+
+    private void detailRuptures() {
+        ui.TacheFond.executer(carteRuptures,
+                () -> produitDAO.findAll().stream()
+                        .filter(p -> p.getQuantiteStock() == 0)
+                        .collect(java.util.stream.Collectors.toList()),
+                produits -> ui.DialogueDetail.produits(carteRuptures,
+                        "Produits en rupture", produits));
+    }
+
+    private void detailVentes() {
+        ui.TacheFond.executer(carteVentes,
+                () -> venteDAO.findByDate(LocalDateTime.now()),
+                ventes -> ui.DialogueDetail.ventes(carteVentes, "Ventes du jour", ventes));
+    }
+
+    private void detailFournisseurs() {
+        ui.TacheFond.executer(carteFournisseurs, () -> fournisseurDAO.findAll(),
+                fournisseurs -> ui.DialogueDetail.fournisseurs(carteFournisseurs,
+                        "Fournisseurs", fournisseurs, creditFournisseurDAO));
+    }
+
+    private void detailCredits() {
+        detailFournisseurs();
+    }
+
+    private void detailPaiements() {
+        ui.TacheFond.executer(cartePaiements,
+                () -> paiementFournisseurDAO.findByDate(LocalDateTime.now()),
+                paiements -> ui.DialogueDetail.paiements(cartePaiements,
+                        "Paiements du jour", paiements));
+    }
+
+    private void detailNotes() {
+        ui.TacheFond.executer(carteNotes,
+                () -> noteJourDAO.findByDate(LocalDateTime.now()),
+                notes -> ui.DialogueDetail.notes(carteNotes, "Notes du jour", notes));
+    }
+
+    /** Ouvre le journal d'audit, chargé en arrière-plan. */
+    @FXML
+    private void handleAudit() {
+        ui.TacheFond.executer(carteProduits,
+                () -> new dao.AuditLogDAO().findRecent(1000),
+                logs -> ui.DialogueAudit.ouvrir(carteProduits, logs,
+                        new dao.UtilisateurDAO().findAll()));
     }
 
     /** Chiffres du tableau de bord, collectés en une passe. */

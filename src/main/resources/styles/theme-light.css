@@ -343,3 +343,23 @@
     -fx-font-size: 13px;
     -fx-font-weight: normal;
 }
+
+
+/* Le titre de l'écran figure déjà dans la barre supérieure commune.
+   Le conserver dans l'en-tête de l'écran le répétait à deux lignes
+   d'intervalle et consommait de la hauteur utile. Seuls les boutons
+   d'action de l'en-tête restent visibles. */
+.header-title, .dashboard-header-label {
+    -fx-font-size: 0;
+    -fx-min-height: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+    -fx-padding: 0;
+    -fx-opacity: 0;
+}
+
+/* En-têtes ramenés à une simple rangée de boutons. */
+.header, .header-bar, .header-box, .dashboard-header, .caisse-header {
+    -fx-padding: 8 20 8 20;
+    -fx-spacing: 10;
+}
