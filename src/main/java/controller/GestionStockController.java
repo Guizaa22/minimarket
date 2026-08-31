@@ -136,6 +136,14 @@ public class GestionStockController {
     // ========================================
     private ProduitDAO produitDAO;
     private CategorieDAO categorieDAO;
+
+    /**
+     * Les écritures passent par le service : il applique les validations
+     * métier, journalise l'action dans audit_logs et enregistre le mouvement
+     * de stock. En appelant le DAO directement, ces trois effets étaient
+     * perdus — le journal d'audit ne contenait que des connexions.
+     */
+    private service.ProduitService produitService;
     private ObservableList<Produit> produitsList;
     private ObservableList<Categorie> categoriesList;
     private Produit produitSelectionne;
@@ -147,6 +155,7 @@ public class GestionStockController {
     private void initialize() {
         produitDAO = new ProduitDAO();
         categorieDAO = new CategorieDAO();
+        produitService = new service.ProduitService();
         produitsList = FXCollections.observableArrayList();
         categoriesList = FXCollections.observableArrayList();
         
@@ -343,22 +352,18 @@ public class GestionStockController {
             }
             
             try {
-                if (produitDAO.delete(produit.getId(), forceDelete)) {
-                    String message = "Produit supprimé avec succès.";
-                    if (forceDelete) {
-                        message += "\n\n⚠️ Les références à ce produit dans les ventes et ajouts de stock ont également été supprimées.";
-                    }
-                    showAlert(Alert.AlertType.INFORMATION, "Succès", message);
-                    // Rafraîchir la liste des produits
-                    chargerProduits();
-                    // S'assurer que la table est visible et mise à jour
-                    produitsTable.setVisible(true);
-                    produitsTable.requestFocus();
-                } else {
-                    showAlert(Alert.AlertType.ERROR, "Erreur",
-                            "Erreur lors de la suppression du produit. Le produit n'a pas été trouvé.");
+                produitService.supprimer(produit, util.SessionManager.getCurrentUserId(), forceDelete);
+                String message = "Produit supprimé avec succès.";
+                if (forceDelete) {
+                    message += "\n\n⚠️ Les références à ce produit dans les ventes et ajouts de stock ont également été supprimées.";
                 }
-            } catch (java.sql.SQLException e) {
+                showAlert(Alert.AlertType.INFORMATION, "Succès", message);
+                // Rafraîchir la liste des produits
+                chargerProduits();
+                // S'assurer que la table est visible et mise à jour
+                produitsTable.setVisible(true);
+                produitsTable.requestFocus();
+            } catch (exception.ApplicationException e) {
                 String errorMessage = e.getMessage();
                 if (errorMessage != null && errorMessage.contains("utilisé dans des ventes")) {
                     showAlert(Alert.AlertType.WARNING, "Impossible de supprimer",
@@ -415,23 +420,15 @@ public class GestionStockController {
             }
 
             try {
-                if (produitDAO.create(produit)) {
-                    showAlert(Alert.AlertType.INFORMATION, "Succès",
-                            "Produit ajouté avec succès.");
-                    viderFormulaire();
-                    // Rafraîchir la liste des produits
-                    chargerProduits();
-                    // S'assurer que la table est visible et mise à jour
-                    produitsTable.setVisible(true);
-                    produitsTable.requestFocus();
-                } else {
-                    showAlert(Alert.AlertType.ERROR, "Erreur",
-                            "Erreur lors de l'ajout du produit.\n\n" +
-                            "Vérifiez:\n" +
-                            "- Que tous les champs sont remplis correctement\n" +
-                            "- Que le code-barres n'existe pas déjà\n" +
-                            "- La console pour les détails de l'erreur SQL");
-                }
+                produitService.creer(produit, util.SessionManager.getCurrentUserId());
+                showAlert(Alert.AlertType.INFORMATION, "Succès",
+                        "Produit ajouté avec succès.");
+                viderFormulaire();
+                // Rafraîchir la liste des produits
+                chargerProduits();
+                // S'assurer que la table est visible et mise à jour
+                produitsTable.setVisible(true);
+                produitsTable.requestFocus();
             } catch (Exception e) {
                 String errorMsg = "Erreur lors de l'ajout du produit:\n\n" + e.getMessage();
                 if (e.getCause() != null) {
@@ -466,20 +463,16 @@ public class GestionStockController {
                 return;
             }
 
-            if (produitDAO.update(produit)) {
-                showAlert(Alert.AlertType.INFORMATION, "Succès",
-                        "Produit modifié avec succès.");
-                viderFormulaire();
-                desactiverModeEdition();
-                // Rafraîchir la liste des produits
-                chargerProduits();
-                // S'assurer que la table est visible et mise à jour
-                produitsTable.setVisible(true);
-                produitsTable.requestFocus();
-            } else {
-                showAlert(Alert.AlertType.ERROR, "Erreur",
-                        "Erreur lors de la modification du produit. Vérifiez la console pour plus de détails.");
-            }
+            produitService.modifier(produit, util.SessionManager.getCurrentUserId());
+            showAlert(Alert.AlertType.INFORMATION, "Succès",
+                    "Produit modifié avec succès.");
+            viderFormulaire();
+            desactiverModeEdition();
+            // Rafraîchir la liste des produits
+            chargerProduits();
+            // S'assurer que la table est visible et mise à jour
+            produitsTable.setVisible(true);
+            produitsTable.requestFocus();
         }
     }
 
