@@ -32,7 +32,7 @@ public class CategorieProduitsController {
     // CONSTANTES
     // ============================================
     private static final int CARD_WIDTH = 240;
-    private static final int CARD_HEIGHT = 300;
+    private static final int CARD_HEIGHT = 400;
     private static final int ANIMATION_DURATION = 200;
 
     // ============================================
@@ -245,6 +245,37 @@ public class CategorieProduitsController {
             detailsContainer.getChildren().add(uniteLabel);
         }
 
+        // Tarif à la cigarette : le caissier doit savoir, avant d'appuyer, si
+        // le produit se vend au détail. Sinon il découvre au moment du
+        // dialogue que l'option n'existe pas.
+        if (produit.isTabac()) {
+            if (produit.vendableALaCigarette()) {
+                Label cigLabel = new Label(String.format("🚬 %.3f DT / cigarette",
+                        produit.getPrixVenteCigarette()));
+                cigLabel.getStyleClass().add("product-unite");
+                detailsContainer.getChildren().add(cigLabel);
+
+                Label parPaquet = new Label("1 paquet = "
+                        + model.TypeCategorie.CIGARETTES_PAR_PAQUET + " cigarettes");
+                parPaquet.getStyleClass().add("sous-titre");
+                detailsContainer.getChildren().add(parPaquet);
+            } else {
+                Label paquetSeul = new Label("Vendu au paquet uniquement");
+                paquetSeul.getStyleClass().add("sous-titre");
+                detailsContainer.getChildren().add(paquetSeul);
+            }
+        }
+
+        // Marge : utile pour arbitrer une remise au comptoir.
+        if (produit.getPrixAchatActuel() != null && produit.getPrixVenteDefaut() != null
+                && produit.getPrixAchatActuel().signum() > 0) {
+            java.math.BigDecimal marge = produit.getPrixVenteDefaut()
+                    .subtract(produit.getPrixAchatActuel());
+            Label margeLabel = new Label(String.format("Marge %.3f DT", marge));
+            margeLabel.getStyleClass().add("sous-titre");
+            detailsContainer.getChildren().add(margeLabel);
+        }
+
         contentBox.getChildren().addAll(nomLabel, priceContainer, detailsContainer);
 
         // Spacer to push footer to bottom
@@ -416,6 +447,15 @@ public class CategorieProduitsController {
      * Ajoute un produit au panier ou incrémente la quantité
      */
     private void ajouterAuPanier(Produit produit) {
+        // Le tabac passe toujours par le dialogue : sans lui, ce bouton
+        // ajoutait le produit au prix du paquet sans jamais demander s'il
+        // s'agissait d'un paquet ou de cigarettes, et sans enregistrer l'unité
+        // vendue. Seuls « ×N » et le double appui posaient la question.
+        if (produit.isTabac()) {
+            ouvrirSaisieQuantite(produit);
+            return;
+        }
+
         // Vérifier si le produit est déjà dans le panier
         DetailVente detailExistant = rechercherProduitDansPanier(produit.getId());
 
@@ -537,6 +577,7 @@ public class CategorieProduitsController {
             alert.setTitle("Erreur");
             alert.setHeaderText(null);
             alert.setContentText("Le produit \"" + produit.getNom() + "\" n'a pas de prix de vente défini.");
+            ui.Dialogues.preparer(alert.getDialogPane(), null);
             alert.showAndWait();
             return;
         }
@@ -621,6 +662,7 @@ public class CategorieProduitsController {
         alert.setTitle(titre);
         alert.setHeaderText(null);
         alert.setContentText(message);
+        ui.Dialogues.preparer(alert.getDialogPane(), null);
         alert.showAndWait();
     }
 }

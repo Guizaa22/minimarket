@@ -174,6 +174,12 @@ public class GestionTabacController {
                             // Calculer cigarettes et paquets
                             if ("cigarette".equals(detail.getTypeVenteTabac())) {
                                 totalCigarettes += detail.getQuantite();
+                                // Les paquets entamés comptent aussi : vendre 25
+                                // cigarettes en ouvre deux. Ils étaient ignorés
+                                // ici, alors que la branche « frak » les comptait.
+                                totalPaquets += (detail.getQuantite()
+                                        + model.TypeCategorie.CIGARETTES_PAR_PAQUET - 1)
+                                        / model.TypeCategorie.CIGARETTES_PAR_PAQUET;
                             } else if ("paquet".equals(detail.getTypeVenteTabac())) {
                                 totalPaquets += detail.getQuantite();
                                 totalCigarettes += detail.getQuantite() * model.TypeCategorie.CIGARETTES_PAR_PAQUET;
@@ -273,6 +279,7 @@ public class GestionTabacController {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
+        ui.Dialogues.preparer(alert.getDialogPane(), null);
         alert.showAndWait();
     }
     

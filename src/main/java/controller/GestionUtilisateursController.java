@@ -227,6 +227,7 @@ public class GestionUtilisateursController {
         confirmAlert.setContentText("Êtes-vous sûr de vouloir supprimer l'utilisateur \"" +
                 utilisateur.getUsername() + "\" ?\n\nCette action est irréversible.");
 
+        ui.Dialogues.preparer(confirmAlert.getDialogPane(), null);
         if (confirmAlert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
             if (utilisateurDAO.delete(utilisateur.getId())) {
                 showAlert(Alert.AlertType.INFORMATION, "Succès",
@@ -453,6 +454,7 @@ public class GestionUtilisateursController {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
+        ui.Dialogues.preparer(alert.getDialogPane(), null);
         alert.showAndWait();
     }
 }

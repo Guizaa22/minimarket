@@ -381,6 +381,7 @@ public class CaisseController {
             alert.setHeaderText("Êtes-vous sûr de vouloir vider le panier ?");
             alert.setContentText("Cette action est irréversible.");
 
+            ui.Dialogues.preparer(alert.getDialogPane(), null);
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK) {
                 service.SessionContext.get().getPanier().getLignes().clear();
@@ -763,6 +764,7 @@ public class CaisseController {
         
         alert.getButtonTypes().setAll(buttonTypePaquet, buttonTypeCigarette, buttonTypeCancel);
         
+        ui.Dialogues.preparer(alert.getDialogPane(), null);
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent()) {
             if (result.get() == buttonTypePaquet) {
@@ -924,6 +926,7 @@ public class CaisseController {
         alert.setTitle(titre);
         alert.setHeaderText(null);
         alert.setContentText(message);
+        ui.Dialogues.preparer(alert.getDialogPane(), null);
         alert.showAndWait();
     }
 }

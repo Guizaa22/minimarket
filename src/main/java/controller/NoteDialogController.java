@@ -344,6 +344,7 @@ public class NoteDialogController {
         javafx.scene.Node alertNode = alert.getDialogPane();
         alertNode.setStyle("-fx-background-radius: 12;");
         
+        ui.Dialogues.preparer(alert.getDialogPane(), null);
         alert.showAndWait();
     }
 }

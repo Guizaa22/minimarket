@@ -456,3 +456,71 @@
     -fx-padding: 18 20;
     -fx-min-height: 118;
 }
+
+
+/* ------------------------------------------------------------
+   Boîtes de dialogue
+   ------------------------------------------------------------
+   Les Alert de JavaFX arrivent avec un fond gris clair et des boutons
+   système, insensibles au thème. Toutes passent désormais par
+   ui/Dialogues, qui applique ces styles : une seule apparence, et le
+   mode sombre respecté. */
+
+.dialogue, .dialog-pane {
+    -fx-background-color: #0b1d52;
+    -fx-border-color: #2a3a72;
+    -fx-border-width: 1;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-padding: 4;
+}
+
+.dialogue > .header-panel, .dialog-pane > .header-panel {
+    -fx-background-color: #16295e;
+    -fx-background-radius: 13 13 0 0;
+    -fx-padding: 18 24 16 24;
+}
+
+.dialogue > .header-panel .label, .dialog-pane > .header-panel .label {
+    -fx-text-fill: #F2F4FC;
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+}
+
+.dialogue > .content, .dialog-pane > .content {
+    -fx-padding: 20 24;
+}
+
+.dialogue .content.label, .dialog-pane .content.label {
+    -fx-text-fill: #C9CFE8;
+    -fx-font-size: 14.5px;
+    -fx-wrap-text: true;
+}
+
+.dialogue .label, .dialog-pane .label {
+    -fx-text-fill: #C9CFE8;
+}
+
+/* Rangée de boutons : séparée du contenu par un filet, alignée à droite
+   comme dans le reste du système. */
+.dialogue > .button-bar, .dialog-pane > .button-bar {
+    -fx-background-color: #081741;
+    -fx-background-radius: 0 0 13 13;
+    -fx-padding: 14 20;
+    -fx-border-color: #2a3a72 transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.dialogue > .button-bar .button, .dialog-pane > .button-bar .button {
+    -fx-min-width: 118px;
+    -fx-min-height: 42px;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+}
+
+/* L'icône système par défaut ne correspond à aucun de nos visuels. */
+.dialogue > .header-panel > .graphic-container,
+.dialog-pane > .header-panel > .graphic-container {
+    -fx-padding: 0;
+    -fx-min-width: 0;
+}

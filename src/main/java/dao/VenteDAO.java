@@ -109,7 +109,13 @@ public class VenteDAO {
             }
 
             // INSERT DETAILS + UPDATE STOCK
-            String sqlDetail = "INSERT INTO detailsvente (id_vente, id_produit, quantite, prix_vente_unitaire, prix_achat_unitaire) VALUES (?, ?, ?, ?, ?)";
+            // unite_vente enregistre si la ligne est en paquets ou en cigarettes.
+            // Sans elle, une ligne de 7 « Marlboro » est ambiguë au rechargement,
+            // et les statistiques tabac comptaient 7 cigarettes comme 7 paquets.
+            String sqlDetail = "INSERT INTO detailsvente "
+                             + "(id_vente, id_produit, quantite, prix_vente_unitaire, "
+                             + " prix_achat_unitaire, unite_vente) "
+                             + "VALUES (?, ?, ?, ?, ?, ?)";
             String sqlStock = "UPDATE produits SET quantite_stock = quantite_stock - ? WHERE id = ? AND quantite_stock >= ?";
 
             stmtDetail = conn.prepareStatement(sqlDetail);
@@ -137,11 +143,14 @@ public class VenteDAO {
                                 throw new SQLException("Produit ID " + d.getProduitId() + " introuvable dans la base de données");
                             }
                             int stockActuel = rs.getInt("quantite_stock");
-                            if (stockActuel < d.getQuantite()) {
+                            // Comparé en paquets, unité dans laquelle le stock
+                            // est tenu — pas en cigarettes.
+                            int requis = paquetsConsommes(d);
+                            if (stockActuel < requis) {
                                 // Exception métier : le contrôleur peut afficher
                                 // un message utile sans analyser un texte SQL.
                                 throw new exception.StockInsuffisantException(
-                                        produitVendu.getNom(), stockActuel, d.getQuantite());
+                                        produitVendu.getNom(), stockActuel, requis);
                             }
                         }
                     }
@@ -152,6 +161,8 @@ public class VenteDAO {
                 stmtDetail.setInt(3, d.getQuantite());
                 stmtDetail.setBigDecimal(4, d.getPrixVenteUnitaire());
                 stmtDetail.setBigDecimal(5, d.getPrixAchatUnitaire());
+                stmtDetail.setString(6, d.getTypeVenteTabac() != null
+                        ? d.getTypeVenteTabac() : "unite");
                 stmtDetail.addBatch();
 
                 // Si c'est un "frak cigarette", décrémenter le stock du produit tabac associé
@@ -198,10 +209,16 @@ public class VenteDAO {
                         LOG.error("⚠ ATTENTION: Produit 'frak cigarette' '" + produitVendu.getNom() + "' vendu, mais aucun produit tabac associé spécifié. Le stock du produit tabac ne sera pas décrémenté.");
                     }
                 } else {
-                    // Produit normal: décrémenter son propre stock
-                    stmtStock.setInt(1, d.getQuantite());
+                    // Le stock est tenu en paquets. Une vente à la cigarette
+                    // n'en consomme donc pas autant d'unités que de cigarettes :
+                    // 7 cigarettes entament 1 paquet, 25 en entament 2.
+                    // Sans cette conversion, vendre 7 cigarettes retirait
+                    // 7 paquets du stock.
+                    int unitesADecrementer = paquetsConsommes(d);
+
+                    stmtStock.setInt(1, unitesADecrementer);
                     stmtStock.setInt(2, d.getProduitId());
-                    stmtStock.setInt(3, d.getQuantite()); // Vérification dans WHERE
+                    stmtStock.setInt(3, unitesADecrementer); // Vérification dans WHERE
                     stmtStock.addBatch();
                 }
             }
@@ -278,6 +295,22 @@ public class VenteDAO {
                 LOG.error("Erreur lors de la fermeture des ressources", e);
             }
         }
+    }
+
+    /**
+     * Nombre d'unités de stock consommées par une ligne de vente.
+     *
+     * Le stock des produits de tabac est tenu en paquets. Une ligne vendue à la
+     * cigarette consomme donc le nombre de paquets entamés, arrondi au
+     * supérieur : 7 cigarettes entament 1 paquet, 25 en entament 2. Pour toute
+     * autre ligne, la quantité vendue est directement l'unité de stock.
+     */
+    private int paquetsConsommes(DetailVente detail) {
+        if (!"cigarette".equals(detail.getTypeVenteTabac())) {
+            return detail.getQuantite();
+        }
+        int parPaquet = model.TypeCategorie.CIGARETTES_PAR_PAQUET;
+        return (detail.getQuantite() + parPaquet - 1) / parPaquet;
     }
 
     /**
@@ -438,14 +471,22 @@ public class VenteDAO {
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
-                details.add(new DetailVente(
+                DetailVente detail = new DetailVente(
                         rs.getInt("id"),
                         rs.getInt("id_vente"),
                         rs.getInt("id_produit"),
                         rs.getInt("quantite"),
                         rs.getBigDecimal("prix_vente_unitaire"),
                         rs.getBigDecimal("prix_achat_unitaire")
-                ));
+                );
+
+                // « unite » correspond à un produit ordinaire : on laisse null
+                // pour que les traitements tabac ne s'y appliquent pas.
+                String unite = rs.getString("unite_vente");
+                if (unite != null && !"unite".equals(unite)) {
+                    detail.setTypeVenteTabac(unite);
+                }
+                details.add(detail);
             }
 
         } catch (SQLException e) {

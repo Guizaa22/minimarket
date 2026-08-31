@@ -319,6 +319,7 @@ public class GestionStockController {
         confirmAlert.setContentText("Êtes-vous sûr de vouloir supprimer le produit \"" +
                 produit.getNom() + "\" ?");
 
+        ui.Dialogues.preparer(confirmAlert.getDialogPane(), null);
         if (confirmAlert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
             // Vérifier si l'utilisateur est admin
             boolean isAdmin = SessionManager.isAdmin();
@@ -333,6 +334,7 @@ public class GestionStockController {
                         "⚠️ ATTENTION: Cela supprimera également toutes les références à ce produit dans les ventes et ajouts de stock.\n\n" +
                         "Voulez-vous continuer ?");
                 
+                ui.Dialogues.preparer(forceConfirmAlert.getDialogPane(), null);
                 if (forceConfirmAlert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
                     forceDelete = true;
                 } else {
@@ -890,6 +892,7 @@ public class GestionStockController {
         confirmation.setContentText(probleme + "\n\nEnregistrer quand même ?");
         confirmation.getDialogPane().setMinWidth(480);
 
+        ui.Dialogues.preparer(confirmation.getDialogPane(), null);
         return confirmation.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK;
     }
 
@@ -901,6 +904,7 @@ public class GestionStockController {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
+        ui.Dialogues.preparer(alert.getDialogPane(), null);
         alert.showAndWait();
     }
 }

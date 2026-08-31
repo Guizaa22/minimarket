@@ -105,6 +105,7 @@ public class DeplacementDialogController {
         alert.setTitle(titre);
         alert.setHeaderText(null);
         alert.setContentText(message);
+        ui.Dialogues.preparer(alert.getDialogPane(), null);
         alert.showAndWait();
     }
 }

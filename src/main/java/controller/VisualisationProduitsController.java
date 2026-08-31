@@ -336,6 +336,7 @@ public class VisualisationProduitsController {
             confirmAlert.setContentText("Aucun produit trouvé avec le code-barres: " + codeBarre + 
                                        "\n\nVoulez-vous créer un nouveau produit avec ce code-barres ?");
             
+            ui.Dialogues.preparer(confirmAlert.getDialogPane(), null);
             if (confirmAlert.showAndWait().orElse(javafx.scene.control.ButtonType.CANCEL) == javafx.scene.control.ButtonType.OK) {
                 ouvrirCreationProduit(codeBarre);
             }
@@ -675,6 +676,7 @@ public class VisualisationProduitsController {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
+        ui.Dialogues.preparer(alert.getDialogPane(), null);
         alert.showAndWait();
     }
 }

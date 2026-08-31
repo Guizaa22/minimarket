@@ -549,6 +549,7 @@ public class GestionVentesController {
         }
 
         alert.setContentText(content.toString());
+        ui.Dialogues.preparer(alert.getDialogPane(), null);
         alert.showAndWait();
     }
 
@@ -651,6 +652,7 @@ public class GestionVentesController {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
+        ui.Dialogues.preparer(alert.getDialogPane(), null);
         alert.showAndWait();
     }
 
