@@ -3,6 +3,8 @@ package controller;
 import java.util.List;
 
 import dao.ProduitDAO;
+import service.ProduitService;
+import model.StockMovement;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -42,12 +44,14 @@ public class VisualisationProduitsController {
     private Label totalProduitsLabel;
     
     private ProduitDAO produitDAO;
+    private ProduitService produitService;
     private ObservableList<Produit> tousProduits;
     private FilteredList<Produit> produitsFiltres;
     
     @FXML
     private void initialize() {
         produitDAO = new ProduitDAO();
+        produitService = new ProduitService();
         tousProduits = FXCollections.observableArrayList();
         produitsFiltres = new FilteredList<>(tousProduits, p -> true);
         
@@ -357,14 +361,18 @@ public class VisualisationProduitsController {
             try {
                 int quantite = Integer.parseInt(quantiteStr);
                 if (quantite > 0) {
-                    produit.setQuantiteStock(produit.getQuantiteStock() + quantite);
-                    if (produitDAO.update(produit)) {
-                        showAlert(Alert.AlertType.INFORMATION, "Succès", 
+                    // Passer par ProduitService : incrément atomique (pas de
+                    // lecture-modification-écriture qui écraserait une vente
+                    // simultanée), mouvement de stock et audit inclus.
+                    try {
+                        produitService.ajouterStock(produit.getId(), quantite,
+                                service.SessionContext.get().getUtilisateurId(),
+                                StockMovement.Type.DESKTOP_ADD, null);
+                        showAlert(Alert.AlertType.INFORMATION, "Succès",
                                  quantite + " " + produit.getUnite() + " ajouté(s) au stock.");
                         chargerProduits();
-                    } else {
-                        showAlert(Alert.AlertType.ERROR, "Erreur", 
-                                 "Erreur lors de la mise à jour du stock.");
+                    } catch (exception.ApplicationException ex) {
+                        showAlert(Alert.AlertType.ERROR, "Erreur", ex.getMessage());
                     }
                 } else {
                     showAlert(Alert.AlertType.WARNING, "Quantité invalide", 
@@ -656,6 +664,7 @@ public class VisualisationProduitsController {
         
         // Créer la scène et afficher
         javafx.scene.Scene scene = new javafx.scene.Scene(root);
+        util.FXMLUtils.appliquerStylesDialogue(scene);
         dialogStage.setScene(scene);
         dialogStage.setResizable(false);
         

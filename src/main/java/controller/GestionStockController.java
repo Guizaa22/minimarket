@@ -30,7 +30,6 @@ import javafx.scene.layout.HBox;
 import model.Categorie;
 import model.TypeCategorie;
 import model.Produit;
-import util.SessionManager;
 
 /**
  * Contrôleur pour la gestion de stock (Admin uniquement)
@@ -331,7 +330,7 @@ public class GestionStockController {
         ui.Dialogues.preparer(confirmAlert.getDialogPane(), null);
         if (confirmAlert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
             // Vérifier si l'utilisateur est admin
-            boolean isAdmin = SessionManager.isAdmin();
+            boolean isAdmin = service.SessionContext.get().estAdmin();
             boolean forceDelete = false;
             
             // Si le produit est utilisé et que l'utilisateur est admin, demander confirmation pour suppression forcée
@@ -352,7 +351,7 @@ public class GestionStockController {
             }
             
             try {
-                produitService.supprimer(produit, util.SessionManager.getCurrentUserId(), forceDelete);
+                produitService.supprimer(produit, service.SessionContext.get().getUtilisateurId(), forceDelete);
                 String message = "Produit supprimé avec succès.";
                 if (forceDelete) {
                     message += "\n\n⚠️ Les références à ce produit dans les ventes et ajouts de stock ont également été supprimées.";
@@ -420,7 +419,7 @@ public class GestionStockController {
             }
 
             try {
-                produitService.creer(produit, util.SessionManager.getCurrentUserId());
+                produitService.creer(produit, service.SessionContext.get().getUtilisateurId());
                 showAlert(Alert.AlertType.INFORMATION, "Succès",
                         "Produit ajouté avec succès.");
                 viderFormulaire();
@@ -463,7 +462,7 @@ public class GestionStockController {
                 return;
             }
 
-            produitService.modifier(produit, util.SessionManager.getCurrentUserId());
+            produitService.modifier(produit, service.SessionContext.get().getUtilisateurId());
             showAlert(Alert.AlertType.INFORMATION, "Succès",
                     "Produit modifié avec succès.");
             viderFormulaire();

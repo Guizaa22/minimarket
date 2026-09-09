@@ -1,6 +1,7 @@
 package controller;
 
-import dao.UtilisateurDAO;
+import service.AuthService;
+import exception.ApplicationException;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -10,7 +11,6 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import model.Utilisateur;
-import util.SecurityUtil;
 
 /**
  * Contrôleur pour la gestion des utilisateurs (Admin uniquement)
@@ -75,7 +75,7 @@ public class GestionUtilisateursController {
     // ========================================
     // DONNÉES & DAO
     // ========================================
-    private UtilisateurDAO utilisateurDAO;
+    private AuthService authService;
     private ObservableList<Utilisateur> utilisateursList;
     private Utilisateur utilisateurSelectionne;
     private boolean modeEdition = false;
@@ -85,7 +85,7 @@ public class GestionUtilisateursController {
      */
     @FXML
     private void initialize() {
-        utilisateurDAO = new UtilisateurDAO();
+        authService = new AuthService();
         utilisateursList = FXCollections.observableArrayList();
 
         // Configuration du ComboBox des rôles
@@ -229,14 +229,16 @@ public class GestionUtilisateursController {
 
         ui.Dialogues.preparer(confirmAlert.getDialogPane(), null);
         if (confirmAlert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
-            if (utilisateurDAO.delete(utilisateur.getId())) {
+            // AuthService centralise les garde-fous (dernier administrateur,
+            // compte de la session) et le journal d'audit.
+            try {
+                authService.supprimerCompte(utilisateur);
                 showAlert(Alert.AlertType.INFORMATION, "Succès",
                         "Utilisateur supprimé avec succès.");
                 chargerUtilisateurs();
                 updateUserCount();
-            } else {
-                showAlert(Alert.AlertType.ERROR, "Erreur",
-                        "Erreur lors de la suppression de l'utilisateur.");
+            } catch (ApplicationException e) {
+                showAlert(Alert.AlertType.ERROR, "Suppression impossible", e.getMessage());
             }
         }
     }
@@ -279,28 +281,17 @@ public class GestionUtilisateursController {
         String password = passwordField.getText();
         Utilisateur.Role role = roleComboBox.getValue();
 
-        // Vérifier si l'utilisateur existe déjà
-        if (utilisateurDAO.usernameExists(username)) {
-            showAlert(Alert.AlertType.WARNING, "Nom d'utilisateur existant",
-                    "Un utilisateur avec ce nom existe déjà.");
-            return;
-        }
-
-        Utilisateur utilisateur = new Utilisateur(
-                username,
-                SecurityUtil.hashPassword(password),
-                role
-        );
-
-        if (utilisateurDAO.create(utilisateur)) {
+        // Création, validation, unicité, hachage BCrypt et audit sont portés
+        // par AuthService.
+        try {
+            authService.creerCompte(username, password, role);
             showAlert(Alert.AlertType.INFORMATION, "Succès",
                     "Utilisateur ajouté avec succès.");
             viderFormulaire();
             chargerUtilisateurs();
             updateUserCount();
-        } else {
-            showAlert(Alert.AlertType.ERROR, "Erreur",
-                    "Erreur lors de l'ajout de l'utilisateur.");
+        } catch (ApplicationException e) {
+            showAlert(Alert.AlertType.WARNING, "Ajout impossible", e.getMessage());
         }
     }
 
@@ -323,31 +314,17 @@ public class GestionUtilisateursController {
         String password = passwordField.getText();
         Utilisateur.Role role = roleComboBox.getValue();
 
-        // Vérifier si le nom d'utilisateur a changé et existe déjà
-        if (!username.equals(utilisateurSelectionne.getUsername()) &&
-                utilisateurDAO.usernameExists(username)) {
-            showAlert(Alert.AlertType.WARNING, "Nom d'utilisateur existant",
-                    "Un utilisateur avec ce nom existe déjà.");
-            return;
-        }
-
-        utilisateurSelectionne.setUsername(username);
-        utilisateurSelectionne.setRole(role);
-
-        // Mettre à jour le mot de passe seulement s'il n'est pas vide
-        if (!password.isEmpty()) {
-            utilisateurSelectionne.setPasswordHash(SecurityUtil.hashPassword(password));
-        }
-
-        if (utilisateurDAO.update(utilisateurSelectionne)) {
+        // Modification (nom, rôle, mot de passe optionnel), unicité et audit
+        // sont portés par AuthService.
+        try {
+            authService.modifierCompte(utilisateurSelectionne, username, role, password);
             showAlert(Alert.AlertType.INFORMATION, "Succès",
                     "Utilisateur modifié avec succès.");
             viderFormulaire();
             desactiverModeEdition();
             chargerUtilisateurs();
-        } else {
-            showAlert(Alert.AlertType.ERROR, "Erreur",
-                    "Erreur lors de la modification de l'utilisateur.");
+        } catch (ApplicationException e) {
+            showAlert(Alert.AlertType.WARNING, "Modification impossible", e.getMessage());
         }
     }
 
@@ -379,7 +356,7 @@ public class GestionUtilisateursController {
      */
     private void chargerUtilisateurs() {
         utilisateursList.clear();
-        utilisateursList.addAll(utilisateurDAO.findAll());
+        utilisateursList.addAll(authService.listerUtilisateurs());
     }
 
     /**

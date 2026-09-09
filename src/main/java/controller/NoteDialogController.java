@@ -25,7 +25,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import model.NoteJour;
-import util.SessionManager;
 
 /**
  * Contrôleur pour le dialogue d'ajout de notes
@@ -221,7 +220,7 @@ public class NoteDialogController {
         }
         
         // La note doit être rattachée à l'employé réellement connecté.
-        int idEmploye = SessionManager.getCurrentUserId();
+        int idEmploye = service.SessionContext.get().getUtilisateurId();
         if (idEmploye <= 0) {
             afficherAlerteAvecAnimation(Alert.AlertType.ERROR, "Session expirée",
                 "Aucun utilisateur connecté. Reconnectez-vous pour enregistrer une note.");

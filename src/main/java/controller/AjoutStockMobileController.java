@@ -1,6 +1,8 @@
 package controller;
 
 import dao.ProduitDAO;
+import service.ProduitService;
+import model.StockMovement;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -43,12 +45,14 @@ public class AjoutStockMobileController {
     private VBox historiqueContainer;
     
     private ProduitDAO produitDAO;
+    private ProduitService produitService;
     private Produit produitActuel;
     private ObservableList<String> historique;
     
     @FXML
     private void initialize() {
         produitDAO = new ProduitDAO();
+        produitService = new ProduitService();
         historique = FXCollections.observableArrayList();
         
         // Focus automatique sur le champ code-barres
@@ -275,11 +279,16 @@ public class AjoutStockMobileController {
                 return;
             }
             
-            // Mettre à jour le stock
-            produitActuel.setQuantiteStock(produitActuel.getQuantiteStock() + quantite);
-            
-            if (produitDAO.update(produitActuel)) {
-                // Ajouter à l'historique
+            // Mise à jour via ProduitService : incrément atomique (évite
+            // d'écraser une vente simultanée), mouvement de stock et audit.
+            try {
+                produitService.ajouterStock(produitActuel.getId(), quantite,
+                        service.SessionContext.get().getUtilisateurId(),
+                        StockMovement.Type.MOBILE_ADD, null);
+
+                // Relecture pour afficher le stock réel après incrément.
+                produitActuel = produitService.parId(produitActuel.getId());
+
                 String historiqueItem = String.format(
                     "✅ %s: +%d %s (Stock: %d %s)",
                     produitActuel.getNom(),
@@ -290,18 +299,17 @@ public class AjoutStockMobileController {
                 );
                 historique.add(0, historiqueItem);
                 afficherHistorique();
-                
+
                 // Réinitialiser pour le prochain scan
                 codeBarreField.clear();
                 quantiteField.setText("1");
                 masquerInfosProduit();
                 codeBarreField.requestFocus();
-                
+
                 // Feedback visuel
                 afficherInfosProduit(produitActuel);
-            } else {
-                showAlert(Alert.AlertType.ERROR, "Erreur", 
-                         "Erreur lors de la mise à jour du stock.");
+            } catch (exception.ApplicationException ex) {
+                showAlert(Alert.AlertType.ERROR, "Erreur", ex.getMessage());
             }
         } catch (NumberFormatException e) {
             showAlert(Alert.AlertType.ERROR, "Erreur", 

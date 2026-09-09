@@ -10,7 +10,6 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import model.*;
 import util.FXMLUtils;
-import util.SessionManager;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -311,7 +310,7 @@ public class RecetteJourController {
         LocalDateTime dateFin = date.atTime(23, 59, 59);
         
         // La recette affichée est celle de l'employé connecté.
-        int idEmploye = SessionManager.getCurrentUserId();
+        int idEmploye = service.SessionContext.get().getUtilisateurId();
         if (idEmploye <= 0) {
             afficherAlerte(Alert.AlertType.ERROR, "Session expirée",
                 "Aucun utilisateur connecté. Reconnectez-vous pour consulter la recette du jour.");
@@ -437,8 +436,8 @@ public class RecetteJourController {
             java.io.File file = fileChooser.showSaveDialog(stage);
             
             if (file != null) {
-                boolean isAdmin = SessionManager.isAdmin();
-                int idEmploye = SessionManager.getCurrentUserId();
+                boolean isAdmin = service.SessionContext.get().estAdmin();
+                int idEmploye = service.SessionContext.get().getUtilisateurId();
                 util.PDFExporter.exportRecetteJour(file, date, venteDAO, paiementDAO, ajoutStockDAO, 
                     noteDAO, fournisseurDAO, produitDAO, deplacementDAO, utilisateurDAO, idEmploye, isAdmin);
                 afficherAlerte(Alert.AlertType.INFORMATION, "Succès", 

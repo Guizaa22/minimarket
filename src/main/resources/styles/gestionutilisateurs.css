@@ -9,14 +9,14 @@
 .root {
     -fx-font-family: "Segoe UI", "Roboto", "Arial", sans-serif;
     -fx-font-size: 14px;
-    -fx-background-color: linear-gradient(to bottom right, #f9fafb 0%, #e5e7eb 100%);
+    -fx-background-color: linear-gradient(to bottom right, -fond-eleve 0%, -fond-eleve 100%);
 }
 
 /* ==========================================
    HEADER - Barre supérieure moderne
    ========================================== */
 .header-box {
-    -fx-background-color: linear-gradient(to right, #2563eb 0%, #1d4ed8 100%);
+    -fx-background-color: linear-gradient(to right, -accent 0%, -accent 100%);
     -fx-padding: 25 40;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 15, 0, 0, 5);
 }
@@ -32,8 +32,8 @@
    BOUTON RETOUR
    ========================================== */
 #retourButton {
-    -fx-background-color: white;
-    -fx-text-fill: #2563eb;
+    -fx-background-color: -fond-carte;
+    -fx-text-fill: -accent;
     -fx-font-weight: bold;
     -fx-font-size: 16px;
     -fx-background-radius: 10;
@@ -43,7 +43,7 @@
 }
 
 #retourButton:hover {
-    -fx-background-color: #f9fafb;
+    -fx-background-color: -fond-eleve;
     -fx-scale-x: 1.05;
     -fx-scale-y: 1.05;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 12, 0, 0, 5);
@@ -52,14 +52,14 @@
 #retourButton:pressed {
     -fx-scale-x: 0.98;
     -fx-scale-y: 0.98;
-    -fx-background-color: #e5e7eb;
+    -fx-background-color: -fond-eleve;
 }
 
 /* ==========================================
    SECTIONS - Cards
    ========================================== */
 .section-box {
-    -fx-background-color: white;
+    -fx-background-color: -fond-carte;
     -fx-background-radius: 15;
     -fx-padding: 25;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 5);
@@ -74,14 +74,14 @@
 .section-title {
     -fx-font-weight: bold;
     -fx-font-size: 22px;
-    -fx-text-fill: #1f2937;
+    -fx-text-fill: -texte-fort;
 }
 
 /* ==========================================
    LABELS DU FORMULAIRE
    ========================================== */
 .form-label {
-    -fx-text-fill: #374151;
+    -fx-text-fill: -texte-fort;
     -fx-font-size: 14px;
     -fx-font-weight: bold;
 }
@@ -90,29 +90,29 @@
    CHAMPS DE TEXTE
    ========================================== */
 .text-field, .password-field {
-    -fx-background-color: white;
-    -fx-border-color: #d1d5db;
+    -fx-background-color: -fond-carte;
+    -fx-border-color: -bordure;
     -fx-border-width: 2;
     -fx-border-radius: 10;
     -fx-background-radius: 10;
     -fx-padding: 12 16;
     -fx-font-size: 14px;
-    -fx-text-fill: #1f2937;
-    -fx-prompt-text-fill: #9ca3af;
+    -fx-text-fill: -texte-fort;
+    -fx-prompt-text-fill: -texte-discret;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 3, 0, 0, 1);
 }
 
 .text-field:focused, .password-field:focused {
-    -fx-border-color: #2563eb;
+    -fx-border-color: -accent;
     -fx-border-width: 2;
-    -fx-background-color: white;
+    -fx-background-color: -fond-carte;
     -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.3), 10, 0, 0, 0);
     -fx-scale-x: 1.01;
     -fx-scale-y: 1.01;
 }
 
 .text-field:hover, .password-field:hover {
-    -fx-border-color: #9ca3af;
+    -fx-border-color: -bordure;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 5, 0, 0, 2);
 }
 
@@ -124,8 +124,8 @@
    COMBOBOX
    ========================================== */
 .combo-box {
-    -fx-background-color: white;
-    -fx-border-color: #d1d5db;
+    -fx-background-color: -fond-carte;
+    -fx-border-color: -bordure;
     -fx-border-width: 2;
     -fx-border-radius: 10;
     -fx-background-radius: 10;
@@ -133,24 +133,24 @@
 }
 
 .combo-box:focused {
-    -fx-border-color: #2563eb;
+    -fx-border-color: -accent;
     -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.3), 10, 0, 0, 0);
 }
 
 .combo-box:hover {
-    -fx-border-color: #9ca3af;
+    -fx-border-color: -bordure;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 5, 0, 0, 2);
 }
 
 .combo-box .list-cell {
-    -fx-background-color: white;
-    -fx-text-fill: #1f2937;
+    -fx-background-color: -fond-carte;
+    -fx-text-fill: -texte-fort;
     -fx-padding: 8 12;
 }
 
 .combo-box-popup .list-view {
-    -fx-background-color: white;
-    -fx-border-color: #e5e7eb;
+    -fx-background-color: -fond-carte;
+    -fx-border-color: -bordure;
     -fx-border-width: 1;
     -fx-border-radius: 8;
     -fx-background-radius: 8;
@@ -163,7 +163,7 @@
 
 .combo-box-popup .list-view .list-cell:selected {
     -fx-background-color: rgba(37, 99, 235, 0.2);
-    -fx-text-fill: #2563eb;
+    -fx-text-fill: -accent;
 }
 
 #roleComboBox {
@@ -176,7 +176,7 @@
 
 /* Bouton Ajouter - Bleu */
 #ajouterButton {
-    -fx-background-color: linear-gradient(to bottom, #2563eb 0%, #1d4ed8 100%);
+    -fx-background-color: linear-gradient(to bottom, -accent 0%, -accent 100%);
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-font-size: 16px;
@@ -187,7 +187,7 @@
 }
 
 #ajouterButton:hover {
-    -fx-background-color: linear-gradient(to bottom, #1d4ed8 0%, #1e40af 100%);
+    -fx-background-color: linear-gradient(to bottom, -accent 0%, -accent 100%);
     -fx-scale-x: 1.03;
     -fx-scale-y: 1.03;
     -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.5), 15, 0, 0, 6);
@@ -201,7 +201,7 @@
 
 /* Bouton Modifier - Vert */
 #modifierButton {
-    -fx-background-color: linear-gradient(to bottom, #059669 0%, #047857 100%);
+    -fx-background-color: linear-gradient(to bottom, -succes 0%, -succes 100%);
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-font-size: 16px;
@@ -212,7 +212,7 @@
 }
 
 #modifierButton:hover {
-    -fx-background-color: linear-gradient(to bottom, #047857 0%, #065f46 100%);
+    -fx-background-color: linear-gradient(to bottom, -succes 0%, -succes 100%);
     -fx-scale-x: 1.03;
     -fx-scale-y: 1.03;
     -fx-effect: dropshadow(gaussian, rgba(5, 150, 105, 0.5), 15, 0, 0, 6);
@@ -250,7 +250,7 @@
 /* Boutons d'action dans le tableau */
 .action-button-edit {
     -fx-background-color: transparent;
-    -fx-text-fill: #059669;
+    -fx-text-fill: -succes;
     -fx-font-size: 16px;
     -fx-cursor: hand;
     -fx-padding: 8;
@@ -263,7 +263,7 @@
 
 .action-button-delete {
     -fx-background-color: transparent;
-    -fx-text-fill: #dc2626;
+    -fx-text-fill: -danger;
     -fx-font-size: 16px;
     -fx-cursor: hand;
     -fx-padding: 8;
@@ -279,7 +279,7 @@
    ========================================== */
 .counter-badge {
     -fx-background-color: rgba(37, 99, 235, 0.1);
-    -fx-text-fill: #2563eb;
+    -fx-text-fill: -accent;
     -fx-padding: 8 16;
     -fx-background-radius: 20;
     -fx-border-color: rgba(37, 99, 235, 0.3);
@@ -299,7 +299,7 @@
 
 .role-badge-admin {
     -fx-background-color: rgba(220, 38, 38, 0.1);
-    -fx-text-fill: #dc2626;
+    -fx-text-fill: -danger;
     -fx-border-color: rgba(220, 38, 38, 0.3);
     -fx-border-width: 1;
     -fx-border-radius: 15;
@@ -307,7 +307,7 @@
 
 .role-badge-caissier {
     -fx-background-color: rgba(37, 99, 235, 0.1);
-    -fx-text-fill: #2563eb;
+    -fx-text-fill: -accent;
     -fx-border-color: rgba(37, 99, 235, 0.3);
     -fx-border-width: 1;
     -fx-border-radius: 15;
@@ -324,9 +324,9 @@
 
 /* En-têtes de colonnes */
 #utilisateursTable .column-header-background {
-    -fx-background-color: #f9fafb;
+    -fx-background-color: -fond-eleve;
     -fx-background-radius: 10 10 0 0;
-    -fx-border-color: transparent transparent #e5e7eb transparent;
+    -fx-border-color: transparent transparent -bordure transparent;
     -fx-border-width: 0 0 2 0;
 }
 
@@ -339,28 +339,28 @@
 #utilisateursTable .column-header .label {
     -fx-font-size: 12px;
     -fx-font-weight: bold;
-    -fx-text-fill: #6b7280;
+    -fx-text-fill: -texte-discret;
     -fx-alignment: center-left;
 }
 
 /* Cellules du tableau */
 #utilisateursTable .table-cell {
     -fx-padding: 14 12;
-    -fx-border-color: transparent transparent #f3f4f6 transparent;
+    -fx-border-color: transparent transparent -bordure transparent;
     -fx-border-width: 0 0 1 0;
     -fx-font-size: 14px;
-    -fx-text-fill: #374151;
+    -fx-text-fill: -texte-fort;
     -fx-alignment: center-left;
 }
 
 /* Lignes du tableau */
 #utilisateursTable .table-row-cell {
-    -fx-background-color: white;
+    -fx-background-color: -fond-carte;
     -fx-background-radius: 0;
 }
 
 #utilisateursTable .table-row-cell:hover {
-    -fx-background-color: #f9fafb;
+    -fx-background-color: -fond-eleve;
     -fx-cursor: hand;
 }
 
@@ -369,7 +369,7 @@
 }
 
 #utilisateursTable .table-row-cell:selected .table-cell {
-    -fx-text-fill: #2563eb;
+    -fx-text-fill: -accent;
 }
 
 /* ==========================================
@@ -381,7 +381,7 @@
 }
 
 .scroll-bar .thumb {
-    -fx-background-color: #d1d5db;
+    -fx-background-color: -fond-eleve;
     -fx-background-radius: 8;
     -fx-border-radius: 8;
 }
@@ -413,7 +413,7 @@
 }
 
 .separator .line {
-    -fx-border-color: #e5e7eb;
+    -fx-border-color: -bordure;
     -fx-border-width: 1 0 0 0;
 }
 
@@ -433,7 +433,7 @@
    PLACEHOLDER
    ========================================== */
 .table-view .placeholder .label {
-    -fx-text-fill: #9ca3af;
+    -fx-text-fill: -texte-discret;
     -fx-font-size: 16px;
 }
 
@@ -441,7 +441,7 @@
    FOCUS
    ========================================== */
 *:focused {
-    -fx-focus-color: #2563eb;
+    -fx-focus-color: -accent;
     -fx-faint-focus-color: rgba(37, 99, 235, 0.2);
 }
 

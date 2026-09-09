@@ -152,7 +152,32 @@ public class FXMLUtils {
                 || fxmlPath.contains("AjoutStock") || fxmlPath.contains("VisualisationProduits")) {
             return java.util.List.of("/styles/product-card.css");
         }
+        if (fxmlPath.contains("Connexion")) {
+            // Chargée au niveau de la scène (et non sur le nœud racine dans le
+            // contrôleur) : ainsi les variables du thème se résolvent et la
+            // feuille de thème, ajoutée en dernier, prime là où login.css ne
+            // fixe pas la couleur.
+            return java.util.List.of("/styles/login.css");
+        }
         return java.util.List.of();
+    }
+
+    /**
+     * Applique les feuilles communes (global, modern) et le thème courant à une
+     * scène de dialogue construite à la main.
+     *
+     * Les fenêtres créées directement avec {@code new Scene(...)} (recherche
+     * caisse, fiche produit, note…) s'ouvraient sinon avec l'apparence système
+     * par défaut — fond gris clair, insensible au mode sombre — en décalage avec
+     * le reste de l'application. À appeler juste après la création de la scène.
+     */
+    public static void appliquerStylesDialogue(Scene scene) {
+        if (scene == null) {
+            return;
+        }
+        appliquerFeuille(scene, "/styles/global.css");
+        appliquerFeuille(scene, "/styles/modern.css");
+        ui.ThemeManager.enregistrer(scene);
     }
 
     /**

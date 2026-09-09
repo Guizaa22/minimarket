@@ -337,7 +337,7 @@ public class CaisseCategoriesController {
         button.getStyleClass().add("category-button");
         // Fallback style if CSS not loaded yet or class not found
         if (button.getStyleClass().isEmpty()) {
-             button.setStyle("-fx-background-color: linear-gradient(to bottom, #4CAF50, #2E7D32); -fx-background-radius: 20;");
+             button.setStyle("-fx-background-color: linear-gradient(to bottom, -accent, -accent); -fx-background-radius: 20;");
         }
 
         // Effet hover

@@ -52,7 +52,6 @@ import model.PaiementFournisseur;
 import model.Produit;
 import util.FXMLUtils;
 import util.PopupManager;
-import util.SessionManager;
 
 /**
  * Contrôleur pour l'ajout de stock par les employés
@@ -742,7 +741,7 @@ public class AjoutStockEmployeController {
         // Vérifié avant de toucher au stock : sans employé identifié, l'ajout ne
         // serait pas traçable. L'ancien code modifiait le stock puis ignorait
         // silencieusement l'écriture dans ajouts_stock.
-        int idEmploye = SessionManager.getCurrentUserId();
+        int idEmploye = service.SessionContext.get().getUtilisateurId();
         if (idEmploye <= 0) {
             afficherMessage("Aucun utilisateur connecté. Reconnectez-vous.", Alert.AlertType.ERROR);
             return;
@@ -808,7 +807,7 @@ public class AjoutStockEmployeController {
         }
 
         // Vérifié avant de toucher au stock ou aux comptes fournisseur.
-        int idEmploye = SessionManager.getCurrentUserId();
+        int idEmploye = service.SessionContext.get().getUtilisateurId();
         if (idEmploye <= 0) {
             afficherMessage("Aucun utilisateur connecté. Reconnectez-vous.", Alert.AlertType.ERROR);
             return;
@@ -977,6 +976,7 @@ public class AjoutStockEmployeController {
             double dialogHeight = Math.min(500, bounds.getHeight() * 0.6);
             
             javafx.scene.Scene scene = new javafx.scene.Scene(root, dialogWidth, dialogHeight);
+            util.FXMLUtils.appliquerStylesDialogue(scene);
             javafx.stage.Stage dialogStage = new javafx.stage.Stage();
             dialogStage.setTitle("Ajouter une Note");
             dialogStage.setScene(scene);

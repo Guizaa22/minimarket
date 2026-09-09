@@ -10,7 +10,6 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import model.DeplacementEmploye;
-import util.SessionManager;
 
 /**
  * Contrôleur pour le dialogue de suivi des déplacements
@@ -51,7 +50,7 @@ public class DeplacementDialogController {
         }
         
         // Le déplacement doit être rattaché à l'employé réellement connecté.
-        int idEmploye = SessionManager.getCurrentUserId();
+        int idEmploye = service.SessionContext.get().getUtilisateurId();
         if (idEmploye <= 0) {
             afficherAlerte(Alert.AlertType.ERROR, "Session expirée",
                 "Aucun utilisateur connecté. Reconnectez-vous pour enregistrer un déplacement.");

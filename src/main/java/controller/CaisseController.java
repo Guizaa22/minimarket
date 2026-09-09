@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import dao.ProduitDAO;
-import dao.VenteDAO;
+import service.VenteService;
 import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
@@ -89,7 +89,7 @@ public class CaisseController {
     // ATTRIBUTS
     // ============================================
     private ProduitDAO produitDAO;
-    private VenteDAO venteDAO;
+    private VenteService venteService;
     private String modePaiement = "ESPÈCES"; // Par défaut
 
     // ============================================
@@ -98,7 +98,7 @@ public class CaisseController {
     @FXML
     private void initialize() {
         produitDAO = new ProduitDAO();
-        venteDAO = new VenteDAO();
+        venteService = new VenteService();
 
         // Initialiser l'interface
         updatePanierView();
@@ -305,39 +305,21 @@ public class CaisseController {
         // La vente doit être attribuée à l'utilisateur réellement connecté.
         // L'ancien code retombait sur un utilisateur "par défaut", ce qui attribuait
         // en pratique toutes les ventes au compte admin.
-        int userId = util.SessionManager.getCurrentUserId();
+        int userId = service.SessionContext.get().getUtilisateurId();
         if (userId <= 0) {
             afficherAlerte(Alert.AlertType.ERROR, "Session expirée",
                 "Aucun utilisateur connecté. Reconnectez-vous avant d'encaisser une vente.");
             return;
         }
 
-        // Créer la vente
-        Vente vente = new Vente();
-        vente.setDateVente(LocalDateTime.now());
-        vente.setTotalVente(total);
-        vente.setUtilisateurId(userId);
-        
-        // Ajouter les détails à la vente
-        for (DetailVente detail : service.SessionContext.get().getPanier().getLignes()) {
-            vente.addDetail(detail);
-        }
-
-        // Vérifier que la vente a des détails
-        if (vente.getDetails() == null || vente.getDetails().isEmpty()) {
-            afficherAlerte(Alert.AlertType.ERROR, "Erreur", 
-                "Le panier est vide ou invalide.");
-            return;
-        }
-
-        // Sauvegarder la vente et ses détails
-        LOG.info("Tentative d'enregistrement de la vente:");
-        LOG.info("  - Total: " + total);
-        LOG.info("  - Utilisateur ID: " + userId);
-        LOG.info("  - Nombre de détails: " + vente.getDetails().size());
-        
+        // L'encaissement passe désormais par VenteService : validation des
+        // lignes, décrémentation atomique du stock et journal d'audit y sont
+        // centralisés. Le contrôleur ne construit plus la vente ni n'appelle le
+        // DAO directement (les invariants métier étaient sinon contournés).
+        Vente vente;
         try {
-            venteDAO.create(vente);
+            vente = venteService.encaisser(
+                    service.SessionContext.get().getPanier(), userId, typePaiementVente());
 
         } catch (exception.StockInsuffisantException e) {
             // Le panier est conservé : le caissier ajuste la quantité et réessaie.
@@ -563,6 +545,7 @@ public class CaisseController {
         });
         
         Scene dialogScene = new Scene(dialogRoot, 600, 500);
+        util.FXMLUtils.appliquerStylesDialogue(dialogScene);
         dialogStage.setScene(dialogScene);
         dialogStage.setResizable(false);
         
@@ -632,6 +615,17 @@ public class CaisseController {
         btn.getStyleClass().clear();
         btn.getStyleClass().add("btn");
         btn.getStyleClass().add(styleClass); // Clear inline styles
+    }
+
+    /** Convertit le mode de paiement de l'écran en constante de {@link Vente}. */
+    private String typePaiementVente() {
+        if ("CARTE BANCAIRE".equals(modePaiement)) {
+            return Vente.PAIEMENT_CARTE;
+        }
+        if ("AUTRE".equals(modePaiement)) {
+            return Vente.PAIEMENT_AUTRE;
+        }
+        return Vente.PAIEMENT_ESPECES;
     }
 
     // ============================================
