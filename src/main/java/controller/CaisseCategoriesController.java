@@ -56,9 +56,6 @@ public class CaisseCategoriesController {
     private Button panierButton;
 
     @FXML
-    private Button deconnexionButton;
-
-    @FXML
     private Label panierCountLabel;
 
     @FXML
@@ -900,18 +897,6 @@ public class CaisseCategoriesController {
         } catch (Exception e) {
             showAlert(Alert.AlertType.ERROR, "Erreur",
                     "Erreur lors de l'ouverture du panier: " + e.getMessage());
-        }
-    }
-
-    @FXML
-    private void handleDeconnexion() {
-        ConnexionController.deconnecter();
-        try {
-            Stage stage = (Stage) deconnexionButton.getScene().getWindow();
-            util.FXMLUtils.changeScene(stage, "/view/Connexion.fxml", "Connexion");
-        } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "Erreur",
-                    "Erreur lors de la déconnexion: " + e.getMessage());
         }
     }
 

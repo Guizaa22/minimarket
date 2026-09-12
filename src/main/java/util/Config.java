@@ -3,7 +3,6 @@ package util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -246,10 +245,5 @@ public final class Config {
     /** Vérifie que la configuration minimale est présente. */
     public static boolean isConfigured() {
         return jdbcUrl != null && !jdbcUrl.isBlank() && !getDbUser().isBlank();
-    }
-
-    /** Ancien emplacement de la base SQLite, utilisé uniquement par la migration. */
-    public static File legacySqliteFile() {
-        return new File(System.getProperty("user.dir"), "MarketDB.db");
     }
 }

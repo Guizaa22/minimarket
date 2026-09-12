@@ -269,10 +269,16 @@ public class GestionStockController {
      * Configuration de la colonne Actions avec boutons Modifier et Supprimer
      */
     private void configureActionsColumn() {
+        // La suppression reste réservée aux administrateurs : un employé peut
+        // ajouter et modifier un produit, mais pas le supprimer.
+        boolean estAdmin = service.SessionContext.get().estAdmin();
+
         actionsColumn.setCellFactory(column -> new TableCell<Produit, Void>() {
             private final Button btnEdit = new Button("✎");
             private final Button btnDelete = new Button("🗑");
-            private final HBox actionBox = new HBox(8, btnEdit, btnDelete);
+            private final HBox actionBox = estAdmin
+                    ? new HBox(8, btnEdit, btnDelete)
+                    : new HBox(8, btnEdit);
 
             {
                 // Style des boutons
@@ -511,7 +517,9 @@ public class GestionStockController {
     private void handleRetour() {
         try {
             javafx.stage.Stage stage = (javafx.stage.Stage) retourButton.getScene().getWindow();
-            util.FXMLUtils.changeScene(stage, "/view/AdminDashboard.fxml", "Dashboard Administrateur");
+            // Accueil selon le rôle : tableau de bord pour l'admin, caisse pour
+            // l'employé, qui accède désormais aussi à cet écran.
+            util.FXMLUtils.accueil(stage);
         } catch (java.io.IOException e) {
             showAlert(Alert.AlertType.ERROR, "Erreur",
                     "Erreur lors du retour: " + e.getMessage());

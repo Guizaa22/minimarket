@@ -43,4 +43,24 @@ public final class DayRange {
         stmt.setTimestamp(firstIndex + 1, Timestamp.valueOf(start.plusDays(1)));
         return firstIndex + 2;
     }
+
+    /**
+     * Renseigne les deux paramètres pour une plage de jours, du jour de {@code debut}
+     * au jour de {@code fin} inclus. L'intervalle reste semi-ouvert [début, lendemain
+     * de fin[, donc {@code debut == fin} équivaut à {@link #bind}.
+     *
+     * @param stmt       requête préparée
+     * @param firstIndex index du premier des deux paramètres
+     * @param debut      n'importe quel instant du premier jour de la plage
+     * @param fin        n'importe quel instant du dernier jour de la plage
+     * @return index du paramètre suivant
+     */
+    public static int bindRange(PreparedStatement stmt, int firstIndex,
+                                LocalDateTime debut, LocalDateTime fin) throws SQLException {
+        LocalDateTime start = debut.toLocalDate().atStartOfDay();
+        LocalDateTime end = fin.toLocalDate().plusDays(1).atStartOfDay();
+        stmt.setTimestamp(firstIndex, Timestamp.valueOf(start));
+        stmt.setTimestamp(firstIndex + 1, Timestamp.valueOf(end));
+        return firstIndex + 2;
+    }
 }

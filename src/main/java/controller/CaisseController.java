@@ -179,69 +179,30 @@ public class CaisseController {
 
         infoBox.getChildren().addAll(nomLabel, codeLabel);
 
-        // Quantité with +/- buttons
+        // Quantité : un appui ouvre le pavé numérique pour saisir directement le
+        // nombre d'articles, au lieu des boutons +/- qu'il fallait marteler —
+        // peu pratiques sur une caisse tactile pour de grandes quantités.
         VBox quantiteContainer = new VBox(5);
         quantiteContainer.setAlignment(Pos.CENTER);
         quantiteContainer.setMinWidth(120);
-        
+
         Label qteTitleLabel = new Label("Quantité");
         qteTitleLabel.setStyle("-fx-font-size: 10px; -fx-font-weight: bold;");
-        
-        // Horizontal container for -/quantity/+ buttons
-        HBox quantiteControls = new HBox(8);
-        quantiteControls.setAlignment(Pos.CENTER);
-        
-        Label qteLabel = new Label(String.valueOf(detail.getQuantite()));
-        qteLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-min-width: 35px; -fx-alignment: center;");
 
-        // Les libellés de prix sont déclarés ici pour que les boutons +/-
-        // puissent les mettre à jour directement.
+        // Déclaré ici car la fiche de prix, plus bas, le réutilise.
         Label prixTotalLabel = new Label(String.format("%.2f DT", detail.getSousTotal()));
         prixTotalLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 18px;");
 
-        // Ne rafraîchit que la ligne concernée et le total. L'ancien code
-        // appelait updatePanierView() à chaque +1, ce qui vidait et
-        // reconstruisait toutes les lignes du panier — et relançait un
-        // findById() par ligne dont le produit n'était pas encore chargé.
-        Runnable rafraichirLigne = () -> {
-            qteLabel.setText(String.valueOf(finalDetail.getQuantite()));
-            prixTotalLabel.setText(String.format("%.2f DT", finalDetail.getSousTotal()));
-            updateTotal();
-        };
+        Button qteButton = new Button(String.valueOf(detail.getQuantite()));
+        qteButton.getStyleClass().addAll("btn", "btn-secondary");
+        qteButton.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-min-width: 70px; -fx-padding: 6 16;");
+        qteButton.setTooltip(new javafx.scene.control.Tooltip("Appuyer pour saisir la quantité"));
+        // Réutilise la saisie par pavé numérique : contrôle de stock, mise à jour
+        // du panier et retrait de la ligne quand la quantité tombe à zéro y sont
+        // centralisés. La liste du panier étant observée, la ligne se redessine.
+        qteButton.setOnAction(e -> modifierQuantiteItem(finalDetail));
 
-        Button minusButton = new Button("➖");
-        minusButton.getStyleClass().addAll("btn", "btn-secondary");
-        minusButton.setStyle("-fx-padding: 5 12; -fx-font-size: 14px; -fx-min-width: 35px;");
-        minusButton.setOnAction(e -> {
-            if (finalDetail.getQuantite() > 1) {
-                finalDetail.setQuantite(finalDetail.getQuantite() - 1);
-                rafraichirLigne.run();
-            } else {
-                // Le retrait change la composition du panier : reconstruction complète.
-                retirerDuPanier(finalDetail);
-            }
-        });
-
-        Button plusButton = new Button("➕");
-        plusButton.getStyleClass().addAll("btn", "btn-primary");
-        plusButton.setStyle("-fx-padding: 5 12; -fx-font-size: 14px; -fx-min-width: 35px;");
-        plusButton.setOnAction(e -> {
-            Produit p = finalDetail.getProduit();
-            // Contrôle immédiat : inutile d'attendre l'encaissement pour
-            // apprendre que le stock est insuffisant.
-            if (p != null && !p.isFrakCigarette()
-                    && finalDetail.getQuantite() + 1 > p.getQuantiteStock()) {
-                ui.Toast.avertissement(plusButton,
-                        "Stock limité : il ne reste que " + p.getQuantiteStock()
-                        + " « " + p.getNom() + " ».");
-                return;
-            }
-            finalDetail.setQuantite(finalDetail.getQuantite() + 1);
-            rafraichirLigne.run();
-        });
-
-        quantiteControls.getChildren().addAll(minusButton, qteLabel, plusButton);
-        quantiteContainer.getChildren().addAll(qteTitleLabel, quantiteControls);
+        quantiteContainer.getChildren().addAll(qteTitleLabel, qteButton);
 
         // Prix
         VBox prixContainer = new VBox(5);
@@ -881,6 +842,12 @@ public class CaisseController {
 
         ui.PaveNumerique.demanderEntier("Quantité", nom, detail.getQuantite())
                 .ifPresent(quantite -> {
+                    // Une quantité nulle (ou négative) vaut un retrait de la ligne.
+                    if (quantite <= 0) {
+                        retirerDuPanier(detail);
+                        return;
+                    }
+
                     Produit produit = detail.getProduit();
 
                     // Les cigarettes à l'unité n'ont pas de stock propre :

@@ -286,8 +286,19 @@ public class AjoutStockMobileController {
                         service.SessionContext.get().getUtilisateurId(),
                         StockMovement.Type.MOBILE_ADD, null);
 
-                // Relecture pour afficher le stock réel après incrément.
+                // Relecture pour afficher le stock réel après incrément. Le
+                // produit peut avoir disparu entre-temps (suppression concurrente
+                // côté admin) : on le signale au lieu de laisser une NPE remonter.
                 produitActuel = produitService.parId(produitActuel.getId());
+                if (produitActuel == null) {
+                    showAlert(Alert.AlertType.ERROR, "Erreur",
+                             "Stock ajouté, mais le produit est introuvable après l'ajout.");
+                    codeBarreField.clear();
+                    quantiteField.setText("1");
+                    masquerInfosProduit();
+                    codeBarreField.requestFocus();
+                    return;
+                }
 
                 String historiqueItem = String.format(
                     "✅ %s: +%d %s (Stock: %d %s)",

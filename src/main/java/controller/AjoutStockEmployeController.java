@@ -126,9 +126,6 @@ public class AjoutStockEmployeController {
     private TextField filtreField;
     
     @FXML
-    private Button retourButton;
-    
-    @FXML
     private ComboBox<Fournisseur> fournisseurComboBox;
     
     @FXML
@@ -142,13 +139,7 @@ public class AjoutStockEmployeController {
     
     @FXML
     private Label creditDisponibleLabel;
-    
-    @FXML
-    private Button recetteJourButton;
-    
-    @FXML
-    private Button notesButton;
-    
+
     private ProduitDAO produitDAO;
     private FournisseurDAO fournisseurDAO;
     private CreditFournisseurDAO creditDAO;
@@ -194,18 +185,6 @@ public class AjoutStockEmployeController {
         configurerScanCodeBarres(rechercheField);
         
         // S'assurer que tous les boutons sont visibles
-        if (notesButton != null) {
-            notesButton.setVisible(true);
-            notesButton.setManaged(true);
-        }
-        if (recetteJourButton != null) {
-            recetteJourButton.setVisible(true);
-            recetteJourButton.setManaged(true);
-        }
-        if (retourButton != null) {
-            retourButton.setVisible(true);
-            retourButton.setManaged(true);
-        }
         if (moinsButton != null) {
             moinsButton.setVisible(true);
             moinsButton.setManaged(true);
@@ -954,49 +933,6 @@ public class AjoutStockEmployeController {
     }
     
     @FXML
-    private void handleRecetteJour() {
-        try {
-            javafx.stage.Stage stage = (javafx.stage.Stage) recetteJourButton.getScene().getWindow();
-            FXMLUtils.changeScene(stage, "/view/RecetteJour.fxml", "Recette du Jour");
-        } catch (IOException e) {
-            afficherMessage("Erreur lors de l'ouverture de la recette du jour: " + e.getMessage(), Alert.AlertType.ERROR);
-        }
-    }
-    
-    @FXML
-    private void handleNotes() {
-        try {
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/view/NoteDialog.fxml"));
-            javafx.scene.Parent root = loader.load();
-            
-            // Use screen dimensions for dialog (centered modal)
-            javafx.stage.Screen screen = javafx.stage.Screen.getPrimary();
-            javafx.geometry.Rectangle2D bounds = screen.getVisualBounds();
-            double dialogWidth = Math.min(600, bounds.getWidth() * 0.5);
-            double dialogHeight = Math.min(500, bounds.getHeight() * 0.6);
-            
-            javafx.scene.Scene scene = new javafx.scene.Scene(root, dialogWidth, dialogHeight);
-            util.FXMLUtils.appliquerStylesDialogue(scene);
-            javafx.stage.Stage dialogStage = new javafx.stage.Stage();
-            dialogStage.setTitle("Ajouter une Note");
-            dialogStage.setScene(scene);
-            dialogStage.setResizable(true);
-            dialogStage.initModality(javafx.stage.Modality.WINDOW_MODAL);
-            dialogStage.initOwner(notesButton.getScene().getWindow());
-            
-            // Center dialog on screen
-            dialogStage.setOnShown(e -> {
-                dialogStage.setX(bounds.getMinX() + (bounds.getWidth() - dialogWidth) / 2);
-                dialogStage.setY(bounds.getMinY() + (bounds.getHeight() - dialogHeight) / 2);
-            });
-            
-            dialogStage.showAndWait();
-        } catch (IOException e) {
-            afficherMessage("Erreur lors de l'ouverture du dialogue de notes: " + e.getMessage(), Alert.AlertType.ERROR);
-        }
-    }
-
-    @FXML
     private void handleFiltre() {
         String filtre = filtreField.getText().toLowerCase().trim();
         
@@ -1011,16 +947,6 @@ public class AjoutStockEmployeController {
         }
         
         afficherProduits();
-    }
-
-    @FXML
-    private void handleRetour() {
-        try {
-            javafx.stage.Stage stage = (javafx.stage.Stage) retourButton.getScene().getWindow();
-            FXMLUtils.changeScene(stage, "/view/CaisseCategories.fxml", "2M Market - Point de Vente");
-        } catch (IOException e) {
-            afficherMessage("Erreur lors du retour: " + e.getMessage(), Alert.AlertType.ERROR);
-        }
     }
 
     /**

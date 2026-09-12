@@ -93,38 +93,7 @@ $env:PGPASSWORD = "votre_mot_de_passe_market_app"
 Remove-Item Env:\PGPASSWORD
 ```
 
-### Étape 3 — importer vos données existantes
-
-Vos 12 ventes, 10 produits, 4 utilisateurs et 6 notes sont récupérables.
-
-> ⚠️ **Importez avant le premier lancement de l'application.** Au tout premier
-> démarrage sur une base vide, l'application propose de créer un compte
-> administrateur ; ce compte entrerait ensuite en conflit avec le compte `admin`
-> importé (contrainte d'unicité sur `username`).
-
-**Méthode A — fichier SQL (recommandée, aucune dépendance)**
-
-```powershell
-python tools\export_sqlite_to_sql.py --sqlite MarketDB.db --out tools\data_postgres.sql
-```
-Puis :
-```powershell
-$env:PGPASSWORD = "votre_mot_de_passe_market_app"
-& "C:\Program Files\PostgreSQL\16\bin\psql.exe" -h localhost -p 5432 -U market_app -d market2m -f tools\data_postgres.sql
-Remove-Item Env:\PGPASSWORD
-```
-
-**Méthode B — migration directe**
-
-```powershell
-python tools\migrate_sqlite_to_postgres.py --sqlite MarketDB.db --pg "postgresql://market_app:MOTDEPASSE@localhost:5432/market2m" --dry-run
-```
-Retirez `--dry-run` pour appliquer.
-
-> Les deux méthodes sont **idempotentes** (`ON CONFLICT DO NOTHING`) : les rejouer
-> ne crée pas de doublons.
-
-### Étape 4 — lancer
+### Étape 3 — lancer
 
 ```bash
 mvn javafx:run

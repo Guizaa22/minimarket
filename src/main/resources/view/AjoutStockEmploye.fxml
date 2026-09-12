@@ -28,9 +28,8 @@
                      </font>
                   </Label>
                   <Region HBox.hgrow="ALWAYS" />
-                  <Button fx:id="notesButton" onAction="#handleNotes" styleClass="btn, btn-secondary" text="📝 Notes" minWidth="120" prefHeight="45" visible="true" managed="true" />
-                  <Button fx:id="recetteJourButton" onAction="#handleRecetteJour" styleClass="btn, btn-secondary" text="📊 Recette du Jour" minWidth="180" prefHeight="45" visible="true" managed="true" />
-                  <Button fx:id="retourButton" onAction="#handleRetour" styleClass="btn, btn-secondary" text="◀ Retour" minWidth="120" prefHeight="45" style="-fx-font-size: 16px; -fx-font-weight: bold" visible="true" managed="true" />
+                  <!-- Notes, Recette du Jour et Retour sont désormais portés par
+                       la barre supérieure commune (ui.BarreHaut). -->
                </children>
             </HBox>
 

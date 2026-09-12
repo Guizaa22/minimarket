@@ -158,9 +158,8 @@ Write-Host "  Utilisateur   : $AppUser"
 Write-Host "  Config        : $configFile (acces restreint)"
 Write-Host ""
 Write-Host "Etapes suivantes :" -ForegroundColor Cyan
-Write-Host "  1. Importer vos donnees AVANT le premier lancement :" -ForegroundColor White
-Write-Host "     python tools\export_sqlite_to_sql.py --sqlite MarketDB.db --out tools\data_postgres.sql"
-Write-Host "  2. Lancer l'application (le schema est cree automatiquement) :" -ForegroundColor White
+Write-Host "  1. Lancer l'application (le schema est cree automatiquement) :" -ForegroundColor White
 Write-Host "     mvn javafx:run"
-Write-Host "  3. Lancer les tests (schema isole, sans risque pour vos donnees) :" -ForegroundColor White
+Write-Host "     Au premier lancement, l'application demande de creer le compte administrateur."
+Write-Host "  2. Lancer les tests (schema isole, sans risque pour vos donnees) :" -ForegroundColor White
 Write-Host "     mvn test"

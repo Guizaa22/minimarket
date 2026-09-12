@@ -149,23 +149,40 @@ public class AuthService {
         }
         String nom = nouveauNom.trim();
 
+        // Toutes les validations d'abord, avant de toucher à l'objet : sur un
+        // échec (unicité, mot de passe trop court, écriture refusée), l'instance
+        // fournie par l'appelant ne doit pas rester modifiée en mémoire alors
+        // que la base, elle, n'a pas changé.
+        //
         // Unicité vérifiée seulement si le nom change, sinon un compte
         // entrerait en collision avec lui-même.
         if (!nom.equals(utilisateur.getUsername()) && utilisateurDAO.usernameExists(nom)) {
             throw new ApplicationException("Un compte nommé « " + nom + " » existe déjà.");
         }
 
+        boolean changerMotDePasse = nouveauMotDePasse != null && !nouveauMotDePasse.isEmpty();
+        if (changerMotDePasse && nouveauMotDePasse.length() < LONGUEUR_MIN_MOT_DE_PASSE) {
+            throw new ApplicationException("Le mot de passe doit contenir au moins "
+                    + LONGUEUR_MIN_MOT_DE_PASSE + " caractères.");
+        }
+
+        // Valeurs d'origine conservées pour restaurer l'instance si l'écriture
+        // échoue : l'objet fourni par l'appelant est souvent celui affiché dans
+        // le tableau, il ne doit pas montrer des changements non persistés.
+        String ancienNom = utilisateur.getUsername();
+        Utilisateur.Role ancienRole = utilisateur.getRole();
+        String ancienHash = utilisateur.getPasswordHash();
+
         utilisateur.setUsername(nom);
         utilisateur.setRole(nouveauRole);
-        if (nouveauMotDePasse != null && !nouveauMotDePasse.isEmpty()) {
-            if (nouveauMotDePasse.length() < LONGUEUR_MIN_MOT_DE_PASSE) {
-                throw new ApplicationException("Le mot de passe doit contenir au moins "
-                        + LONGUEUR_MIN_MOT_DE_PASSE + " caractères.");
-            }
+        if (changerMotDePasse) {
             utilisateur.setPasswordHash(SecurityUtil.hashPassword(nouveauMotDePasse));
         }
 
         if (!utilisateurDAO.update(utilisateur)) {
+            utilisateur.setUsername(ancienNom);
+            utilisateur.setRole(ancienRole);
+            utilisateur.setPasswordHash(ancienHash);
             throw new ApplicationException("La modification du compte a échoué.");
         }
 
