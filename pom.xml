@@ -64,8 +64,7 @@
             <version>1.5.6</version>
         </dependency>
 
-        <!-- SQLite retiré : la migration est terminée. Les scripts de reprise
-             (tools/*.py) utilisent le module sqlite3 de Python, pas le pilote Java. -->
+        <!-- SQLite retiré : la migration vers PostgreSQL est terminée. -->
 
         <!-- BCrypt for password hashing -->
         <dependency>

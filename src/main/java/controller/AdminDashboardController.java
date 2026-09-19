@@ -16,9 +16,6 @@ import dao.PaiementFournisseurDAO;
 import dao.ProduitDAO;
 import dao.VenteDAO;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -231,12 +228,11 @@ public class AdminDashboardController {
     @SuppressWarnings("unused")
     private void handleGestionVentes() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/GestionVentes.fxml"));
-            Parent root = loader.load();
-
+            // Passer par FXMLUtils.changeScene comme toutes les autres
+            // navigations : sans cela l'écran s'ouvrait sans feuilles de style,
+            // sans barre supérieure, sans thème ni plein écran.
             Stage stage = (Stage) gestionVentesButton.getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.setTitle("Gestion des Ventes");
+            FXMLUtils.changeScene(stage, "/view/GestionVentes.fxml", "Gestion des Ventes");
 
         } catch (IOException e) {
             LOG.error("Erreur lors du chargement de la gestion des ventes: " + e.getMessage(), e);

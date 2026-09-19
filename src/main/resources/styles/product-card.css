@@ -4,9 +4,9 @@
    ============================================ */
 
 .product-card {
-    -fx-background-color: linear-gradient(to bottom, #FFFFFF, #FAFBFC);
+    -fx-background-color: linear-gradient(to bottom, -fond-carte, -fond-carte);
     -fx-background-radius: 16px;
-    -fx-border-color: #E2E8F0;
+    -fx-border-color: -bordure;
     -fx-border-width: 1.5px;
     -fx-border-radius: 16px;
     -fx-padding: 20px;
@@ -21,8 +21,8 @@
 }
 
 .product-card:hover {
-    -fx-background-color: linear-gradient(to bottom, #FFFFFF, #F5F7FA);
-    -fx-border-color: #2E6BE6;
+    -fx-background-color: linear-gradient(to bottom, -fond-carte, -fond-carte);
+    -fx-border-color: -accent;
     -fx-border-width: 2.5px;
     -fx-effect: dropshadow(three-pass-box, rgba(76, 175, 80, 0.25), 20, 0, 0, 8);
     -fx-scale-x: 1.03;
@@ -43,7 +43,7 @@
 .product-name {
     -fx-font-size: 22px;
     -fx-font-weight: 700;
-    -fx-text-fill: #1A1A1A;
+    -fx-text-fill: -texte-fort;
     -fx-wrap-text: true;
     -fx-alignment: center-left;
     -fx-line-spacing: 4px;
@@ -59,7 +59,7 @@
 .product-price {
     -fx-font-size: 28px;
     -fx-font-weight: 800;
-    -fx-text-fill: #0441bd;
+    -fx-text-fill: -accent;
     -fx-padding: 8 0 4 0;
     -fx-effect: dropshadow(one-pass-box, rgba(46, 125, 50, 0.2), 2, 0, 0, 1);
 }
@@ -81,7 +81,7 @@
 .product-category {
     -fx-font-size: 14px;
     -fx-font-weight: 600;
-    -fx-text-fill: #4A5568;
+    -fx-text-fill: -texte-fort;
     -fx-padding: 6 12;
     -fx-background-color: rgba(46, 125, 50, 0.1);
     -fx-background-radius: 8px;
@@ -91,21 +91,21 @@
 .product-code {
     -fx-font-size: 13px;
     -fx-font-weight: 500;
-    -fx-text-fill: #718096;
+    -fx-text-fill: -texte-discret;
     -fx-padding: 4 0;
 }
 
 .product-unite {
     -fx-font-size: 14px;
     -fx-font-weight: 500;
-    -fx-text-fill: #4A5568;
+    -fx-text-fill: -texte-fort;
     -fx-padding: 4 0;
 }
 
 .product-purchase-price {
     -fx-font-size: 13px;
     -fx-font-weight: 500;
-    -fx-text-fill: #718096;
+    -fx-text-fill: -texte-discret;
     -fx-padding: 2 0;
 }
 
@@ -131,21 +131,21 @@
 
 /* Stock Status Colors */
 .stock-high {
-    -fx-text-fill: #0441bd;
+    -fx-text-fill: -accent;
     -fx-background-color: rgba(76, 175, 80, 0.15);
     -fx-border-color: rgba(76, 175, 80, 0.3);
     -fx-border-width: 1;
 }
 
 .stock-medium {
-    -fx-text-fill: #F57C00;
+    -fx-text-fill: -avertissement;
     -fx-background-color: rgba(255, 152, 0, 0.15);
     -fx-border-color: rgba(255, 152, 0, 0.3);
     -fx-border-width: 1;
 }
 
 .stock-low {
-    -fx-text-fill: #D32F2F;
+    -fx-text-fill: -danger;
     -fx-background-color: rgba(211, 47, 47, 0.15);
     -fx-border-color: rgba(211, 47, 47, 0.3);
     -fx-border-width: 1;
@@ -154,8 +154,8 @@
 
 .stock-critical {
     -fx-text-fill: #FFFFFF;
-    -fx-background-color: #D32F2F;
-    -fx-border-color: #B71C1C;
+    -fx-background-color: -danger;
+    -fx-border-color: -danger;
     -fx-border-width: 1.5;
     -fx-effect: dropshadow(one-pass-box, rgba(211, 47, 47, 0.5), 6, 0, 0, 3);
     -fx-font-weight: 700;
@@ -165,7 +165,7 @@
 .stock-label {
     -fx-font-size: 10px;
     -fx-font-weight: 500;
-    -fx-text-fill: #718096;
+    -fx-text-fill: -texte-discret;
     -fx-padding: 2 0;
 }
 
@@ -179,7 +179,7 @@
    ============================================ */
 
 .product-add-btn {
-    -fx-background-color: linear-gradient(to bottom, #2E6BE6, #0441bd);
+    -fx-background-color: linear-gradient(to bottom, -accent, -accent);
     -fx-text-fill: #FFFFFF;
     -fx-font-weight: 700;
     -fx-font-size: 14px;
@@ -192,7 +192,7 @@
 }
 
 .product-add-btn:hover {
-    -fx-background-color: linear-gradient(to bottom, #5B8FF0, #2E6BE6);
+    -fx-background-color: linear-gradient(to bottom, -accent, -accent);
     -fx-effect: dropshadow(three-pass-box, rgba(46, 125, 50, 0.4), 12, 0, 0, 6);
     -fx-scale-x: 1.05;
     -fx-scale-y: 1.05;
@@ -236,7 +236,7 @@
    ============================================ */
 
 .product-divider {
-    -fx-background-color: #E2E8F0;
+    -fx-background-color: -fond-eleve;
     -fx-pref-height: 1px;
     -fx-max-height: 1px;
     -fx-padding: 8 0;
@@ -313,7 +313,7 @@
    ============================================ */
 
 .product-card:focused {
-    -fx-border-color: #1565C0;
+    -fx-border-color: -accent;
     -fx-border-width: 3px;
     -fx-effect: dropshadow(three-pass-box, rgba(21, 101, 192, 0.3), 16, 0, 0, 6);
 }

@@ -56,9 +56,6 @@ public class CaisseCategoriesController {
     private Button panierButton;
 
     @FXML
-    private Button deconnexionButton;
-
-    @FXML
     private Label panierCountLabel;
 
     @FXML
@@ -337,7 +334,7 @@ public class CaisseCategoriesController {
         button.getStyleClass().add("category-button");
         // Fallback style if CSS not loaded yet or class not found
         if (button.getStyleClass().isEmpty()) {
-             button.setStyle("-fx-background-color: linear-gradient(to bottom, #4CAF50, #2E7D32); -fx-background-radius: 20;");
+             button.setStyle("-fx-background-color: linear-gradient(to bottom, -accent, -accent); -fx-background-radius: 20;");
         }
 
         // Effet hover
@@ -900,18 +897,6 @@ public class CaisseCategoriesController {
         } catch (Exception e) {
             showAlert(Alert.AlertType.ERROR, "Erreur",
                     "Erreur lors de l'ouverture du panier: " + e.getMessage());
-        }
-    }
-
-    @FXML
-    private void handleDeconnexion() {
-        ConnexionController.deconnecter();
-        try {
-            Stage stage = (Stage) deconnexionButton.getScene().getWindow();
-            util.FXMLUtils.changeScene(stage, "/view/Connexion.fxml", "Connexion");
-        } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "Erreur",
-                    "Erreur lors de la déconnexion: " + e.getMessage());
         }
     }
 

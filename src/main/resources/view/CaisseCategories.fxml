@@ -47,8 +47,7 @@
                   <!-- Bouton Panier -->
                   <Button fx:id="panierButton" onAction="#handleVoirPanier" styleClass="btn, btn-accent" text="🛒 Panier" />
 
-                  <!-- Bouton Déconnexion -->
-                  <Button fx:id="deconnexionButton" onAction="#handleDeconnexion" styleClass="btn, btn-danger" text="🚪 Déconnexion" />
+                  <!-- La déconnexion est portée par la barre supérieure commune. -->
                </HBox>
             </children>
          </HBox>

@@ -14,7 +14,7 @@
 
 /* Header Styles */
 .header {
-    -fx-background-color: linear-gradient(to right, #0441bd, #2E6BE6);
+    -fx-background-color: linear-gradient(to right, -accent, -accent);
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 15, 0, 0, 4);
 }
 
@@ -48,7 +48,7 @@
 }
 
 .btn-retour {
-    -fx-background-color: #f44336;
+    -fx-background-color: -danger;
     -fx-text-fill: white;
     -fx-background-radius: 8px;
     -fx-padding: 10 24 10 24;
@@ -58,21 +58,21 @@
 }
 
 .btn-retour:hover {
-    -fx-background-color: #d32f2f;
+    -fx-background-color: -danger;
     -fx-scale-y: 1.05;
     -fx-scale-x: 1.05;
 }
 
 /* Navigation Tabs */
 .tabs-container {
-    -fx-background-color: white;
+    -fx-background-color: -fond-carte;
     -fx-padding: 0 30 0 30;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);
 }
 
 .tab-button {
     -fx-background-color: transparent;
-    -fx-text-fill: #666666;
+    -fx-text-fill: -texte-discret;
     -fx-font-size: 15px;
     -fx-font-weight: bold;
     -fx-padding: 15 25 15 25;
@@ -86,7 +86,7 @@
 }
 
 .tab-button.active {
-    -fx-background-color: linear-gradient(to bottom, #2E6BE6, #0441bd);
+    -fx-background-color: linear-gradient(to bottom, -accent, -accent);
     -fx-text-fill: white;
     -fx-border-width: 0;
 }
@@ -144,12 +144,12 @@
 
 .badge-green {
     -fx-background-color: rgba(76, 175, 80, 0.2);
-    -fx-text-fill: #2E6BE6;
+    -fx-text-fill: -accent;
 }
 
 .badge-blue {
     -fx-background-color: rgba(33, 150, 243, 0.2);
-    -fx-text-fill: #2196F3;
+    -fx-text-fill: -accent;
 }
 
 .badge-purple {
@@ -159,7 +159,7 @@
 
 .badge-orange {
     -fx-background-color: rgba(255, 152, 0, 0.2);
-    -fx-text-fill: #FF9800;
+    -fx-text-fill: -avertissement;
 }
 
 .badge-cyan {
@@ -174,7 +174,7 @@
 
 .kpi-title {
     -fx-font-size: 14px;
-    -fx-text-fill: #666666;
+    -fx-text-fill: -texte-discret;
 }
 
 .kpi-value {
@@ -182,10 +182,10 @@
     -fx-font-weight: bold;
 }
 
-.value-green { -fx-text-fill: #2E6BE6; }
-.value-blue { -fx-text-fill: #2196F3; }
+.value-green { -fx-text-fill: -accent; }
+.value-blue { -fx-text-fill: -accent; }
 .value-purple { -fx-text-fill: #9C27B0; }
-.value-orange { -fx-text-fill: #FF9800; }
+.value-orange { -fx-text-fill: -avertissement; }
 .value-cyan { -fx-text-fill: #00BCD4; }
 .value-pink { -fx-text-fill: #E91E63; }
 
@@ -205,7 +205,7 @@
 .chart-title {
     -fx-font-size: 18px;
     -fx-font-weight: bold;
-    -fx-text-fill: #333333;
+    -fx-text-fill: -texte-fort;
 }
 
 .line-chart, .pie-chart, .bar-chart {
@@ -224,7 +224,7 @@
 .section-title {
     -fx-font-size: 20px;
     -fx-font-weight: bold;
-    -fx-text-fill: #333333;
+    -fx-text-fill: -texte-fort;
 }
 
 /* Table Styles */
@@ -238,7 +238,7 @@
 }
 
 .btn-search {
-    -fx-background-color: #2E6BE6;
+    -fx-background-color: -accent;
     -fx-text-fill: white;
     -fx-background-radius: 8px;
     -fx-padding: 10 20 10 20;
@@ -247,7 +247,7 @@
 }
 
 .btn-search:hover {
-    -fx-background-color: #45a049;
+    -fx-background-color: -succes;
 }
 
 .sales-table {
@@ -255,45 +255,45 @@
 }
 
 .sales-table .column-header {
-    -fx-background-color: linear-gradient(to right, #0441bd, #2E6BE6);
+    -fx-background-color: linear-gradient(to right, -accent, -accent);
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-padding: 15;
 }
 
 .sales-table .column-header-background {
-    -fx-background-color: linear-gradient(to right, #0441bd, #2E6BE6);
+    -fx-background-color: linear-gradient(to right, -accent, -accent);
 }
 
 .sales-table .table-row-cell {
-    -fx-background-color: white;
-    -fx-border-color: #eeeeee;
+    -fx-background-color: -fond-carte;
+    -fx-border-color: -bordure;
     -fx-border-width: 0 0 1 0;
 }
 
 .sales-table .table-row-cell:odd {
-    -fx-background-color: #f9f9f9;
+    -fx-background-color: -fond-carte;
 }
 
 .sales-table .table-row-cell:hover {
-    -fx-background-color: #E9EDF8;
+    -fx-background-color: -fond-eleve;
 }
 
 /* Products Table */
 .products-table .column-header {
-    -fx-background-color: linear-gradient(to right, #FF9800, #F57C00);
+    -fx-background-color: linear-gradient(to right, -avertissement, -avertissement);
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-padding: 15;
 }
 
 .products-table .column-header-background {
-    -fx-background-color: linear-gradient(to right, #FF9800, #F57C00);
+    -fx-background-color: linear-gradient(to right, -avertissement, -avertissement);
 }
 
 .products-table .table-row-cell {
-    -fx-background-color: white;
-    -fx-border-color: #eeeeee;
+    -fx-background-color: -fond-carte;
+    -fx-border-color: -bordure;
     -fx-border-width: 0 0 1 0;
 }
 
@@ -311,10 +311,10 @@
     -fx-pref-width: 300;
 }
 
-.report-green { -fx-border-color: #2E6BE6; -fx-border-width: 2; }
-.report-blue { -fx-border-color: #2196F3; -fx-border-width: 2; }
+.report-green { -fx-border-color: -accent; -fx-border-width: 2; }
+.report-blue { -fx-border-color: -accent; -fx-border-width: 2; }
 .report-purple { -fx-border-color: #9C27B0; -fx-border-width: 2; }
-.report-orange { -fx-border-color: #FF9800; -fx-border-width: 2; }
+.report-orange { -fx-border-color: -avertissement; -fx-border-width: 2; }
 
 .report-icon {
     -fx-font-size: 48px;
@@ -325,14 +325,14 @@
     -fx-font-weight: bold;
 }
 
-.report-green .report-title { -fx-text-fill: #2E6BE6; }
-.report-blue .report-title { -fx-text-fill: #2196F3; }
+.report-green .report-title { -fx-text-fill: -accent; }
+.report-blue .report-title { -fx-text-fill: -accent; }
 .report-purple .report-title { -fx-text-fill: #9C27B0; }
-.report-orange .report-title { -fx-text-fill: #FF9800; }
+.report-orange .report-title { -fx-text-fill: -avertissement; }
 
 .report-desc {
     -fx-font-size: 14px;
-    -fx-text-fill: #666666;
+    -fx-text-fill: -texte-discret;
 }
 
 .btn-download {
@@ -344,10 +344,10 @@
     -fx-pref-width: Infinity;
 }
 
-.btn-green { -fx-background-color: #2E6BE6; }
-.btn-blue { -fx-background-color: #2196F3; }
+.btn-green { -fx-background-color: -accent; }
+.btn-blue { -fx-background-color: -accent; }
 .btn-purple { -fx-background-color: #9C27B0; }
-.btn-orange { -fx-background-color: #FF9800; }
+.btn-orange { -fx-background-color: -avertissement; }
 
 .btn-download:hover {
     -fx-opacity: 0.9;

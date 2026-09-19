@@ -16,10 +16,11 @@ import util.SecurityUtil;
  *
  * Centralise l'ouverture de session, qui était auparavant incomplète :
  * {@code ConnexionController} renseignait son propre champ statique mais
- * n'appelait jamais {@code SessionManager.startSession()}, si bien que
- * {@code getCurrentUserId()} renvoyait -1 dans toute l'application. Les
- * contrôleurs retombaient alors sur un « utilisateur par défaut » et toutes
- * les ventes se retrouvaient attribuées au compte admin.
+ * la session partagée n'était jamais renseignée, si bien que l'identifiant
+ * de l'utilisateur connecté manquait dans toute l'application. Les contrôleurs
+ * retombaient alors sur un « utilisateur par défaut » et toutes les ventes se
+ * retrouvaient attribuées au compte admin. L'ouverture et la fermeture
+ * écrivent désormais dans {@link SessionContext}, seule source de vérité.
  */
 public class AuthService {
 
@@ -133,6 +134,60 @@ public class AuthService {
         audit.enregistrer(session.getUtilisateurId(), "CREATION_COMPTE", "utilisateurs",
                 utilisateur.getId(), "Compte « " + utilisateur.getUsername() + " » (" + role + ")");
         return utilisateur;
+    }
+
+    /**
+     * Modifie le nom, le rôle et éventuellement le mot de passe d'un compte.
+     *
+     * @param nouveauMotDePasse {@code null} ou vide pour conserver le mot de
+     *        passe actuel ; sinon il est validé puis haché.
+     */
+    public void modifierCompte(Utilisateur utilisateur, String nouveauNom,
+                               Utilisateur.Role nouveauRole, String nouveauMotDePasse) {
+        if (nouveauNom == null || nouveauNom.isBlank()) {
+            throw new ApplicationException("Le nom d'utilisateur est obligatoire.");
+        }
+        String nom = nouveauNom.trim();
+
+        // Toutes les validations d'abord, avant de toucher à l'objet : sur un
+        // échec (unicité, mot de passe trop court, écriture refusée), l'instance
+        // fournie par l'appelant ne doit pas rester modifiée en mémoire alors
+        // que la base, elle, n'a pas changé.
+        //
+        // Unicité vérifiée seulement si le nom change, sinon un compte
+        // entrerait en collision avec lui-même.
+        if (!nom.equals(utilisateur.getUsername()) && utilisateurDAO.usernameExists(nom)) {
+            throw new ApplicationException("Un compte nommé « " + nom + " » existe déjà.");
+        }
+
+        boolean changerMotDePasse = nouveauMotDePasse != null && !nouveauMotDePasse.isEmpty();
+        if (changerMotDePasse && nouveauMotDePasse.length() < LONGUEUR_MIN_MOT_DE_PASSE) {
+            throw new ApplicationException("Le mot de passe doit contenir au moins "
+                    + LONGUEUR_MIN_MOT_DE_PASSE + " caractères.");
+        }
+
+        // Valeurs d'origine conservées pour restaurer l'instance si l'écriture
+        // échoue : l'objet fourni par l'appelant est souvent celui affiché dans
+        // le tableau, il ne doit pas montrer des changements non persistés.
+        String ancienNom = utilisateur.getUsername();
+        Utilisateur.Role ancienRole = utilisateur.getRole();
+        String ancienHash = utilisateur.getPasswordHash();
+
+        utilisateur.setUsername(nom);
+        utilisateur.setRole(nouveauRole);
+        if (changerMotDePasse) {
+            utilisateur.setPasswordHash(SecurityUtil.hashPassword(nouveauMotDePasse));
+        }
+
+        if (!utilisateurDAO.update(utilisateur)) {
+            utilisateur.setUsername(ancienNom);
+            utilisateur.setRole(ancienRole);
+            utilisateur.setPasswordHash(ancienHash);
+            throw new ApplicationException("La modification du compte a échoué.");
+        }
+
+        audit.enregistrer(session.getUtilisateurId(), "MODIFICATION_COMPTE", "utilisateurs",
+                utilisateur.getId(), "Compte « " + utilisateur.getUsername() + " » (" + nouveauRole + ")");
     }
 
     /**

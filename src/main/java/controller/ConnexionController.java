@@ -12,8 +12,8 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import model.Utilisateur;
 import service.AuthService;
+import service.SessionContext;
 import util.FXMLUtils;
-import util.SessionManager;
 
 /**
  * Contrôleur pour l'interface de connexion
@@ -29,7 +29,6 @@ public class ConnexionController {
     private PasswordField passwordField;
 
     private final AuthService authService;
-    private static Utilisateur utilisateurConnecte;
 
     public ConnexionController() {
         authService = new AuthService();
@@ -45,12 +44,10 @@ public class ConnexionController {
             if (usernameField != null && usernameField.getScene() != null) {
                 javafx.scene.Parent root = usernameField.getScene().getRoot();
                 if (root != null) {
-                    // Ajouter le CSS
-                    String cssUrl = getClass().getResource("/styles/login.css").toExternalForm();
-                    if (!root.getStylesheets().contains(cssUrl)) {
-                        root.getStylesheets().add(cssUrl);
-                    }
-                    
+                    // login.css est désormais chargée au niveau de la scène par
+                    // FXMLUtils (pour que le thème et ses variables s'appliquent).
+                    // Ici on se limite à l'image de fond.
+
                     // S'assurer que l'image de fond est appliquée
                     if (root instanceof javafx.scene.layout.AnchorPane) {
                         javafx.scene.layout.AnchorPane anchorPane = (javafx.scene.layout.AnchorPane) root;
@@ -91,9 +88,9 @@ public class ConnexionController {
             return;
         }
 
+        // AuthService.connecter a déjà ouvert la session (SessionContext) :
+        // le contrôleur ne mémorise plus l'utilisateur de son côté.
         Utilisateur utilisateur = connecte.get();
-        utilisateurConnecte = utilisateur;
-        SessionManager.startSession(utilisateur);
 
         try {
             Stage stage = (Stage) usernameField.getScene().getWindow();
@@ -115,19 +112,14 @@ public class ConnexionController {
         handleLogin();
     }
     
+    /** Utilisateur connecté, lu depuis l'unique source de vérité. */
     public static Utilisateur getUtilisateurConnecte() {
-        return utilisateurConnecte;
+        return SessionContext.get().getUtilisateurConnecte();
     }
-    
-    /**
-     * Ferme la session : vide le panier, journalise et efface l'utilisateur des
-     * trois emplacements qui le mémorisent encore (SessionContext, SessionManager
-     * et ce champ statique, conservés le temps de la migration des contrôleurs).
-     */
+
+    /** Ferme la session (journalisation + vidage du panier) via AuthService. */
     public static void deconnecter() {
         new AuthService().deconnecter();
-        utilisateurConnecte = null;
-        SessionManager.endSession();
     }
     
     private void showAlert(Alert.AlertType type, String title, String message) {

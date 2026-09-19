@@ -432,8 +432,9 @@ public class VenteDAO {
 
     public List<Vente> findByUtilisateurAndDate(int utilisateurId, LocalDateTime dateDebut, LocalDateTime dateFin) {
         List<Vente> ventes = new ArrayList<>();
-        // Intervalle semi-ouvert [jour, lendemain[ : compatible index, contrairement
-        // à DATE(date_vente) qui empêchait toute utilisation de l'index.
+        // Intervalle semi-ouvert [jour de début, lendemain du jour de fin[ : couvre
+        // toute la plage demandée et reste compatible index, contrairement à
+        // DATE(date_vente) qui empêchait toute utilisation de l'index.
         String sql = "SELECT * FROM ventes WHERE id_utilisateur = ? AND "
                    + DayRange.where("date_vente") + " ORDER BY date_vente DESC";
 
@@ -441,14 +442,15 @@ public class VenteDAO {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, utilisateurId);
-            DayRange.bind(stmt, 2, dateDebut);
+            DayRange.bindRange(stmt, 2, dateDebut, dateFin);
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
                 ventes.add(mapResultSetToVente(rs));
             }
-            
-            LOG.info("findByUtilisateurAndDate: Trouvé " + ventes.size() + " ventes pour utilisateur " + utilisateurId + " le " + dateDebut.toLocalDate());
+
+            LOG.info("findByUtilisateurAndDate: {} vente(s) pour l'utilisateur {} du {} au {}",
+                    ventes.size(), utilisateurId, dateDebut.toLocalDate(), dateFin.toLocalDate());
 
         } catch (SQLException e) {
             LOG.error("Erreur findByUtilisateurAndDate: " + e.getMessage(), e);

@@ -8,10 +8,11 @@ import model.Utilisateur;
 /**
  * État partagé de la session en cours : utilisateur connecté et panier.
  *
- * Point d'accès unique remplaçant les données statiques éparpillées dans les
- * contrôleurs (le panier vivait dans {@code CategorieProduitsController},
- * l'utilisateur dans {@code ConnexionController} et dans {@code SessionManager},
- * ces deux derniers pouvant diverger).
+ * Source de vérité unique de la session : elle remplace les données statiques
+ * autrefois éparpillées (le panier dans {@code CategorieProduitsController},
+ * l'utilisateur dans un champ statique de {@code ConnexionController} et dans
+ * un ancien {@code SessionManager}, qui pouvaient diverger). Tout est désormais
+ * lu et écrit ici, l'ouverture/fermeture passant par {@link AuthService}.
  *
  * L'instance par défaut est accessible par {@link #get()} pour les contrôleurs
  * FXML, que JavaFX instancie lui-même ; le constructeur reste public afin que

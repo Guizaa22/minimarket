@@ -28,9 +28,10 @@ import model.NoteJour;
 import model.Produit;
 import model.Utilisateur;
 import model.Vente;
+import service.AuthService;
+import service.SessionContext;
 import util.DatabaseSetup;
 import util.SecurityUtil;
-import util.SessionManager;
 
 /**
  * Tests de non-régression sur les défauts corrigés.
@@ -126,7 +127,7 @@ class RegressionIT {
         } catch (SQLException e) {
             System.err.println("Nettoyage impossible : " + e.getMessage());
         }
-        SessionManager.reset();
+        SessionContext.reset();
         DBConnector.closeConnection();
     }
 
@@ -157,12 +158,15 @@ class RegressionIT {
 
     @Test
     @Order(2)
-    @DisplayName("Les index sont créés (la base SQLite n'en avait aucun)")
+    @DisplayName("Les index attendus sont créés par le schéma")
     void indexesExist() throws SQLException {
         assumeTrue(dbAvailable);
 
+        // current_schema() reflète le search_path fixé par le pool (Config.getDbSchema()),
+        // donc test_2m pendant les tests et public en exploitation — l'ancien filtre
+        // 'public' en dur ne trouvait aucun index quand les tests tournaient en schéma dédié.
         String sql = "SELECT COUNT(*) FROM pg_indexes "
-                   + "WHERE schemaname = 'public' AND indexname LIKE 'idx_%'";
+                   + "WHERE schemaname = current_schema() AND indexname LIKE 'idx_%'";
         try (Connection conn = DBConnector.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -184,14 +188,16 @@ class RegressionIT {
 
         Utilisateur employe = new UtilisateurDAO().findById(employeId);
         assertNotNull(employe);
-        SessionManager.startSession(employe);
-        assertEquals(employeId, SessionManager.getCurrentUserId(),
-                "startSession() doit renseigner la session");
+        // Ouverture de session par le vrai chemin d'authentification : c'est
+        // AuthService qui renseigne SessionContext, source de vérité unique.
+        new AuthService().connecter(employe.getUsername(), "motdepasse-test");
+        assertEquals(employeId, SessionContext.get().getUtilisateurId(),
+                "la connexion doit renseigner la session");
 
         Vente vente = new Vente();
         vente.setDateVente(LocalDateTime.now());
         vente.setTotalVente(new BigDecimal("5.500"));
-        vente.setUtilisateurId(SessionManager.getCurrentUserId());
+        vente.setUtilisateurId(SessionContext.get().getUtilisateurId());
         vente.setTypePaiement(Vente.PAIEMENT_ESPECES);
 
         DetailVente detail = new DetailVente();

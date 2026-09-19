@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import dao.ProduitDAO;
-import dao.VenteDAO;
+import service.VenteService;
 import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
@@ -89,7 +89,7 @@ public class CaisseController {
     // ATTRIBUTS
     // ============================================
     private ProduitDAO produitDAO;
-    private VenteDAO venteDAO;
+    private VenteService venteService;
     private String modePaiement = "ESPÈCES"; // Par défaut
 
     // ============================================
@@ -98,7 +98,7 @@ public class CaisseController {
     @FXML
     private void initialize() {
         produitDAO = new ProduitDAO();
-        venteDAO = new VenteDAO();
+        venteService = new VenteService();
 
         // Initialiser l'interface
         updatePanierView();
@@ -179,69 +179,30 @@ public class CaisseController {
 
         infoBox.getChildren().addAll(nomLabel, codeLabel);
 
-        // Quantité with +/- buttons
+        // Quantité : un appui ouvre le pavé numérique pour saisir directement le
+        // nombre d'articles, au lieu des boutons +/- qu'il fallait marteler —
+        // peu pratiques sur une caisse tactile pour de grandes quantités.
         VBox quantiteContainer = new VBox(5);
         quantiteContainer.setAlignment(Pos.CENTER);
         quantiteContainer.setMinWidth(120);
-        
+
         Label qteTitleLabel = new Label("Quantité");
         qteTitleLabel.setStyle("-fx-font-size: 10px; -fx-font-weight: bold;");
-        
-        // Horizontal container for -/quantity/+ buttons
-        HBox quantiteControls = new HBox(8);
-        quantiteControls.setAlignment(Pos.CENTER);
-        
-        Label qteLabel = new Label(String.valueOf(detail.getQuantite()));
-        qteLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-min-width: 35px; -fx-alignment: center;");
 
-        // Les libellés de prix sont déclarés ici pour que les boutons +/-
-        // puissent les mettre à jour directement.
+        // Déclaré ici car la fiche de prix, plus bas, le réutilise.
         Label prixTotalLabel = new Label(String.format("%.2f DT", detail.getSousTotal()));
         prixTotalLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 18px;");
 
-        // Ne rafraîchit que la ligne concernée et le total. L'ancien code
-        // appelait updatePanierView() à chaque +1, ce qui vidait et
-        // reconstruisait toutes les lignes du panier — et relançait un
-        // findById() par ligne dont le produit n'était pas encore chargé.
-        Runnable rafraichirLigne = () -> {
-            qteLabel.setText(String.valueOf(finalDetail.getQuantite()));
-            prixTotalLabel.setText(String.format("%.2f DT", finalDetail.getSousTotal()));
-            updateTotal();
-        };
+        Button qteButton = new Button(String.valueOf(detail.getQuantite()));
+        qteButton.getStyleClass().addAll("btn", "btn-secondary");
+        qteButton.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-min-width: 70px; -fx-padding: 6 16;");
+        qteButton.setTooltip(new javafx.scene.control.Tooltip("Appuyer pour saisir la quantité"));
+        // Réutilise la saisie par pavé numérique : contrôle de stock, mise à jour
+        // du panier et retrait de la ligne quand la quantité tombe à zéro y sont
+        // centralisés. La liste du panier étant observée, la ligne se redessine.
+        qteButton.setOnAction(e -> modifierQuantiteItem(finalDetail));
 
-        Button minusButton = new Button("➖");
-        minusButton.getStyleClass().addAll("btn", "btn-secondary");
-        minusButton.setStyle("-fx-padding: 5 12; -fx-font-size: 14px; -fx-min-width: 35px;");
-        minusButton.setOnAction(e -> {
-            if (finalDetail.getQuantite() > 1) {
-                finalDetail.setQuantite(finalDetail.getQuantite() - 1);
-                rafraichirLigne.run();
-            } else {
-                // Le retrait change la composition du panier : reconstruction complète.
-                retirerDuPanier(finalDetail);
-            }
-        });
-
-        Button plusButton = new Button("➕");
-        plusButton.getStyleClass().addAll("btn", "btn-primary");
-        plusButton.setStyle("-fx-padding: 5 12; -fx-font-size: 14px; -fx-min-width: 35px;");
-        plusButton.setOnAction(e -> {
-            Produit p = finalDetail.getProduit();
-            // Contrôle immédiat : inutile d'attendre l'encaissement pour
-            // apprendre que le stock est insuffisant.
-            if (p != null && !p.isFrakCigarette()
-                    && finalDetail.getQuantite() + 1 > p.getQuantiteStock()) {
-                ui.Toast.avertissement(plusButton,
-                        "Stock limité : il ne reste que " + p.getQuantiteStock()
-                        + " « " + p.getNom() + " ».");
-                return;
-            }
-            finalDetail.setQuantite(finalDetail.getQuantite() + 1);
-            rafraichirLigne.run();
-        });
-
-        quantiteControls.getChildren().addAll(minusButton, qteLabel, plusButton);
-        quantiteContainer.getChildren().addAll(qteTitleLabel, quantiteControls);
+        quantiteContainer.getChildren().addAll(qteTitleLabel, qteButton);
 
         // Prix
         VBox prixContainer = new VBox(5);
@@ -305,39 +266,21 @@ public class CaisseController {
         // La vente doit être attribuée à l'utilisateur réellement connecté.
         // L'ancien code retombait sur un utilisateur "par défaut", ce qui attribuait
         // en pratique toutes les ventes au compte admin.
-        int userId = util.SessionManager.getCurrentUserId();
+        int userId = service.SessionContext.get().getUtilisateurId();
         if (userId <= 0) {
             afficherAlerte(Alert.AlertType.ERROR, "Session expirée",
                 "Aucun utilisateur connecté. Reconnectez-vous avant d'encaisser une vente.");
             return;
         }
 
-        // Créer la vente
-        Vente vente = new Vente();
-        vente.setDateVente(LocalDateTime.now());
-        vente.setTotalVente(total);
-        vente.setUtilisateurId(userId);
-        
-        // Ajouter les détails à la vente
-        for (DetailVente detail : service.SessionContext.get().getPanier().getLignes()) {
-            vente.addDetail(detail);
-        }
-
-        // Vérifier que la vente a des détails
-        if (vente.getDetails() == null || vente.getDetails().isEmpty()) {
-            afficherAlerte(Alert.AlertType.ERROR, "Erreur", 
-                "Le panier est vide ou invalide.");
-            return;
-        }
-
-        // Sauvegarder la vente et ses détails
-        LOG.info("Tentative d'enregistrement de la vente:");
-        LOG.info("  - Total: " + total);
-        LOG.info("  - Utilisateur ID: " + userId);
-        LOG.info("  - Nombre de détails: " + vente.getDetails().size());
-        
+        // L'encaissement passe désormais par VenteService : validation des
+        // lignes, décrémentation atomique du stock et journal d'audit y sont
+        // centralisés. Le contrôleur ne construit plus la vente ni n'appelle le
+        // DAO directement (les invariants métier étaient sinon contournés).
+        Vente vente;
         try {
-            venteDAO.create(vente);
+            vente = venteService.encaisser(
+                    service.SessionContext.get().getPanier(), userId, typePaiementVente());
 
         } catch (exception.StockInsuffisantException e) {
             // Le panier est conservé : le caissier ajuste la quantité et réessaie.
@@ -563,6 +506,7 @@ public class CaisseController {
         });
         
         Scene dialogScene = new Scene(dialogRoot, 600, 500);
+        util.FXMLUtils.appliquerStylesDialogue(dialogScene);
         dialogStage.setScene(dialogScene);
         dialogStage.setResizable(false);
         
@@ -632,6 +576,17 @@ public class CaisseController {
         btn.getStyleClass().clear();
         btn.getStyleClass().add("btn");
         btn.getStyleClass().add(styleClass); // Clear inline styles
+    }
+
+    /** Convertit le mode de paiement de l'écran en constante de {@link Vente}. */
+    private String typePaiementVente() {
+        if ("CARTE BANCAIRE".equals(modePaiement)) {
+            return Vente.PAIEMENT_CARTE;
+        }
+        if ("AUTRE".equals(modePaiement)) {
+            return Vente.PAIEMENT_AUTRE;
+        }
+        return Vente.PAIEMENT_ESPECES;
     }
 
     // ============================================
@@ -887,6 +842,12 @@ public class CaisseController {
 
         ui.PaveNumerique.demanderEntier("Quantité", nom, detail.getQuantite())
                 .ifPresent(quantite -> {
+                    // Une quantité nulle (ou négative) vaut un retrait de la ligne.
+                    if (quantite <= 0) {
+                        retirerDuPanier(detail);
+                        return;
+                    }
+
                     Produit produit = detail.getProduit();
 
                     // Les cigarettes à l'unité n'ont pas de stock propre :
