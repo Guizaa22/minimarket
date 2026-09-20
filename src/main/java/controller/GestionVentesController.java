@@ -30,6 +30,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import model.DetailVente;
 import model.Produit;
+import model.ProduitStats;
 import model.Vente;
 import util.FXMLUtils;
 
@@ -37,6 +38,9 @@ import util.FXMLUtils;
  * Contrôleur pour la gestion des ventes
  */
 public class GestionVentesController {
+
+    private static final org.slf4j.Logger LOG =
+            org.slf4j.LoggerFactory.getLogger(GestionVentesController.class);
 
     // ========================================
     // LABELS & DATE
@@ -154,6 +158,8 @@ public class GestionVentesController {
     // ========================================
     private VenteDAO venteDAO;
     private DetailVenteDAO detailVenteDAO;
+    /** Les rapports passent par le service, seul détenteur des règles de calcul. */
+    private service.VenteService venteService;
     private ProduitDAO produitDAO;
     private UtilisateurDAO utilisateurDAO;
 
@@ -169,6 +175,7 @@ public class GestionVentesController {
         // Initialisation des DAOs
         venteDAO = new VenteDAO();
         detailVenteDAO = new DetailVenteDAO();
+        venteService = new service.VenteService();
         produitDAO = new ProduitDAO();
         utilisateurDAO = new UtilisateurDAO();
 
@@ -634,14 +641,119 @@ public class GestionVentesController {
         }
     }
 
+    // ========================================
+    // GÉNÉRATION DES RAPPORTS
+    // ========================================
+
+    /** Nombre de produits repris dans le classement d'un rapport. */
+    private static final int TOP_PRODUITS_RAPPORT = 10;
+
     /**
-     * Générer un rapport (placeholder)
+     * Périodes couvertes par les rapports.
+     *
+     * Chaque valeur connaît ses propres bornes : le rapport n'a plus qu'à
+     * demander la période voulue, et ajouter un rythme de reporting ne touche
+     * qu'à cette énumération.
      */
+    private enum PeriodeRapport {
+        JOURNALIER("RAPPORT JOURNALIER", "journalier"),
+        HEBDOMADAIRE("RAPPORT HEBDOMADAIRE", "hebdomadaire"),
+        MENSUEL("RAPPORT MENSUEL", "mensuel"),
+        ANNUEL("RAPPORT ANNUEL", "annuel");
+
+        private final String titre;
+        private final String nomFichier;
+
+        PeriodeRapport(String titre, String nomFichier) {
+            this.titre = titre;
+            this.nomFichier = nomFichier;
+        }
+
+        /** Début de la période, à partir d'aujourd'hui. */
+        LocalDateTime debut() {
+            LocalDate aujourdhui = LocalDate.now();
+            switch (this) {
+                case JOURNALIER:   return aujourdhui.atStartOfDay();
+                case HEBDOMADAIRE: return aujourdhui.with(java.time.DayOfWeek.MONDAY).atStartOfDay();
+                case MENSUEL:      return aujourdhui.withDayOfMonth(1).atStartOfDay();
+                case ANNUEL:       return aujourdhui.withDayOfYear(1).atStartOfDay();
+                default:           return aujourdhui.atStartOfDay();
+            }
+        }
+
+        /** Fin de la période : la journée en cours, jusqu'à son dernier instant. */
+        LocalDateTime fin() {
+            return LocalDate.now().atTime(23, 59, 59);
+        }
+    }
+
     @FXML
-    @SuppressWarnings("unused")
-    private void genererRapport(String typeRapport) {
-        showAlert(Alert.AlertType.INFORMATION, "Rapport",
-                "Génération du rapport " + typeRapport + " en cours...");
+    @SuppressWarnings("unused") // Lié par FXML (onAction="#genererRapportJournalier")
+    private void genererRapportJournalier() {
+        genererRapport(PeriodeRapport.JOURNALIER);
+    }
+
+    @FXML
+    @SuppressWarnings("unused") // Lié par FXML (onAction="#genererRapportHebdomadaire")
+    private void genererRapportHebdomadaire() {
+        genererRapport(PeriodeRapport.HEBDOMADAIRE);
+    }
+
+    @FXML
+    @SuppressWarnings("unused") // Lié par FXML (onAction="#genererRapportMensuel")
+    private void genererRapportMensuel() {
+        genererRapport(PeriodeRapport.MENSUEL);
+    }
+
+    @FXML
+    @SuppressWarnings("unused") // Lié par FXML (onAction="#genererRapportAnnuel")
+    private void genererRapportAnnuel() {
+        genererRapport(PeriodeRapport.ANNUEL);
+    }
+
+    /**
+     * Produit un rapport PDF pour la période demandée.
+     *
+     * Les chiffres viennent de {@code VenteService} : chiffre d'affaires,
+     * bénéfice, nombre de ventes et classement des produits. Le fichier est
+     * écrit dans le dossier de données de l'application, aux côtés des tickets
+     * et des journaux, et son chemin est indiqué à l'utilisateur.
+     */
+    private void genererRapport(PeriodeRapport periode) {
+        LocalDateTime debut = periode.debut();
+        LocalDateTime fin = periode.fin();
+
+        try {
+            BigDecimal ca = venteService.chiffreAffaires(debut, fin);
+            BigDecimal benefice = venteService.benefice(debut, fin);
+            int nbVentes = venteService.nombreVentes(debut, fin);
+            List<model.ProduitStats> topProduits =
+                    venteService.topProduits(debut, fin, TOP_PRODUITS_RAPPORT);
+
+            String horodatage = LocalDateTime.now()
+                    .format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+            java.io.File fichier = util.Config.getRapportsDir()
+                    .resolve("rapport-" + periode.nomFichier + "-" + horodatage + ".pdf")
+                    .toFile();
+
+            util.PDFExporter.exportRapportPeriode(fichier, periode.titre, debut, fin,
+                    ca, benefice, nbVentes, topProduits);
+
+            showAlert(Alert.AlertType.INFORMATION, "Rapport généré",
+                    "Rapport enregistré :\n" + fichier.getAbsolutePath()
+                    + "\n\nChiffre d'affaires : " + String.format("%.2f DT", ca)
+                    + "\nBénéfice : " + String.format("%.2f DT", benefice)
+                    + "\nVentes : " + nbVentes);
+
+        } catch (IOException e) {
+            LOG.error("Écriture du rapport {} impossible", periode.nomFichier, e);
+            showAlert(Alert.AlertType.ERROR, "Erreur",
+                    "Le rapport n'a pas pu être écrit sur le disque : " + e.getMessage());
+        } catch (RuntimeException e) {
+            LOG.error("Génération du rapport {} impossible", periode.nomFichier, e);
+            showAlert(Alert.AlertType.ERROR, "Erreur",
+                    "Le rapport n'a pas pu être généré : " + e.getMessage());
+        }
     }
 
     /**
@@ -698,25 +810,4 @@ public class GestionVentesController {
         public int getVenteId() { return venteId; }
     }
 
-    /**
-     * Classe pour les statistiques des produits
-     */
-    public static class ProduitStats {
-        private int rang;
-        private final String nomProduit;
-        private final int quantiteVendue;
-        private final String caGenere;
-
-        public ProduitStats(String nomProduit, int quantiteVendue, BigDecimal ca) {
-            this.nomProduit = nomProduit;
-            this.quantiteVendue = quantiteVendue;
-            this.caGenere = String.format("%.2f DT", ca);
-        }
-
-        public int getRang() { return rang; }
-        public void setRang(int rang) { this.rang = rang; }
-        public String getNomProduit() { return nomProduit; }
-        public int getQuantiteVendue() { return quantiteVendue; }
-        public String getCaGenere() { return caGenere; }
-    }
 }

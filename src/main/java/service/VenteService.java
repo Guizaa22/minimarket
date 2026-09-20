@@ -7,6 +7,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dao.DetailVenteDAO;
 import dao.VenteDAO;
 import exception.ApplicationException;
 import exception.StockInsuffisantException;
@@ -26,17 +27,25 @@ public class VenteService {
     private static final Logger LOG = LoggerFactory.getLogger(VenteService.class);
 
     private final VenteDAO venteDAO;
+    private final DetailVenteDAO detailVenteDAO;
     private final ProduitService produitService;
     private final AuditService audit;
 
-    public VenteService(VenteDAO venteDAO, ProduitService produitService, AuditService audit) {
+    public VenteService(VenteDAO venteDAO, DetailVenteDAO detailVenteDAO,
+                        ProduitService produitService, AuditService audit) {
         this.venteDAO = venteDAO;
+        this.detailVenteDAO = detailVenteDAO;
         this.produitService = produitService;
         this.audit = audit;
     }
 
+    /** Conservé pour l'encaissement, qui ne consulte pas les statistiques détaillées. */
+    public VenteService(VenteDAO venteDAO, ProduitService produitService, AuditService audit) {
+        this(venteDAO, new DetailVenteDAO(), produitService, audit);
+    }
+
     public VenteService() {
-        this(new VenteDAO(), new ProduitService(), new AuditService());
+        this(new VenteDAO(), new DetailVenteDAO(), new ProduitService(), new AuditService());
     }
 
     // ------------------------------------------------------------------
@@ -150,5 +159,19 @@ public class VenteService {
 
     public int nombreVentes(LocalDateTime debut, LocalDateTime fin) {
         return venteDAO.getNombreVentesParPeriode(debut, fin);
+    }
+
+    /**
+     * Produits les plus vendus sur une période, du plus au moins écoulé.
+     *
+     * Le rang est renseigné ici : il dépend du classement demandé, pas du
+     * produit, et n'a donc pas à être recalculé par chaque écran.
+     */
+    public List<model.ProduitStats> topProduits(LocalDateTime debut, LocalDateTime fin, int limite) {
+        List<model.ProduitStats> stats = detailVenteDAO.getTopProduitsParPeriode(debut, fin, limite);
+        for (int i = 0; i < stats.size(); i++) {
+            stats.get(i).setRang(i + 1);
+        }
+        return stats;
     }
 }
