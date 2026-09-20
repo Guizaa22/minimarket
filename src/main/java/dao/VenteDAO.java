@@ -237,14 +237,17 @@ public class VenteDAO {
             conn.commit();
             
             // Vérifier que tout est bien sauvegardé
-            try (Statement verifyStmt = conn.createStatement();
-                 ResultSet rs = verifyStmt.executeQuery("SELECT COUNT(*) FROM detailsvente WHERE id_vente = " + venteId)) {
-                if (rs.next()) {
-                    int count = rs.getInt(1);
-                    if (count != vente.getDetails().size()) {
-                        LOG.error("ATTENTION: Nombre de détails sauvegardés (" + count + ") ne correspond pas au nombre attendu (" + vente.getDetails().size() + ")");
-                    } else {
-                        LOG.info("✓ Vente sauvegardée avec succès: ID=" + venteId + ", Détails=" + count);
+            try (PreparedStatement verifyStmt = conn.prepareStatement(
+                    "SELECT COUNT(*) FROM detailsvente WHERE id_vente = ?")) {
+                verifyStmt.setInt(1, venteId);
+                try (ResultSet rs = verifyStmt.executeQuery()) {
+                    if (rs.next()) {
+                        int count = rs.getInt(1);
+                        if (count != vente.getDetails().size()) {
+                            LOG.error("ATTENTION: Nombre de détails sauvegardés (" + count + ") ne correspond pas au nombre attendu (" + vente.getDetails().size() + ")");
+                        } else {
+                            LOG.info("✓ Vente sauvegardée avec succès: ID=" + venteId + ", Détails=" + count);
+                        }
                     }
                 }
             }
