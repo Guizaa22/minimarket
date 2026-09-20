@@ -79,18 +79,21 @@ public class ConnexionController {
         // manipule plus l'état de session directement. C'est l'oubli d'un de ces
         // appels qui faisait renvoyer -1 à getCurrentUserId() dans toute
         // l'application, et attribuait toutes les ventes au compte admin.
-        java.util.Optional<Utilisateur> connecte = authService.connecter(username, password);
+        service.ResultatConnexion resultat = authService.tenterConnexion(username, password);
 
-        if (connecte.isEmpty()) {
-            showAlert(Alert.AlertType.ERROR, "Échec de connexion",
-                     "Nom d'utilisateur ou mot de passe incorrect.");
+        if (!resultat.estReussi()) {
+            // Le motif du refus vient du service : un identifiant bloqué après
+            // trop d'essais mérite autre chose que « mot de passe incorrect ».
+            String titre = resultat.statut() == service.ResultatConnexion.Statut.COMPTE_BLOQUE
+                    ? "Compte bloqué" : "Échec de connexion";
+            showAlert(Alert.AlertType.ERROR, titre, resultat.message());
             passwordField.clear();
             return;
         }
 
-        // AuthService.connecter a déjà ouvert la session (SessionContext) :
+        // tenterConnexion a déjà ouvert la session (SessionContext) :
         // le contrôleur ne mémorise plus l'utilisateur de son côté.
-        Utilisateur utilisateur = connecte.get();
+        Utilisateur utilisateur = resultat.utilisateur().orElseThrow();
 
         try {
             Stage stage = (Stage) usernameField.getScene().getWindow();

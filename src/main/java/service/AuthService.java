@@ -1,7 +1,11 @@
 package service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +33,27 @@ public class AuthService {
     /** Longueur minimale imposée à la création ou au changement de mot de passe. */
     public static final int LONGUEUR_MIN_MOT_DE_PASSE = 8;
 
+    /** Nombre d'échecs consécutifs au-delà duquel un identifiant est bloqué. */
+    public static final int TENTATIVES_AVANT_BLOCAGE = 5;
+
+    /** Durée du blocage d'un identifiant après trop d'échecs. */
+    public static final Duration DUREE_BLOCAGE = Duration.ofMinutes(5);
+
+    /**
+     * Compteur d'échecs par identifiant.
+     *
+     * Volontairement en mémoire, et donc propre au processus : deux caisses
+     * ouvertes sur la même base comptent leurs échecs chacune de leur côté, et
+     * tout est remis à zéro au redémarrage de l'application. C'est une gêne
+     * pour qui tâtonne au comptoir, pas une défense contre une attaque menée
+     * depuis plusieurs postes ; un compteur partagé suppose une colonne en base
+     * et la gestion de l'horloge de chaque poste.
+     *
+     * La clé est l'identifiant normalisé (sans espaces, en minuscules) : sinon
+     * « Admin » et « admin » auraient chacun leur quota d'essais.
+     */
+    private static final Map<String, Tentatives> ECHECS = new ConcurrentHashMap<>();
+
     private final UtilisateurDAO utilisateurDAO;
     private final SessionContext session;
     private final AuditService audit;
@@ -51,22 +76,109 @@ public class AuthService {
      * Vérifie les identifiants et ouvre la session.
      *
      * @return l'utilisateur connecté, ou vide si les identifiants sont refusés
+     *         ou si l'identifiant est temporairement bloqué. Pour distinguer
+     *         les deux cas à l'écran, voir {@link #tenterConnexion}.
      */
     public Optional<Utilisateur> connecter(String username, String motDePasse) {
+        return tenterConnexion(username, motDePasse).utilisateur();
+    }
+
+    /**
+     * Vérifie les identifiants et ouvre la session, en détaillant l'issue.
+     *
+     * Après {@link #TENTATIVES_AVANT_BLOCAGE} échecs consécutifs, l'identifiant
+     * est refusé pendant {@link #DUREE_BLOCAGE}, mot de passe correct compris :
+     * rien n'empêchait jusqu'ici d'essayer les mots de passe en rafale sur le
+     * poste de caisse. Une connexion réussie remet le compteur à zéro.
+     *
+     * @return l'issue de la tentative, jamais {@code null}
+     */
+    public ResultatConnexion tenterConnexion(String username, String motDePasse) {
         if (username == null || username.isBlank() || motDePasse == null || motDePasse.isEmpty()) {
-            return Optional.empty();
+            return ResultatConnexion.saisieInvalide();
         }
 
-        Utilisateur utilisateur = utilisateurDAO.authenticate(username.trim(), motDePasse);
+        String identifiant = username.trim();
+        String cle = identifiant.toLowerCase();
+
+        long minutesRestantes = minutesDeBlocageRestantes(cle);
+        if (minutesRestantes > 0) {
+            LOG.warn("Connexion refusée pour « {} » : identifiant bloqué encore {} minute(s)",
+                    identifiant, minutesRestantes);
+            return ResultatConnexion.bloque(minutesRestantes);
+        }
+
+        Utilisateur utilisateur = utilisateurDAO.authenticate(identifiant, motDePasse);
         if (utilisateur == null) {
-            LOG.warn("Échec de connexion pour « {} »", username.trim());
-            return Optional.empty();
+            int echecs = enregistrerEchec(cle);
+            LOG.warn("Échec de connexion pour « {} » ({} échec(s) consécutif(s))", identifiant, echecs);
+
+            if (echecs >= TENTATIVES_AVANT_BLOCAGE) {
+                long minutes = DUREE_BLOCAGE.toMinutes();
+                // Tracé dans audit_logs sans identifiant d'utilisateur : le nom
+                // saisi peut ne correspondre à aucun compte, c'est justement le
+                // cas qui intéresse en cas de tentative d'intrusion.
+                audit.enregistrer(0, "BLOCAGE_COMPTE", "utilisateurs", null,
+                        "Identifiant « " + identifiant + " » bloqué " + minutes
+                        + " minute(s) après " + echecs + " échecs consécutifs");
+                return ResultatConnexion.bloque(minutes);
+            }
+            return ResultatConnexion.identifiantsInvalides();
         }
 
+        ECHECS.remove(cle);
         session.ouvrirSession(utilisateur);
         audit.enregistrer(utilisateur.getId(), "CONNEXION", "utilisateurs",
                 utilisateur.getId(), "Connexion réussie");
-        return Optional.of(utilisateur);
+        return ResultatConnexion.succes(utilisateur);
+    }
+
+    /**
+     * Minutes de blocage restantes pour un identifiant, 0 s'il est utilisable.
+     * Un blocage arrivé à terme est effacé au passage.
+     */
+    private long minutesDeBlocageRestantes(String cle) {
+        Tentatives tentatives = ECHECS.get(cle);
+        if (tentatives == null || tentatives.echecs < TENTATIVES_AVANT_BLOCAGE) {
+            return 0;
+        }
+
+        Duration ecoule = Duration.between(tentatives.dernierEchec, Instant.now());
+        if (ecoule.compareTo(DUREE_BLOCAGE) >= 0) {
+            ECHECS.remove(cle);
+            return 0;
+        }
+
+        // Arrondi au supérieur : annoncer « 0 minute » alors que le compte est
+        // encore bloqué quarante secondes n'aiderait personne.
+        Duration restant = DUREE_BLOCAGE.minus(ecoule);
+        return Math.max(1, (restant.toSeconds() + 59) / 60);
+    }
+
+    /** Incrémente le compteur d'échecs et retourne son nouveau total. */
+    private int enregistrerEchec(String cle) {
+        return ECHECS.compute(cle, (k, courant) -> courant == null
+                ? new Tentatives(1, Instant.now())
+                : new Tentatives(courant.echecs + 1, Instant.now())).echecs;
+    }
+
+    /**
+     * Oublie les échecs enregistrés.
+     * Réservé aux tests, qui partagent le compteur puisqu'il est statique.
+     */
+    public static void reinitialiserTentatives() {
+        ECHECS.clear();
+    }
+
+    /** Échecs consécutifs d'un identifiant et date du dernier d'entre eux. */
+    private static final class Tentatives {
+        private final int echecs;
+        private final Instant dernierEchec;
+
+        Tentatives(int echecs, Instant dernierEchec) {
+            this.echecs = echecs;
+            this.dernierEchec = dernierEchec;
+        }
     }
 
     public void deconnecter() {
