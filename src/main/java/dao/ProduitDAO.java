@@ -458,13 +458,29 @@ public class ProduitDAO {
      * @return true si une ligne a été mise à jour
      */
     public boolean augmenterStock(int produitId, int delta) {
+        try (Connection conn = DBConnector.getConnection()) {
+            return augmenterStock(conn, produitId, delta);
+        } catch (SQLException e) {
+            LOG.error("✗ Erreur lors de la mise à jour du stock : " + e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Fait varier le stock sur une connexion fournie par l'appelant, afin que
+     * l'incrément tienne dans la même transaction que la trace de l'ajout et
+     * le mouvement de crédit fournisseur.
+     *
+     * La connexion n'est ni validée ni fermée ici.
+     *
+     * @throws SQLException pour laisser l'appelant annuler la transaction
+     */
+    public boolean augmenterStock(Connection conn, int produitId, int delta) throws SQLException {
         String sql = "UPDATE produits SET quantite_stock = quantite_stock + ?, "
                    + "date_derniere_maj = CURRENT_TIMESTAMP "
                    + "WHERE id = ? AND quantite_stock + ? >= 0";
 
-        try (Connection conn = DBConnector.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, delta);
             stmt.setInt(2, produitId);
             stmt.setInt(3, delta);
@@ -474,10 +490,6 @@ public class ProduitDAO {
             }
             LOG.error("✗ Stock non modifié pour le produit ID " + produitId
                     + " (produit introuvable ou stock insuffisant pour un retrait de " + (-delta) + ")");
-            return false;
-
-        } catch (SQLException e) {
-            LOG.error("✗ Erreur lors de la mise à jour du stock : " + e.getMessage(), e);
             return false;
         }
     }

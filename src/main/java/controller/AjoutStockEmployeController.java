@@ -5,14 +5,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import dao.AjoutStockDAO;
 import dao.CreditFournisseurDAO;
 import dao.FournisseurDAO;
-import dao.PaiementFournisseurDAO;
 import dao.ProduitDAO;
 import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
@@ -45,10 +42,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import model.AjoutStock;
 import model.CreditFournisseur;
 import model.Fournisseur;
-import model.PaiementFournisseur;
 import model.Produit;
 import util.FXMLUtils;
 import util.PopupManager;
@@ -140,11 +135,13 @@ public class AjoutStockEmployeController {
     @FXML
     private Label creditDisponibleLabel;
 
+    // Lecture seule : l'affichage des produits, des fournisseurs et du crédit
+    // disponible. Toute écriture passe par ApprovisionnementService, qui la
+    // place dans une transaction unique.
     private ProduitDAO produitDAO;
     private FournisseurDAO fournisseurDAO;
     private CreditFournisseurDAO creditDAO;
-    private PaiementFournisseurDAO paiementDAO;
-    private AjoutStockDAO ajoutStockDAO;
+    private service.ApprovisionnementService approvisionnementService;
     private Produit produitSelectionne;
     private ObservableList<Produit> tousProduits;
     private ObservableList<Produit> produitsFiltres;
@@ -155,8 +152,7 @@ public class AjoutStockEmployeController {
         produitDAO = new ProduitDAO();
         fournisseurDAO = new FournisseurDAO();
         creditDAO = new CreditFournisseurDAO();
-        paiementDAO = new PaiementFournisseurDAO();
-        ajoutStockDAO = new AjoutStockDAO();
+        approvisionnementService = new service.ApprovisionnementService();
         
         tousProduits = FXCollections.observableArrayList();
         produitsFiltres = FXCollections.observableArrayList();
@@ -735,46 +731,36 @@ public class AjoutStockEmployeController {
             }
 
             // Ajout rapide sans fournisseur
-            boolean succes = produitDAO.augmenterStock(produitSelectionne.getId(), quantiteAjouter);
-            int nouveauStock = produitSelectionne.getQuantiteStock() + quantiteAjouter;
-            
-            if (succes) {
-                // Enregistrer l'ajout de stock sans fournisseur
-                String noteRapide = "Ajout rapide";
-                if (descriptionProduitField != null && !descriptionProduitField.getText().trim().isEmpty()) {
-                    noteRapide += " | Description produit: " + descriptionProduitField.getText().trim();
-                }
-
-                AjoutStock ajoutStock = new AjoutStock(
-                    produitSelectionne.getId(),
-                    idEmploye,
-                    null, // Pas de fournisseur pour ajout rapide
-                    quantiteAjouter,
-                    BigDecimal.ZERO, // Pas de paiement
-                    BigDecimal.ZERO, // Pas de crédit
-                    noteRapide,
-                    LocalDateTime.now()
-                );
-                if (!ajoutStockDAO.create(ajoutStock)) {
-                    afficherMessage("Stock mis à jour, mais l'historique n'a pas pu être enregistré.",
-                            Alert.AlertType.WARNING);
-                }
-
-                afficherMessage("✅ Stock ajouté rapidement! Nouveau stock: " + nouveauStock, Alert.AlertType.INFORMATION);
-                produitSelectionne.setQuantiteStock(nouveauStock);
-                afficherInfoProduit(produitSelectionne);
-                
-                // Recharger la liste
-                chargerTousProduits();
-                afficherProduits();
-                
-                // Réinitialiser seulement la quantité
-                quantiteField.setText("1");
-            } else {
-                afficherMessage("Erreur lors de la mise à jour du stock.", Alert.AlertType.ERROR);
+            String noteRapide = "Ajout rapide";
+            if (descriptionProduitField != null && !descriptionProduitField.getText().trim().isEmpty()) {
+                noteRapide += " | Description produit: " + descriptionProduitField.getText().trim();
             }
+
+            // Stock et historique validés ensemble : le stock n'est jamais
+            // incrémenté sans sa trace dans ajouts_stock.
+            int nouveauStock = approvisionnementService.enregistrerAjout(
+                    produitSelectionne.getId(), idEmploye,
+                    null,                       // pas de fournisseur pour un ajout rapide
+                    quantiteAjouter,
+                    BigDecimal.ZERO,            // pas de paiement
+                    BigDecimal.ZERO,            // pas de crédit
+                    noteRapide, null, null);
+
+            afficherMessage("✅ Stock ajouté rapidement! Nouveau stock: " + nouveauStock, Alert.AlertType.INFORMATION);
+            produitSelectionne.setQuantiteStock(nouveauStock);
+            afficherInfoProduit(produitSelectionne);
+
+            // Recharger la liste
+            chargerTousProduits();
+            afficherProduits();
+
+            // Réinitialiser seulement la quantité
+            quantiteField.setText("1");
+
         } catch (NumberFormatException e) {
             afficherMessage("Veuillez entrer un nombre valide.", Alert.AlertType.WARNING);
+        } catch (exception.ApplicationException e) {
+            afficherMessage(e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
@@ -858,77 +844,44 @@ public class AjoutStockEmployeController {
                 }
             }
             
-            // Mettre à jour le stock (incrément atomique côté base)
-            boolean succes = produitDAO.augmenterStock(produitSelectionne.getId(), quantiteAjouter);
-            int nouveauStock = produitSelectionne.getQuantiteStock() + quantiteAjouter;
-
-            if (succes) {
-                // Combiner les notes du fournisseur et la description du produit
-                String notesCompletes = notes;
-                if (descriptionProduitField != null && !descriptionProduitField.getText().trim().isEmpty()) {
-                    if (!notesCompletes.isEmpty()) {
-                        notesCompletes += " | ";
-                    }
-                    notesCompletes += "Description produit: " + descriptionProduitField.getText().trim();
+            // Combiner les notes du fournisseur et la description du produit
+            String notesCompletes = notes;
+            if (descriptionProduitField != null && !descriptionProduitField.getText().trim().isEmpty()) {
+                if (!notesCompletes.isEmpty()) {
+                    notesCompletes += " | ";
                 }
-
-                AjoutStock ajoutStock = new AjoutStock(
-                    produitSelectionne.getId(),
-                    idEmploye,
-                    idFournisseur,
-                    quantiteAjouter,
-                    montantPaiement,
-                    creditUtilise,
-                    notesCompletes,
-                    LocalDateTime.now(),
-                    typeAjoutTabac,
-                    quantiteCigarettes
-                );
-                if (!ajoutStockDAO.create(ajoutStock)) {
-                    afficherMessage("Stock mis à jour, mais l'historique n'a pas pu être enregistré.",
-                            Alert.AlertType.WARNING);
-                }
-
-                // Si un paiement a été fait, l'enregistrer
-                if (montantPaiement.compareTo(BigDecimal.ZERO) > 0 && idFournisseur != null) {
-                    PaiementFournisseur paiement = new PaiementFournisseur(
-                        idFournisseur,
-                        idEmploye,
-                        montantPaiement,
-                        notes,
-                        LocalDateTime.now()
-                    );
-                    if (!paiementDAO.create(paiement)) {
-                        afficherMessage("Le paiement fournisseur n'a pas pu être enregistré.",
-                                Alert.AlertType.WARNING);
-                    }
-                }
-
-                // Utiliser le crédit si nécessaire
-                if (creditUtilise.compareTo(BigDecimal.ZERO) > 0 && idFournisseur != null) {
-                    creditDAO.utiliserCredit(idFournisseur, creditUtilise);
-                }
-                
-                afficherMessage("Stock mis à jour avec succès! Nouveau stock: " + nouveauStock, Alert.AlertType.INFORMATION);
-                produitSelectionne.setQuantiteStock(nouveauStock);
-                afficherInfoProduit(produitSelectionne);
-                
-                // Recharger la liste
-                chargerTousProduits();
-                afficherProduits();
-                
-                // Réinitialiser les champs
-                quantiteField.setText("1");
-                montantPaiementField.clear();
-                creditUtiliseField.clear();
-                notesField.clear();
-                fournisseurComboBox.setValue(null);
-                creditDisponibleLabel.setVisible(false);
-            } else {
-                afficherMessage("Erreur lors de la mise à jour du stock.", Alert.AlertType.ERROR);
+                notesCompletes += "Description produit: " + descriptionProduitField.getText().trim();
             }
+
+            // Stock, historique, paiement et crédit dans une seule transaction :
+            // soit les quatre écritures aboutissent, soit aucune. Auparavant,
+            // une panne au milieu pouvait laisser le stock augmenté sans que le
+            // crédit fournisseur ait été débité.
+            int nouveauStock = approvisionnementService.enregistrerAjout(
+                    produitSelectionne.getId(), idEmploye, idFournisseur, quantiteAjouter,
+                    montantPaiement, creditUtilise, notesCompletes,
+                    typeAjoutTabac, quantiteCigarettes);
+
+            afficherMessage("Stock mis à jour avec succès! Nouveau stock: " + nouveauStock, Alert.AlertType.INFORMATION);
+            produitSelectionne.setQuantiteStock(nouveauStock);
+            afficherInfoProduit(produitSelectionne);
+
+            // Recharger la liste
+            chargerTousProduits();
+            afficherProduits();
+
+            // Réinitialiser les champs
+            quantiteField.setText("1");
+            montantPaiementField.clear();
+            creditUtiliseField.clear();
+            notesField.clear();
+            fournisseurComboBox.setValue(null);
+            creditDisponibleLabel.setVisible(false);
+
         } catch (NumberFormatException e) {
             afficherMessage("Veuillez entrer un nombre valide.", Alert.AlertType.WARNING);
+        } catch (exception.ApplicationException e) {
+            afficherMessage(e.getMessage(), Alert.AlertType.ERROR);
         }
     }
     
