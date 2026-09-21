@@ -408,6 +408,26 @@ END
 $$;
 
 -- ------------------------------------------------------------
+-- Archivage des produits
+-- ------------------------------------------------------------
+-- Un produit déjà vendu ne peut pas être supprimé sans réécrire le passé :
+-- ses lignes de detailsvente portent le prix d'achat et le prix de vente du
+-- jour de la vente, dont dépend tout calcul de bénéfice. L'ancienne
+-- « suppression forcée » les effaçait, si bien que le chiffre d'affaires
+-- restait inchangé — il vient de ventes.total_vente — pendant que le bénéfice
+-- des mois clos s'effondrait. Un produit retiré de la vente est donc archivé :
+-- il disparaît de la caisse et du stock, mais son historique reste intact.
+DO $$
+BEGIN
+    ALTER TABLE produits ADD COLUMN IF NOT EXISTS actif BOOLEAN NOT NULL DEFAULT TRUE;
+
+    -- Les écrans de vente et de stock ne lisent que les produits actifs :
+    -- l'index évite un parcours complet dès que des archives s'accumulent.
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_produits_actif ON produits (actif)';
+END
+$$;
+
+-- ------------------------------------------------------------
 -- Données de référence (idempotent, aucun mot de passe ici)
 -- ------------------------------------------------------------
 INSERT INTO categories (nom, description) VALUES

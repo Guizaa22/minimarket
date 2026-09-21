@@ -36,15 +36,33 @@ public class ProduitDAO {
 
 
     /**
-     * Récupère tous les produits
-     * @return Liste de tous les produits
+     * Récupère les produits proposés à la vente.
+     *
+     * Les produits archivés sont exclus : ils ne doivent plus apparaître ni en
+     * caisse ni dans la gestion du stock. Leur historique de ventes reste
+     * intact et continue d'alimenter les rapports, qui joignent
+     * {@code detailsvente} par identifiant sans passer par cette liste.
+     *
+     * @return Liste des produits actifs
      */
     public List<Produit> findAll() {
+        return findAll(false);
+    }
+
+    /**
+     * Récupère les produits, avec ou sans les archives.
+     *
+     * @param inclureArchives {@code true} pour voir aussi les produits retirés
+     *        de la vente (consultation de l'historique par un administrateur)
+     */
+    public List<Produit> findAll(boolean inclureArchives) {
         List<Produit> produits = new ArrayList<>();
 
         // Projection commune : charge aussi categories.type, dont dépend
         // findProduitsTabac() via isTabac().
-        String sql = SELECT_PRODUIT + " ORDER BY p.nom";
+        String sql = SELECT_PRODUIT
+                   + (inclureArchives ? "" : " WHERE p.actif")
+                   + " ORDER BY p.nom";
 
         try (Connection conn = DBConnector.getConnection();
              Statement stmt = conn.createStatement();
@@ -165,8 +183,11 @@ public class ProduitDAO {
      */
     public List<Produit> findStockFaible() {
         List<Produit> produits = new ArrayList<>();
+        // Un produit archivé n'a plus à être réapprovisionné : l'alerte de
+        // stock ne porte que sur les produits encore vendus.
         String sql = SELECT_PRODUIT
-                   + " WHERE p.quantite_stock <= p.seuil_alerte ORDER BY p.quantite_stock ASC";
+                   + " WHERE p.actif AND p.quantite_stock <= p.seuil_alerte"
+                   + " ORDER BY p.quantite_stock ASC";
 
         try (Connection conn = DBConnector.getConnection();
              Statement stmt = conn.createStatement();
@@ -348,46 +369,64 @@ public class ProduitDAO {
     }
     
     /**
-     * Supprime un produit
+     * Archive ou réactive un produit.
+     *
+     * Retire le produit de la caisse et de la gestion du stock sans toucher à
+     * ses ventes passées : les lignes de {@code detailsvente} portent les prix
+     * pratiqués le jour de la vente, dont dépend tout calcul de bénéfice.
+     *
+     * @param id    produit visé
+     * @param actif {@code false} pour archiver, {@code true} pour remettre en vente
+     * @return true si le produit existait
+     */
+    public boolean definirActif(int id, boolean actif) {
+        String sql = "UPDATE produits SET actif = ?, date_derniere_maj = CURRENT_TIMESTAMP "
+                   + "WHERE id = ?";
+
+        try (Connection conn = DBConnector.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setBoolean(1, actif);
+            stmt.setInt(2, id);
+            return stmt.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            LOG.error("Archivage du produit " + id + " impossible : " + e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Supprime un produit, à condition qu'il ne soit référencé nulle part.
+     *
      * @param id L'ID du produit à supprimer
-     * @param forceDelete Si true, supprime même si le produit est utilisé (admin uniquement)
+     * @param forceDelete conservé pour la compatibilité des appels ; un produit
+     *        référencé n'est plus supprimé, quelle que soit sa valeur : il doit
+     *        être archivé via {@link #definirActif(int, boolean)}
      * @return true si la suppression réussit, false sinon
-     * @throws SQLException si le produit est utilisé dans des ventes ou ajouts de stock (sauf si forceDelete = true)
+     * @throws SQLException si le produit est utilisé dans des ventes ou ajouts de stock
      */
     public boolean delete(int id, boolean forceDelete) throws SQLException {
-        // Ne pas utiliser try-with-resources car la connexion est un singleton partagé
+        // La connexion vient du pool, mais la transaction est pilotée à la main :
+        // un try-with-resources la rendrait avant le commit.
         Connection conn = null;
         try {
             conn = DBConnector.getConnection();
             conn.setAutoCommit(false);
-            
-            // Si forceDelete est activé (admin), supprimer d'abord les références
-            if (forceDelete) {
-                // Supprimer les détails de vente associés
-                String sqlDeleteDetails = "DELETE FROM detailsvente WHERE id_produit = ?";
-                try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteDetails)) {
-                    stmt.setInt(1, id);
-                    int detailsDeleted = stmt.executeUpdate();
-                    if (detailsDeleted > 0) {
-                        LOG.info("✓ " + detailsDeleted + " détail(s) de vente supprimé(s) pour le produit ID " + id);
-                    }
-                }
-                
-                // Supprimer les ajouts de stock associés
-                String sqlDeleteAjouts = "DELETE FROM ajouts_stock WHERE produit_id = ?";
-                try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteAjouts)) {
-                    stmt.setInt(1, id);
-                    int ajoutsDeleted = stmt.executeUpdate();
-                    if (ajoutsDeleted > 0) {
-                        LOG.info("✓ " + ajoutsDeleted + " ajout(s) de stock supprimé(s) pour le produit ID " + id);
-                    }
-                }
-            } else {
-                // Vérifier d'abord si le produit est utilisé (utiliser la même connexion)
-                if (isProduitUtilise(conn, id)) {
-                    conn.rollback();
-                    throw new SQLException("Impossible de supprimer ce produit car il est utilisé dans des ventes ou des ajouts de stock.");
-                }
+
+            // Un produit référencé n'est jamais supprimé, même par un
+            // administrateur. L'ancienne « suppression forcée » effaçait ses
+            // lignes de detailsvente et d'ajouts_stock : le chiffre d'affaires
+            // restait intact, puisqu'il vient de ventes.total_vente, mais le
+            // bénéfice de mois déjà clôturés s'effondrait, et les ventes
+            // concernées se retrouvaient sans aucune ligne. Retirer un produit
+            // de la vente passe désormais par definirActif (archivage).
+            if (isProduitUtilise(conn, id)) {
+                conn.rollback();
+                throw new SQLException(
+                        "Ce produit figure dans des ventes ou des ajouts de stock : "
+                        + "il ne peut pas être supprimé sans fausser l'historique. "
+                        + "Archivez-le pour le retirer de la vente.");
             }
             
             // Supprimer le produit
@@ -398,7 +437,7 @@ public class ProduitDAO {
                 
                 if (rowsAffected > 0) {
                     conn.commit();
-                    LOG.info("✓ Produit ID " + id + " supprimé avec succès" + (forceDelete ? " (suppression forcée)" : ""));
+                    LOG.info("✓ Produit ID " + id + " supprimé avec succès");
                     return true;
                 } else {
                     conn.rollback();
@@ -420,7 +459,6 @@ public class ProduitDAO {
             LOG.error("Code SQL: " + e.getSQLState());
             LOG.error("Code erreur SGBD: " + e.getErrorCode());
             LOG.error("Produit ID: " + id);
-            LOG.error("Force Delete: " + forceDelete);
             LOG.error("========================================");
             throw e; // Re-lancer l'exception pour que le contrôleur puisse l'afficher
         } finally {
@@ -805,6 +843,11 @@ public class ProduitDAO {
             produit.setImageMime(rs.getString("image_mime"));
         } catch (SQLException ignored) {
             // colonne absente de cette projection
+        }
+        try {
+            produit.setActif(rs.getBoolean("actif"));
+        } catch (SQLException ignored) {
+            // colonne absente de cette projection : le produit est réputé actif
         }
         try {
             produit.setPrixVenteCigarette(rs.getBigDecimal("prix_vente_cigarette"));

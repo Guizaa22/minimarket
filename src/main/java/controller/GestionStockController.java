@@ -335,34 +335,45 @@ public class GestionStockController {
 
         ui.Dialogues.preparer(confirmAlert.getDialogPane(), null);
         if (confirmAlert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
-            // Vérifier si l'utilisateur est admin
-            boolean isAdmin = service.SessionContext.get().estAdmin();
-            boolean forceDelete = false;
-            
-            // Si le produit est utilisé et que l'utilisateur est admin, demander confirmation pour suppression forcée
-            if (isAdmin && produitDAO.isProduitUtilise(produit.getId())) {
-                Alert forceConfirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
-                forceConfirmAlert.setTitle("Suppression forcée");
-                forceConfirmAlert.setHeaderText("Ce produit est utilisé dans des ventes ou des ajouts de stock");
-                forceConfirmAlert.setContentText("En tant qu'administrateur, vous pouvez forcer la suppression.\n\n" +
-                        "⚠️ ATTENTION: Cela supprimera également toutes les références à ce produit dans les ventes et ajouts de stock.\n\n" +
-                        "Voulez-vous continuer ?");
-                
-                ui.Dialogues.preparer(forceConfirmAlert.getDialogPane(), null);
-                if (forceConfirmAlert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
-                    forceDelete = true;
-                } else {
-                    return; // L'utilisateur a annulé
+            int utilisateurId = service.SessionContext.get().getUtilisateurId();
+
+            // Un produit déjà vendu n'est pas supprimable : ses lignes de vente
+            // portent les prix du jour de la transaction, dont dépend le
+            // bénéfice des périodes closes. L'ancienne « suppression forcée »
+            // les effaçait et faisait varier après coup le résultat d'un mois
+            // déjà clôturé. On propose l'archivage à la place.
+            if (produitDAO.isProduitUtilise(produit.getId())) {
+                Alert archivage = new Alert(Alert.AlertType.CONFIRMATION);
+                archivage.setTitle("Archiver le produit");
+                archivage.setHeaderText("Ce produit figure dans des ventes ou des ajouts de stock");
+                archivage.setContentText(
+                        "Il ne peut pas être supprimé sans fausser les rapports déjà édités.\n\n"
+                        + "L'archiver le retire de la caisse et de la gestion du stock, "
+                        + "tout en conservant son historique.\n\nArchiver « "
+                        + produit.getNom() + " » ?");
+
+                ui.Dialogues.preparer(archivage.getDialogPane(), null);
+                if (archivage.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
+                    return;
                 }
+
+                try {
+                    produitService.archiver(produit, utilisateurId);
+                    showAlert(Alert.AlertType.INFORMATION, "Produit archivé",
+                            "« " + produit.getNom() + " » a été retiré de la vente.\n"
+                            + "Son historique reste consultable dans les rapports.");
+                    chargerProduits();
+                    produitsTable.setVisible(true);
+                    produitsTable.requestFocus();
+                } catch (exception.ApplicationException e) {
+                    showAlert(Alert.AlertType.ERROR, "Erreur", e.getMessage());
+                }
+                return;
             }
-            
+
             try {
-                produitService.supprimer(produit, service.SessionContext.get().getUtilisateurId(), forceDelete);
-                String message = "Produit supprimé avec succès.";
-                if (forceDelete) {
-                    message += "\n\n⚠️ Les références à ce produit dans les ventes et ajouts de stock ont également été supprimées.";
-                }
-                showAlert(Alert.AlertType.INFORMATION, "Succès", message);
+                produitService.supprimer(produit, utilisateurId, false);
+                showAlert(Alert.AlertType.INFORMATION, "Succès", "Produit supprimé avec succès.");
                 // Rafraîchir la liste des produits
                 chargerProduits();
                 // S'assurer que la table est visible et mise à jour

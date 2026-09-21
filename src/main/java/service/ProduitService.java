@@ -143,6 +143,14 @@ public class ProduitService {
                 "+" + quantite + (note != null && !note.isBlank() ? " — " + note : ""));
     }
 
+    /**
+     * Supprime définitivement un produit jamais vendu ni réapprovisionné.
+     *
+     * @param forcer sans effet : un produit référencé n'est plus supprimé,
+     *        même par un administrateur. Il doit être archivé.
+     * @throws ApplicationException si le produit est référencé ; le message
+     *         invite alors à l'archiver
+     */
     public void supprimer(Produit produit, int utilisateurId, boolean forcer) {
         try {
             if (!produitDAO.delete(produit.getId(), forcer)) {
@@ -153,8 +161,50 @@ public class ProduitService {
             throw new ApplicationException(e.getMessage(), e);
         }
 
-        audit.enregistrer(utilisateurId, forcer ? "SUPPRESSION_FORCEE_PRODUIT" : "SUPPRESSION_PRODUIT",
+        audit.enregistrer(utilisateurId, "SUPPRESSION_PRODUIT",
                 "produits", produit.getId(), produit.getNom() + " (" + produit.getCodeBarre() + ")");
+    }
+
+    /**
+     * Retire un produit de la vente sans toucher à son historique.
+     *
+     * Seule façon d'« enlever » un produit déjà vendu : ses lignes de vente
+     * portent les prix du jour de la transaction, dont dépend le bénéfice des
+     * périodes déjà clôturées. Les effacer faisait varier après coup le
+     * résultat d'un mois clos.
+     */
+    public void archiver(Produit produit, int utilisateurId) {
+        if (produit == null) {
+            throw new ApplicationException("Produit absent.");
+        }
+        if (!produitDAO.definirActif(produit.getId(), false)) {
+            throw new ApplicationException("L'archivage du produit a échoué.");
+        }
+        produit.setActif(false);
+
+        audit.enregistrer(utilisateurId, "ARCHIVAGE_PRODUIT", "produits", produit.getId(),
+                produit.getNom() + " (" + produit.getCodeBarre() + ") retiré de la vente");
+    }
+
+    /** Remet en vente un produit archivé. */
+    public void reactiver(Produit produit, int utilisateurId) {
+        if (produit == null) {
+            throw new ApplicationException("Produit absent.");
+        }
+        if (!produitDAO.definirActif(produit.getId(), true)) {
+            throw new ApplicationException("La réactivation du produit a échoué.");
+        }
+        produit.setActif(true);
+
+        audit.enregistrer(utilisateurId, "REACTIVATION_PRODUIT", "produits", produit.getId(),
+                produit.getNom() + " (" + produit.getCodeBarre() + ") remis en vente");
+    }
+
+    /** Produits retirés de la vente, pour consultation. */
+    public List<Produit> listerArchives() {
+        return produitDAO.findAll(true).stream()
+                .filter(p -> !p.isActif())
+                .collect(java.util.stream.Collectors.toList());
     }
 
     // ------------------------------------------------------------------
