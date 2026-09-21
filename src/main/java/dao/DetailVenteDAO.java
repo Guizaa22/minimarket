@@ -164,7 +164,7 @@ public class DetailVenteDAO {
                 "FROM detailsvente dv " +
                 "INNER JOIN produits p ON dv.id_produit = p.id " +
                 "INNER JOIN ventes v ON dv.id_vente = v.id " +
-                "WHERE v.date_vente BETWEEN ? AND ? " +
+                "WHERE v.date_vente >= ? AND v.date_vente < ? " +
                 "GROUP BY p.id, p.nom " +
                 "ORDER BY quantite_totale DESC " +
                 "LIMIT ?";

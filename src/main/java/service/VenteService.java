@@ -84,7 +84,17 @@ public class VenteService {
 
         // Le DAO gère la transaction : insertion de la vente, des lignes et
         // décrémentation atomique du stock, le tout validé ou annulé ensemble.
-        venteDAO.create(vente);
+        //
+        // Le retour est vérifié : create() renvoie false — sans lever
+        // d'exception — quand la base ne rend aucun identifiant. Ce retour était
+        // ignoré, si bien que l'encaissement se poursuivait : ticket imprimé,
+        // « Vente enregistrée » affiché, panier vidé, et rien en base. Le
+        // caissier encaissait sans trace et sans pouvoir ressaisir la vente.
+        if (!venteDAO.create(vente)) {
+            throw new ApplicationException(
+                    "La vente n'a pas pu être enregistrée. Aucun montant n'a été validé, "
+                    + "le panier est conservé : réessayez.");
+        }
 
         LOG.info("Vente {} encaissée par l'utilisateur {} : {} article(s), {} DT",
                 vente.getId(), utilisateurId, panier.getNombreArticles(), vente.getTotalVente());

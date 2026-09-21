@@ -210,7 +210,7 @@ public class GestionVentesController {
         if (datePickerFilter != null && datePickerFilter.getValue() != null) {
             LocalDate dateSelectionnee = datePickerFilter.getValue();
             LocalDateTime debut = dateSelectionnee.atStartOfDay();
-            LocalDateTime fin = dateSelectionnee.atTime(23, 59, 59);
+            LocalDateTime fin = dateSelectionnee.plusDays(1).atStartOfDay();
             
             // Recharger les statistiques pour cette date
             chargerStatistiquesPourDate(debut, fin);
@@ -681,9 +681,12 @@ public class GestionVentesController {
             }
         }
 
-        /** Fin de la période : la journée en cours, jusqu'à son dernier instant. */
+        /**
+          * Fin de la période, exclue : le début du lendemain.
+          * Une borne à 23:59:59 écartait les ventes de la dernière seconde.
+          */
         LocalDateTime fin() {
-            return LocalDate.now().atTime(23, 59, 59);
+            return LocalDate.now().plusDays(1).atStartOfDay();
         }
     }
 

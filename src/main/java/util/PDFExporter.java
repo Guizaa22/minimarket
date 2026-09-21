@@ -75,7 +75,9 @@ public class PDFExporter {
             yPosition[0] -= LINE_HEIGHT * 2;
             
             LocalDateTime dateDebut = date.atStartOfDay();
-            LocalDateTime dateFin = date.atTime(23, 59, 59);
+            // Borne de fin exclusive : le début du lendemain, et non
+            // 23:59:59 qui laissait échapper la dernière seconde.
+            LocalDateTime dateFin = date.plusDays(1).atStartOfDay();
             
             // Résumé
             BigDecimal totalVentes = venteDAO.getTotalRecettes(dateDebut, dateFin);

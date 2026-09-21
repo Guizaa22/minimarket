@@ -502,10 +502,20 @@ public class VenteDAO {
     }
 
     /**
-     * Total des recettes sur une période
+     * Total des recettes sur une période.
+     *
+     * L'intervalle est semi-ouvert : {@code [debut, fin[}. L'appelant qui veut
+     * une journée entière passe donc le début du lendemain comme borne de fin,
+     * et non 23:59:59 — une vente encaissée dans la dernière seconde de la
+     * journée était sinon absente des statistiques, la recette affichée étant
+     * inférieure à la recette réelle.
+     *
+     * @param debut premier instant inclus
+     * @param fin   premier instant exclu
      */
     public BigDecimal getTotalRecettes(LocalDateTime debut, LocalDateTime fin) {
-        String sql = "SELECT SUM(total_vente) FROM ventes WHERE date_vente BETWEEN ? AND ?";
+        String sql = "SELECT SUM(total_vente) FROM ventes "
+                   + "WHERE date_vente >= ? AND date_vente < ?";
         try (Connection conn = DBConnector.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
@@ -535,7 +545,8 @@ public class VenteDAO {
      * 🔥 Nouvelle méthode : nombre total de ventes sur une période
      */
     public int getNombreVentesParPeriode(LocalDateTime debut, LocalDateTime fin) {
-        String sql = "SELECT COUNT(*) FROM ventes WHERE date_vente BETWEEN ? AND ?";
+        String sql = "SELECT COUNT(*) FROM ventes "
+                   + "WHERE date_vente >= ? AND date_vente < ?";
         try (Connection conn = DBConnector.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
@@ -559,7 +570,7 @@ public class VenteDAO {
                 SELECT SUM((dv.prix_vente_unitaire - dv.prix_achat_unitaire) * dv.quantite)
                 FROM detailsvente dv
                 JOIN ventes v ON dv.id_vente = v.id
-                WHERE v.date_vente BETWEEN ? AND ?
+                WHERE v.date_vente >= ? AND v.date_vente < ?
                 """;
 
         try (Connection conn = DBConnector.getConnection();
@@ -626,7 +637,7 @@ public class VenteDAO {
             INNER JOIN ventes v ON dv.id_vente = v.id
             INNER JOIN produits p ON dv.id_produit = p.id
             LEFT JOIN categories c ON c.id = p.category_id
-            WHERE v.date_vente BETWEEN ? AND ?
+            WHERE v.date_vente >= ? AND v.date_vente < ?
               AND (c.type IN ('Tabac', 'FrakCigarette')
                    OR (c.type IS NULL AND (
                           LOWER(p.categorie) LIKE '%tabac%'

@@ -307,7 +307,9 @@ public class RecetteJourController {
         }
         
         LocalDateTime dateDebut = date.atStartOfDay();
-        LocalDateTime dateFin = date.atTime(23, 59, 59);
+        // Borne de fin exclusive (début du lendemain) : cohérent avec les
+        // statistiques de période, qui travaillent sur [debut, fin[.
+        LocalDateTime dateFin = date.plusDays(1).atStartOfDay();
         
         // La recette affichée est celle de l'employé connecté.
         int idEmploye = service.SessionContext.get().getUtilisateurId();
