@@ -124,6 +124,11 @@ public class VenteDAO {
             // DAO pour récupérer les produits
             ProduitDAO produitDAO = new ProduitDAO();
 
+            // Reliquat du paquet entamé, par produit, suivi pendant toute la
+            // transaction : une même vente peut comporter plusieurs lignes de
+            // cigarettes du même produit, qui doivent puiser dans le même paquet.
+            java.util.Map<Integer, Integer> reliquats = new java.util.HashMap<>();
+
             // Décréments réellement appliqués, pour les journaliser ensuite.
             // Ils ne se déduisent pas des lignes de vente : une vente à la
             // cigarette retire des paquets, et une « frak cigarette » les
@@ -138,9 +143,17 @@ public class VenteDAO {
                     throw new SQLException("Produit ID " + d.getProduitId() + " introuvable dans la base de données");
                 }
                 
-                // Pour les produits "frak cigarette", on ne vérifie pas leur stock (ils n'ont pas de stock)
-                // Le stock sera décrémenté sur le produit tabac associé
+                // Quantité à retirer du stock pour cette ligne, calculée une
+                // seule fois : consommerCigarettes entame le paquet ouvert et
+                // ne doit donc pas être rejoué entre le contrôle et l'écriture.
+                // Les « frak cigarette » n'ont pas de stock propre : c'est le
+                // paquet associé qui est décrémenté, plus bas.
+                int aRetirer = 0;
                 if (!produitVendu.isFrakCigarette()) {
+                    aRetirer = "cigarette".equals(d.getTypeVenteTabac())
+                            ? consommerCigarettes(conn, reliquats, d.getProduitId(), d.getQuantite())
+                            : d.getQuantite();
+
                     // Vérifier le stock avant d'ajouter (uniquement pour les produits normaux)
                     try (PreparedStatement checkStock = conn.prepareStatement("SELECT quantite_stock FROM produits WHERE id = ?")) {
                         checkStock.setInt(1, d.getProduitId());
@@ -151,12 +164,11 @@ public class VenteDAO {
                             int stockActuel = rs.getInt("quantite_stock");
                             // Comparé en paquets, unité dans laquelle le stock
                             // est tenu — pas en cigarettes.
-                            int requis = paquetsConsommes(d);
-                            if (stockActuel < requis) {
+                            if (stockActuel < aRetirer) {
                                 // Exception métier : le contrôleur peut afficher
                                 // un message utile sans analyser un texte SQL.
                                 throw new exception.StockInsuffisantException(
-                                        produitVendu.getNom(), stockActuel, requis);
+                                        produitVendu.getNom(), stockActuel, aRetirer);
                             }
                         }
                     }
@@ -179,11 +191,13 @@ public class VenteDAO {
                         // Récupérer le produit tabac associé
                         Produit produitTabacAssocie = produitDAO.findById(produitTabacAssocieId);
                         if (produitTabacAssocie != null) {
-                            // Calculer combien de paquets à décrémenter (20 cigarettes = 1 paquet)
+                            // Le paquet déjà entamé est consommé en premier :
+                            // sans cela, chaque vente au détail ouvrait un
+                            // paquet neuf et le stock dérivait à la baisse.
                             int totalCigarettes = d.getQuantite();
-                            int paquetsADecrémenter =
-                                    (totalCigarettes + model.TypeCategorie.CIGARETTES_PAR_PAQUET - 1) / model.TypeCategorie.CIGARETTES_PAR_PAQUET;
-                            
+                            int paquetsADecrémenter = consommerCigarettes(
+                                    conn, reliquats, produitTabacAssocie.getId(), totalCigarettes);
+
                             if (paquetsADecrémenter > 0) {
                                 // Vérifier le stock du produit tabac associé
                                 try (PreparedStatement checkStockTabac = conn.prepareStatement("SELECT quantite_stock FROM produits WHERE id = ?")) {
@@ -208,6 +222,10 @@ public class VenteDAO {
                                 decrements.add(new int[]{produitTabacAssocie.getId(), paquetsADecrémenter});
                                 
                                 LOG.info("✓ Frak cigarette: " + totalCigarettes + " cigarettes vendues -> " + paquetsADecrémenter + " paquet(s) décrémenté(s) du produit '" + produitTabacAssocie.getNom() + "'");
+                            } else {
+                                LOG.info("✓ Frak cigarette: " + totalCigarettes
+                                        + " cigarettes prises sur le paquet déjà entamé de '"
+                                        + produitTabacAssocie.getNom() + "'");
                             }
                         } else {
                             LOG.error("⚠ ATTENTION: Produit tabac associé ID " + produitTabacAssocieId + " introuvable pour le produit 'frak cigarette' '" + produitVendu.getNom() + "'.");
@@ -215,19 +233,15 @@ public class VenteDAO {
                     } else {
                         LOG.error("⚠ ATTENTION: Produit 'frak cigarette' '" + produitVendu.getNom() + "' vendu, mais aucun produit tabac associé spécifié. Le stock du produit tabac ne sera pas décrémenté.");
                     }
-                } else {
-                    // Le stock est tenu en paquets. Une vente à la cigarette
-                    // n'en consomme donc pas autant d'unités que de cigarettes :
-                    // 7 cigarettes entament 1 paquet, 25 en entament 2.
-                    // Sans cette conversion, vendre 7 cigarettes retirait
-                    // 7 paquets du stock.
-                    int unitesADecrementer = paquetsConsommes(d);
-
-                    stmtStock.setInt(1, unitesADecrementer);
+                } else if (aRetirer > 0) {
+                    // Quantité déjà calculée plus haut, avec le paquet entamé.
+                    // Une vente entièrement servie par le reliquat ne touche
+                    // pas au stock : rien à décrémenter dans ce cas.
+                    stmtStock.setInt(1, aRetirer);
                     stmtStock.setInt(2, d.getProduitId());
-                    stmtStock.setInt(3, unitesADecrementer); // Vérification dans WHERE
+                    stmtStock.setInt(3, aRetirer); // Vérification dans WHERE
                     stmtStock.addBatch();
-                    decrements.add(new int[]{d.getProduitId(), unitesADecrementer});
+                    decrements.add(new int[]{d.getProduitId(), aRetirer});
                 }
             }
 
@@ -240,6 +254,10 @@ public class VenteDAO {
                     throw new SQLException("Échec de la mise à jour du stock pour un produit");
                 }
             }
+
+            // Reliquats des paquets entamés, dans la même transaction que la
+            // vente : ils décrivent l'état du stock qui vient d'être modifié.
+            appliquerReliquats(conn, reliquats);
 
             // Journal des mouvements de stock, dans la même transaction que la
             // vente : stock_movements se veut le journal unique de toutes les
@@ -325,6 +343,69 @@ public class VenteDAO {
      * supérieur : 7 cigarettes entament 1 paquet, 25 en entament 2. Pour toute
      * autre ligne, la quantité vendue est directement l'unité de stock.
      */
+    /**
+     * Retire des cigarettes d'un produit et indique combien de paquets ouvrir.
+     *
+     * Le paquet déjà entamé est consommé en premier ; un paquet n'est ouvert —
+     * et le stock décrémenté — que lorsque le reliquat ne suffit plus. Le
+     * nouveau reliquat est mémorisé dans {@code reliquats} et écrit en base
+     * avant le commit par {@link #appliquerReliquats}.
+     *
+     * @param conn      connexion portant la transaction
+     * @param reliquats reliquats en cours de transaction, par produit
+     * @param produitId produit de tabac dont le stock est tenu en paquets
+     * @param demandees nombre de cigarettes vendues
+     * @return nombre de paquets à retirer du stock, éventuellement 0
+     */
+    private int consommerCigarettes(Connection conn, java.util.Map<Integer, Integer> reliquats,
+                                    int produitId, int demandees) throws SQLException {
+        int parPaquet = model.TypeCategorie.CIGARETTES_PAR_PAQUET;
+
+        Integer reliquat = reliquats.get(produitId);
+        if (reliquat == null) {
+            reliquat = lireReliquat(conn, produitId);
+        }
+
+        int manquantes = demandees - reliquat;
+        if (manquantes <= 0) {
+            // Le paquet entamé suffit : aucun paquet neuf, stock inchangé.
+            reliquats.put(produitId, reliquat - demandees);
+            return 0;
+        }
+
+        int paquets = (manquantes + parPaquet - 1) / parPaquet;
+        reliquats.put(produitId, reliquat + paquets * parPaquet - demandees);
+        return paquets;
+    }
+
+    /** Reliquat du paquet entamé, 0 si la colonne est absente d'une base ancienne. */
+    private int lireReliquat(Connection conn, int produitId) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "SELECT cigarettes_restantes FROM produits WHERE id = ?")) {
+            stmt.setInt(1, produitId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
+    }
+
+    /** Écrit les reliquats calculés pendant la vente. */
+    private void appliquerReliquats(Connection conn, java.util.Map<Integer, Integer> reliquats)
+            throws SQLException {
+        if (reliquats.isEmpty()) {
+            return;
+        }
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "UPDATE produits SET cigarettes_restantes = ? WHERE id = ?")) {
+            for (java.util.Map.Entry<Integer, Integer> entree : reliquats.entrySet()) {
+                stmt.setInt(1, entree.getValue());
+                stmt.setInt(2, entree.getKey());
+                stmt.addBatch();
+            }
+            stmt.executeBatch();
+        }
+    }
+
     /**
      * Écrit un mouvement de stock par décrément appliqué.
      *

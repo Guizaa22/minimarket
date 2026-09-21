@@ -408,6 +408,31 @@ END
 $$;
 
 -- ------------------------------------------------------------
+-- Reliquat du paquet entamé
+-- ------------------------------------------------------------
+-- Le stock des produits de tabac est tenu en paquets, mais la vente se fait
+-- aussi à la cigarette. Sans mémoire du paquet ouvert, chaque vente au détail
+-- arrondissait au paquet supérieur : vendre 7 cigarettes cinq fois retirait
+-- 5 paquets du stock — 100 cigarettes — pour 35 cigarettes réellement
+-- sorties. Le stock dérivait donc à la baisse à chaque vente partielle.
+--
+-- cigarettes_restantes compte ce qui reste dans le paquet entamé. Une vente
+-- y puise d'abord, et n'ouvre un paquet — donc ne décrémente le stock — que
+-- lorsque le reliquat ne suffit plus.
+DO $$
+BEGIN
+    ALTER TABLE produits
+        ADD COLUMN IF NOT EXISTS cigarettes_restantes INTEGER NOT NULL DEFAULT 0;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'produits_cigarettes_restantes_check') THEN
+        ALTER TABLE produits
+            ADD CONSTRAINT produits_cigarettes_restantes_check
+            CHECK (cigarettes_restantes >= 0);
+    END IF;
+END
+$$;
+
+-- ------------------------------------------------------------
 -- Archivage des produits
 -- ------------------------------------------------------------
 -- Un produit déjà vendu ne peut pas être supprimé sans réécrire le passé :

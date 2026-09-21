@@ -13,6 +13,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -69,6 +70,39 @@ class VenteTabacIT {
         produitId = p.getId();
     }
 
+    /**
+     * Remet le produit partagé dans un état connu : dix paquets pleins, aucun
+     * paquet entamé. Depuis que le reliquat du paquet ouvert est mémorisé, le
+     * stock retiré par une vente à la cigarette dépend de ce qui reste : sans
+     * cette remise à zéro, le résultat de chaque test dépendrait de l'ordre
+     * d'exécution.
+     */
+    @BeforeEach
+    void repartirDUnStockNeuf() {
+        if (!dbAvailable) {
+            return;
+        }
+        try (Connection conn = DBConnector.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate("UPDATE produits SET quantite_stock = 10, "
+                    + "cigarettes_restantes = 0 WHERE id = " + produitId);
+        } catch (SQLException e) {
+            throw new AssertionError("remise à zéro du produit impossible", e);
+        }
+    }
+
+    /** Reliquat du paquet entamé pour le produit de test. */
+    private int reliquat() {
+        try (Connection conn = DBConnector.getConnection();
+             Statement stmt = conn.createStatement();
+             java.sql.ResultSet rs = stmt.executeQuery(
+                     "SELECT cigarettes_restantes FROM produits WHERE id = " + produitId)) {
+            return rs.next() ? rs.getInt(1) : 0;
+        } catch (SQLException e) {
+            throw new AssertionError("lecture du reliquat impossible", e);
+        }
+    }
+
     @AfterAll
     static void tearDown() {
         if (!dbAvailable) {
@@ -120,7 +154,7 @@ class VenteTabacIT {
     // ------------------------------------------------------------------
 
     @Test
-    @DisplayName("7 cigarettes n'entament qu'un seul paquet du stock")
+    @DisplayName("7 cigarettes, paquet neuf : un seul paquet entamé")
     void venteCigarettesNeRetireQuUnPaquet() {
         assumeTrue(dbAvailable);
 
@@ -135,7 +169,7 @@ class VenteTabacIT {
     }
 
     @Test
-    @DisplayName("25 cigarettes entament deux paquets")
+    @DisplayName("25 cigarettes, paquet neuf : deux paquets entamés")
     void vingtCinqCigarettesEntamentDeuxPaquets() {
         assumeTrue(dbAvailable);
 
@@ -145,6 +179,67 @@ class VenteTabacIT {
         new VenteDAO().create(venteDe(ligne(25, "cigarette", "0.600"), new BigDecimal("15.000")));
 
         assertEquals(avant - 2, dao.findById(produitId).getQuantiteStock());
+    }
+
+    @Test
+    @DisplayName("Le paquet entamé est mémorisé après une vente au détail")
+    void reliquatMemorise() {
+        assumeTrue(dbAvailable);
+
+        new VenteDAO().create(venteDe(ligne(7, "cigarette", "0.600"), new BigDecimal("4.200")));
+
+        assertEquals(13, reliquat(), "20 - 7 cigarettes restent dans le paquet ouvert");
+    }
+
+    @Test
+    @DisplayName("Une seconde vente puise dans le paquet entamé, sans toucher au stock")
+    void secondeVenteServieParLeReliquat() {
+        assumeTrue(dbAvailable);
+
+        ProduitDAO dao = new ProduitDAO();
+        VenteDAO venteDAO = new VenteDAO();
+
+        venteDAO.create(venteDe(ligne(7, "cigarette", "0.600"), new BigDecimal("4.200")));
+        int apresPremiere = dao.findById(produitId).getQuantiteStock();
+
+        venteDAO.create(venteDe(ligne(7, "cigarette", "0.600"), new BigDecimal("4.200")));
+
+        assertEquals(apresPremiere, dao.findById(produitId).getQuantiteStock(),
+                "13 cigarettes restaient : la seconde vente n'ouvre aucun paquet");
+        assertEquals(6, reliquat(), "13 - 7");
+    }
+
+    @Test
+    @DisplayName("Cinq ventes de 7 cigarettes ne consomment que deux paquets")
+    void ventesRepeteesNeGaspillentPlusDePaquets() {
+        assumeTrue(dbAvailable);
+
+        ProduitDAO dao = new ProduitDAO();
+        VenteDAO venteDAO = new VenteDAO();
+        int avant = dao.findById(produitId).getQuantiteStock();
+
+        for (int i = 0; i < 5; i++) {
+            venteDAO.create(venteDe(ligne(7, "cigarette", "0.600"), new BigDecimal("4.200")));
+        }
+
+        // 35 cigarettes vendues : deux paquets ouverts, 5 cigarettes restantes.
+        // L'arrondi au paquet supérieur à chaque vente en consommait cinq,
+        // soit 100 cigarettes pour 35 réellement sorties.
+        assertEquals(avant - 2, dao.findById(produitId).getQuantiteStock(),
+                "le stock ne doit plus dériver à chaque vente partielle");
+        assertEquals(5, reliquat(), "2 x 20 - 35");
+    }
+
+    @Test
+    @DisplayName("Une vente au paquet ne touche pas au reliquat")
+    void ventePaquetNAffectePasLeReliquat() {
+        assumeTrue(dbAvailable);
+
+        VenteDAO venteDAO = new VenteDAO();
+        venteDAO.create(venteDe(ligne(7, "cigarette", "0.600"), new BigDecimal("4.200")));
+        venteDAO.create(venteDe(ligne(2, "paquet", "8.500"), new BigDecimal("17.000")));
+
+        assertEquals(13, reliquat(), "vendre des paquets entiers laisse le paquet ouvert intact");
     }
 
     @Test
