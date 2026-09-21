@@ -726,37 +726,53 @@ public class GestionVentesController {
         LocalDateTime debut = periode.debut();
         LocalDateTime fin = periode.fin();
 
-        try {
-            BigDecimal ca = venteService.chiffreAffaires(debut, fin);
-            BigDecimal benefice = venteService.benefice(debut, fin);
-            int nbVentes = venteService.nombreVentes(debut, fin);
-            List<model.ProduitStats> topProduits =
-                    venteService.topProduits(debut, fin, TOP_PRODUITS_RAPPORT);
+        // Quatre requêtes puis l'écriture d'un PDF : exécuté sur le fil
+        // JavaFX, l'écran restait figé le temps de l'export, et d'autant plus
+        // longtemps que la base est sur le réseau.
+        ui.TacheFond.executer(btnRapports,
+                () -> {
+                    BigDecimal ca = venteService.chiffreAffaires(debut, fin);
+                    BigDecimal benefice = venteService.benefice(debut, fin);
+                    int nbVentes = venteService.nombreVentes(debut, fin);
+                    List<model.ProduitStats> topProduits =
+                            venteService.topProduits(debut, fin, TOP_PRODUITS_RAPPORT);
 
-            String horodatage = LocalDateTime.now()
-                    .format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
-            java.io.File fichier = util.Config.getRapportsDir()
-                    .resolve("rapport-" + periode.nomFichier + "-" + horodatage + ".pdf")
-                    .toFile();
+                    String horodatage = LocalDateTime.now()
+                            .format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+                    java.io.File fichier = util.Config.getRapportsDir()
+                            .resolve("rapport-" + periode.nomFichier + "-" + horodatage + ".pdf")
+                            .toFile();
 
-            util.PDFExporter.exportRapportPeriode(fichier, periode.titre, debut, fin,
-                    ca, benefice, nbVentes, topProduits);
+                    try {
+                        util.PDFExporter.exportRapportPeriode(fichier, periode.titre, debut, fin,
+                                ca, benefice, nbVentes, topProduits);
+                    } catch (IOException e) {
+                        // Enveloppée : le traitement de fond ne peut pas
+                        // propager d'exception contrôlée. Le message reste
+                        // celui destiné à l'utilisateur.
+                        throw new exception.ApplicationException(
+                                "Le rapport n'a pas pu être écrit sur le disque : " + e.getMessage(), e);
+                    }
 
-            showAlert(Alert.AlertType.INFORMATION, "Rapport généré",
-                    "Rapport enregistré :\n" + fichier.getAbsolutePath()
-                    + "\n\nChiffre d'affaires : " + String.format("%.2f DT", ca)
-                    + "\nBénéfice : " + String.format("%.2f DT", benefice)
-                    + "\nVentes : " + nbVentes);
+                    return new RapportGenere(fichier, ca, benefice, nbVentes);
+                },
+                rapport -> showAlert(Alert.AlertType.INFORMATION, "Rapport généré",
+                        "Rapport enregistré :\n" + rapport.fichier().getAbsolutePath()
+                        + "\n\nChiffre d'affaires : " + String.format("%.2f DT", rapport.chiffreAffaires())
+                        + "\nBénéfice : " + String.format("%.2f DT", rapport.benefice())
+                        + "\nVentes : " + rapport.nombreVentes()),
+                erreur -> {
+                    LOG.error("Génération du rapport {} impossible", periode.nomFichier, erreur);
+                    showAlert(Alert.AlertType.ERROR, "Erreur",
+                            erreur.getMessage() != null
+                                ? erreur.getMessage()
+                                : "Le rapport n'a pas pu être généré.");
+                });
+    }
 
-        } catch (IOException e) {
-            LOG.error("Écriture du rapport {} impossible", periode.nomFichier, e);
-            showAlert(Alert.AlertType.ERROR, "Erreur",
-                    "Le rapport n'a pas pu être écrit sur le disque : " + e.getMessage());
-        } catch (RuntimeException e) {
-            LOG.error("Génération du rapport {} impossible", periode.nomFichier, e);
-            showAlert(Alert.AlertType.ERROR, "Erreur",
-                    "Le rapport n'a pas pu être généré : " + e.getMessage());
-        }
+    /** Résultat d'un rapport : le fichier écrit et ses chiffres clés. */
+    private record RapportGenere(java.io.File fichier, BigDecimal chiffreAffaires,
+                                 BigDecimal benefice, int nombreVentes) {
     }
 
     /**

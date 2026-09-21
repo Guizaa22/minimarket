@@ -254,9 +254,10 @@ public class PDFExporter {
                 // Calculer paquets et cigarettes
                 int totalPaquets = 0;
                 int totalCigarettes = 0;
-                List<Vente> ventes = venteDAO.findAll().stream()
-                    .filter(v -> v.getDateVente().toLocalDate().equals(date))
-                    .collect(java.util.stream.Collectors.toList());
+                // Requête bornée à la journée : findAll() chargeait toutes les
+                // ventes jamais enregistrées pour n'en garder qu'un jour, et
+                // l'export ralentissait de mois en mois.
+                List<Vente> ventes = venteDAO.findByDate(dateDebut);
                 
                 for (Vente vente : ventes) {
                     List<DetailVente> details = venteDAO.findDetailsByVente(vente.getId());
@@ -286,9 +287,7 @@ public class PDFExporter {
             List<Vente> ventes;
             if (isAdmin) {
                 // Admin: toutes les ventes de la date, groupées par employé
-                ventes = venteDAO.findAll().stream()
-                    .filter(v -> v.getDateVente().toLocalDate().equals(date))
-                    .collect(java.util.stream.Collectors.toList());
+                ventes = venteDAO.findByDate(dateDebut);
                 
                 // Grouper par employé pour l'admin
                 java.util.Map<Integer, List<Vente>> ventesParEmploye = ventes.stream()
