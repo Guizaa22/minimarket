@@ -124,6 +124,12 @@ public class VenteDAO {
             // DAO pour récupérer les produits
             ProduitDAO produitDAO = new ProduitDAO();
 
+            // Décréments réellement appliqués, pour les journaliser ensuite.
+            // Ils ne se déduisent pas des lignes de vente : une vente à la
+            // cigarette retire des paquets, et une « frak cigarette » les
+            // retire d'un autre produit que celui qui figure sur le ticket.
+            List<int[]> decrements = new ArrayList<>();
+
             for (DetailVente d : vente.getDetails()) {
                 
                 // Récupérer le produit pour vérifier s'il est "frak cigarette"
@@ -199,6 +205,7 @@ public class VenteDAO {
                                 stmtStock.setInt(2, produitTabacAssocie.getId());
                                 stmtStock.setInt(3, paquetsADecrémenter);
                                 stmtStock.addBatch();
+                                decrements.add(new int[]{produitTabacAssocie.getId(), paquetsADecrémenter});
                                 
                                 LOG.info("✓ Frak cigarette: " + totalCigarettes + " cigarettes vendues -> " + paquetsADecrémenter + " paquet(s) décrémenté(s) du produit '" + produitTabacAssocie.getNom() + "'");
                             }
@@ -220,6 +227,7 @@ public class VenteDAO {
                     stmtStock.setInt(2, d.getProduitId());
                     stmtStock.setInt(3, unitesADecrementer); // Vérification dans WHERE
                     stmtStock.addBatch();
+                    decrements.add(new int[]{d.getProduitId(), unitesADecrementer});
                 }
             }
 
@@ -232,6 +240,15 @@ public class VenteDAO {
                     throw new SQLException("Échec de la mise à jour du stock pour un produit");
                 }
             }
+
+            // Journal des mouvements de stock, dans la même transaction que la
+            // vente : stock_movements se veut le journal unique de toutes les
+            // variations de stock, mais les ventes n'y figuraient pas — seuls
+            // les réapprovisionnements et les corrections d'inventaire étaient
+            // écrits, et l'historique d'un stock restait impossible à
+            // reconstituer. Écrire ici, et non après coup, garantit que le
+            // journal ne peut pas diverger du stock qu'il décrit.
+            journaliserMouvements(conn, vente, decrements);
 
             // Commit explicite avec vérification
             conn.commit();
@@ -308,6 +325,43 @@ public class VenteDAO {
      * supérieur : 7 cigarettes entament 1 paquet, 25 en entament 2. Pour toute
      * autre ligne, la quantité vendue est directement l'unité de stock.
      */
+    /**
+     * Écrit un mouvement de stock par décrément appliqué.
+     *
+     * @param conn       connexion portant la transaction de la vente
+     * @param vente      vente à l'origine des mouvements
+     * @param decrements couples {identifiant de produit, quantité retirée}
+     */
+    private void journaliserMouvements(Connection conn, Vente vente, List<int[]> decrements)
+            throws SQLException {
+        if (decrements.isEmpty()) {
+            return;
+        }
+
+        String sql = "INSERT INTO stock_movements "
+                   + "(product_id, user_id, quantity_change, stock_apres, type, reference) "
+                   + "VALUES (?, ?, ?, (SELECT quantite_stock FROM produits WHERE id = ?), "
+                   + "'DESKTOP_SALE', ?)";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            for (int[] decrement : decrements) {
+                int produitId = decrement[0];
+                stmt.setInt(1, produitId);
+                if (vente.getUtilisateurId() > 0) {
+                    stmt.setInt(2, vente.getUtilisateurId());
+                } else {
+                    stmt.setNull(2, java.sql.Types.INTEGER);
+                }
+                // Quantité signée : négative pour une sortie de stock.
+                stmt.setInt(3, -decrement[1]);
+                stmt.setInt(4, produitId);
+                stmt.setString(5, "Vente #" + vente.getId());
+                stmt.addBatch();
+            }
+            stmt.executeBatch();
+        }
+    }
+
     private int paquetsConsommes(DetailVente detail) {
         if (!"cigarette".equals(detail.getTypeVenteTabac())) {
             return detail.getQuantite();
