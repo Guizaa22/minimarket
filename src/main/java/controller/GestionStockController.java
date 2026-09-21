@@ -134,7 +134,9 @@ public class GestionStockController {
     // DONNÉES & DAO
     // ========================================
     private ProduitDAO produitDAO;
+    // Lecture seule ; toute écriture de catégorie passe par le service.
     private CategorieDAO categorieDAO;
+    private service.CategorieService categorieService;
 
     /**
      * Les écritures passent par le service : il applique les validations
@@ -154,6 +156,7 @@ public class GestionStockController {
     private void initialize() {
         produitDAO = new ProduitDAO();
         categorieDAO = new CategorieDAO();
+        categorieService = new service.CategorieService();
         produitService = new service.ProduitService();
         produitsList = FXCollections.observableArrayList();
         categoriesList = FXCollections.observableArrayList();
@@ -778,43 +781,41 @@ public class GestionStockController {
 
         String nomCategorie = nomField.getText();
         java.util.Optional.ofNullable(nomCategorie).ifPresent(nom -> {
-            if (!nom.trim().isEmpty()) {
-                // Vérifier si la catégorie existe déjà
-                Categorie existante = categorieDAO.findByNom(nom.trim());
-                if (existante != null) {
-                    showAlert(Alert.AlertType.WARNING, "Catégorie existante",
-                            "Cette catégorie existe déjà.");
-                    categorieComboBox.setValue(existante);
-                    return;
-                }
+            if (nom.trim().isEmpty()) {
+                return;
+            }
 
-                // Créer la nouvelle catégorie
-                Categorie nouvelleCategorie = new Categorie(nom.trim(), typeBox.getValue());
-                if (selecteurImage.aUneImage()) {
-                    nouvelleCategorie.setImage(selecteurImage.getDonnees());
-                    nouvelleCategorie.setImageMime(selecteurImage.getMime());
-                }
-                try {
-                    if (categorieDAO.create(nouvelleCategorie)) {
-                        showAlert(Alert.AlertType.INFORMATION, "Succès",
-                                "Catégorie ajoutée avec succès.");
-                        chargerCategories();
-                        categorieComboBox.setValue(nouvelleCategorie);
-                    } else {
-                        showAlert(Alert.AlertType.ERROR, "Erreur",
-                                "Erreur lors de l'ajout de la catégorie.\n\n" +
-                                "Vérifiez:\n" +
-                                "- Que le nom de la catégorie n'existe pas déjà\n" +
-                                "- La console pour plus de détails");
-                    }
-                } catch (Exception e) {
-                    String errorMsg = "Erreur lors de l'ajout de la catégorie:\n\n" + e.getMessage();
-                    if (e.getCause() != null) {
-                        errorMsg += "\n\nCause: " + e.getCause().getMessage();
-                    }
-                    showAlert(Alert.AlertType.ERROR, "Erreur", errorMsg);
-                    LOG.error("Erreur détaillée lors de l'ajout de catégorie:");
-                }
+            // Une catégorie déjà présente est simplement sélectionnée : le cas
+            // est courant et ne mérite pas une erreur.
+            Categorie existante = categorieService.parNom(nom);
+            if (existante != null) {
+                showAlert(Alert.AlertType.WARNING, "Catégorie existante",
+                        "Cette catégorie existe déjà.");
+                categorieComboBox.setValue(existante);
+                return;
+            }
+
+            // La création passe par le service : unicité, type explicite et
+            // trace dans audit_logs y sont centralisés. Le type décide du
+            // comportement du stock, ce choix doit pouvoir être retrouvé.
+            try {
+                Categorie nouvelle = categorieService.creer(
+                        nom,
+                        typeBox.getValue(),
+                        selecteurImage.aUneImage() ? selecteurImage.getDonnees() : null,
+                        selecteurImage.aUneImage() ? selecteurImage.getMime() : null,
+                        service.SessionContext.get().getUtilisateurId());
+
+                showAlert(Alert.AlertType.INFORMATION, "Succès", "Catégorie ajoutée avec succès.");
+                chargerCategories();
+                categorieComboBox.setValue(nouvelle);
+
+            } catch (exception.ApplicationException e) {
+                showAlert(Alert.AlertType.ERROR, "Erreur", e.getMessage());
+            } catch (Exception e) {
+                LOG.error("Ajout de catégorie impossible", e);
+                showAlert(Alert.AlertType.ERROR, "Erreur",
+                        "Erreur lors de l'ajout de la catégorie : " + e.getMessage());
             }
         });
     }

@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import dao.NoteJourDAO;
 import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.ScaleTransition;
@@ -57,12 +56,12 @@ public class NoteDialogController {
     @FXML
     private StackPane rootPane;
     
-    private NoteJourDAO noteDAO;
+    private service.JourneeService journeeService;
     
     @FXML
     @SuppressWarnings("unused")
     private void initialize() {
-        noteDAO = new NoteJourDAO();
+        journeeService = new service.JourneeService();
         
         // Animation d'entrée pour le dialogue
         Platform.runLater(() -> animerEntree());
@@ -233,10 +232,11 @@ public class NoteDialogController {
         enregistrerButton.setDisable(true);
         
         try {
-            NoteJour note = new NoteJour(idEmploye, type, montant, description, LocalDateTime.now());
-            
-            // Animation de succès
-            if (noteDAO.create(note)) {
+            // L'écriture passe par JourneeService : une sortie de caisse
+            // constate de l'argent qui quitte le tiroir et doit laisser une
+            // trace dans audit_logs, ce que l'appel direct au DAO ne faisait pas.
+            journeeService.enregistrerNote(idEmploye, type, montant, description);
+
             // Animation de succès
             ScaleTransition success = new ScaleTransition(Duration.millis(200), enregistrerButton);
             success.setFromX(1.0);
@@ -249,16 +249,14 @@ public class NoteDialogController {
                 afficherAlerteAvecAnimation(Alert.AlertType.INFORMATION, "Succès", "Note enregistrée avec succès.");
                 fermerAvecAnimation();
             });
-                success.play();
-            } else {
-                enregistrerButton.setText(texteOriginal);
-                enregistrerButton.setDisable(false);
-                afficherAlerteAvecAnimation(Alert.AlertType.ERROR, "Erreur", 
-                    "Erreur lors de l'enregistrement de la note.\n\nVérifiez:\n" +
-                    "- Que l'employé existe dans la base de données\n" +
-                    "- La console pour plus de détails");
-                animerErreur(enregistrerButton);
-            }
+            success.play();
+
+        } catch (exception.ApplicationException e) {
+            enregistrerButton.setText(texteOriginal);
+            enregistrerButton.setDisable(false);
+            afficherAlerteAvecAnimation(Alert.AlertType.ERROR, "Erreur", e.getMessage());
+            animerErreur(enregistrerButton);
+
         } catch (Exception e) {
             enregistrerButton.setText(texteOriginal);
             enregistrerButton.setDisable(false);
