@@ -492,13 +492,21 @@ public class GestionVentesController {
 
         List<Vente> ventes = venteDAO.findRecent(50); // 50 ventes les plus récentes
 
+        // Les caissiers sont relus une fois chacun : une requête par vente
+        // faisait cinquante allers-retours pour une poignée de comptes.
+        Map<Integer, String> caissiers = new java.util.HashMap<>();
+
         for (Vente vente : ventes) {
             // Récupérer les détails de la vente
             List<DetailVente> details = detailVenteDAO.findByVenteId(vente.getId());
             int nbArticles = details.stream().mapToInt(DetailVente::getQuantite).sum();
 
-            // Récupérer le nom du caissier
-            String caissier = utilisateurDAO.findById(vente.getUtilisateurId()).getUsername();
+            // Un compte supprimé depuis la vente ne doit pas faire échouer
+            // l'affichage de tout l'historique.
+            String caissier = caissiers.computeIfAbsent(vente.getUtilisateurId(), id -> {
+                model.Utilisateur u = utilisateurDAO.findById(id);
+                return u != null ? u.getUsername() : "Compte supprimé (#" + id + ")";
+            });
 
             VenteDisplay display = new VenteDisplay(
                     "#" + vente.getId(),
