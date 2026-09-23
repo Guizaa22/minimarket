@@ -28,20 +28,35 @@ public class AjoutStockDAO {
      * Crée un nouvel ajout de stock
      */
     public boolean create(AjoutStock ajoutStock) {
-        // Vérifier si les colonnes tabac existent
-        boolean hasTabacColumns = checkTabacColumnsExist();
-        String sql;
-        if (hasTabacColumns) {
-            sql = "INSERT INTO ajouts_stock (produit_id, employe_id, fournisseur_id, quantite, montant_paiement, credit_utilise, notes, date_ajout, type_ajout_tabac, quantite_cigarettes) " +
-                  "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        } else {
-            sql = "INSERT INTO ajouts_stock (produit_id, employe_id, fournisseur_id, quantite, montant_paiement, credit_utilise, notes, date_ajout) " +
-                  "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DBConnector.getConnection()) {
+            return create(conn, ajoutStock);
+        } catch (SQLException e) {
+            LOG.error("Erreur lors de la création d'ajout de stock: " + e.getMessage(), e);
+            return false;
         }
-        
-        try (Connection conn = DBConnector.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            
+    }
+
+    /**
+     * Crée un ajout de stock sur une connexion fournie par l'appelant.
+     *
+     * Permet d'inscrire l'ajout dans la même transaction que l'incrément de
+     * stock et le mouvement de crédit fournisseur : ces trois écritures
+     * doivent être validées ou annulées ensemble.
+     *
+     * La connexion n'est ni validée ni fermée ici : c'est à l'appelant, qui
+     * possède la transaction, de le faire.
+     *
+     * @throws SQLException pour que l'appelant puisse annuler la transaction ;
+     *         avaler l'erreur laisserait le stock incrémenté sans trace.
+     */
+    public boolean create(Connection conn, AjoutStock ajoutStock) throws SQLException {
+        // Les colonnes tabac font partie du schéma (voir schema_postgres.sql) :
+        // une seule requête, sans détection ni ALTER TABLE à chaud.
+        String sql = "INSERT INTO ajouts_stock (produit_id, employe_id, fournisseur_id, quantite, "
+                   + "montant_paiement, credit_utilise, notes, date_ajout, type_ajout_tabac, quantite_cigarettes) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, ajoutStock.getIdProduit());
             stmt.setInt(2, ajoutStock.getIdEmploye());
             if (ajoutStock.getIdFournisseur() != null) {
@@ -54,35 +69,24 @@ public class AjoutStockDAO {
             stmt.setBigDecimal(6, ajoutStock.getCreditUtilise());
             stmt.setString(7, ajoutStock.getNotes());
             stmt.setTimestamp(8, Timestamp.valueOf(ajoutStock.getDateAjout()));
-            if (hasTabacColumns) {
-                stmt.setString(9, ajoutStock.getTypeAjoutTabac());
-                if (ajoutStock.getQuantiteCigarettes() != null) {
-                    stmt.setInt(10, ajoutStock.getQuantiteCigarettes());
-                } else {
-                    stmt.setNull(10, Types.INTEGER);
+            stmt.setString(9, ajoutStock.getTypeAjoutTabac());
+            if (ajoutStock.getQuantiteCigarettes() != null) {
+                stmt.setInt(10, ajoutStock.getQuantiteCigarettes());
+            } else {
+                stmt.setNull(10, Types.INTEGER);
+            }
+
+            if (stmt.executeUpdate() == 0) {
+                return false;
+            }
+
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    ajoutStock.setId(rs.getInt(1));
                 }
             }
-            
-            int rowsAffected = stmt.executeUpdate();
-            
-            if (rowsAffected > 0) {
-                int ajoutId = -1;
-                    try (ResultSet rs = stmt.getGeneratedKeys()) {
-                        if (rs.next()) {
-                            ajoutId = rs.getInt(1);
-                        }
-                    }
-                
-                if (ajoutId > 0) {
-                    ajoutStock.setId(ajoutId);
-                }
-                return true;
-            }
-        } catch (SQLException e) {
-            LOG.error("Erreur lors de la création d'ajout de stock: " + e.getMessage(), e);
+            return true;
         }
-        
-        return false;
     }
     
     /**
@@ -161,15 +165,10 @@ public class AjoutStockDAO {
         
         Integer idFournisseur = rs.getObject("fournisseur_id", Integer.class);
         
-        // Vérifier si les colonnes tabac existent
-        String typeAjoutTabac = null;
-        Integer quantiteCigarettes = null;
-        try {
-            typeAjoutTabac = rs.getString("type_ajout_tabac");
-            quantiteCigarettes = rs.getObject("quantite_cigarettes", Integer.class);
-        } catch (SQLException e) {
-            // Colonnes n'existent pas encore, utiliser null
-        }
+        // Colonnes garanties par le schéma : elles restent nulles pour un ajout
+        // qui ne concerne pas le tabac.
+        String typeAjoutTabac = rs.getString("type_ajout_tabac");
+        Integer quantiteCigarettes = rs.getObject("quantite_cigarettes", Integer.class);
         
         AjoutStock ajoutStock = new AjoutStock(
             rs.getInt("id"),
@@ -188,29 +187,4 @@ public class AjoutStockDAO {
         return ajoutStock;
     }
     
-    /**
-     * Vérifie si les colonnes tabac existent dans la table ajouts_stock
-     */
-    private boolean checkTabacColumnsExist() {
-        try (Connection conn = DBConnector.getConnection();
-             Statement stmt = conn.createStatement()) {
-            // Essayer de lire les colonnes
-            try (ResultSet rs = stmt.executeQuery("SELECT type_ajout_tabac, quantite_cigarettes FROM ajouts_stock LIMIT 1")) {
-                return true; // Les colonnes existent
-            }
-        } catch (SQLException e) {
-            // Les colonnes n'existent pas, les créer
-            try (Connection conn = DBConnector.getConnection();
-                 Statement stmt = conn.createStatement()) {
-                stmt.execute("ALTER TABLE ajouts_stock ADD COLUMN type_ajout_tabac TEXT");
-                stmt.execute("ALTER TABLE ajouts_stock ADD COLUMN quantite_cigarettes INTEGER");
-                LOG.info("Colonnes tabac ajoutées à la table ajouts_stock");
-                return true;
-            } catch (SQLException e2) {
-                LOG.error("Erreur lors de l'ajout des colonnes tabac: " + e2.getMessage(), e2);
-                return false;
-            }
-        }
-    }
 }
-

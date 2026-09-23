@@ -22,38 +22,44 @@ public class PaiementFournisseurDAO {
      * Crée un nouveau paiement
      */
     public boolean create(PaiementFournisseur paiement) {
+        try (Connection conn = DBConnector.getConnection()) {
+            return create(conn, paiement);
+        } catch (SQLException e) {
+            LOG.error("Erreur lors de la création de paiement: " + e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Enregistre un paiement sur une connexion fournie par l'appelant, afin
+     * que l'écriture tienne dans la même transaction que l'ajout de stock.
+     *
+     * La connexion n'est ni validée ni fermée ici.
+     *
+     * @throws SQLException pour laisser l'appelant annuler la transaction
+     */
+    public boolean create(Connection conn, PaiementFournisseur paiement) throws SQLException {
         String sql = "INSERT INTO paiements_fournisseur (fournisseur_id, employe_id, montant, notes, date_paiement) " +
                      "VALUES (?, ?, ?, ?, ?)";
-        
-        try (Connection conn = DBConnector.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, paiement.getIdFournisseur());
             stmt.setInt(2, paiement.getIdEmploye());
             stmt.setBigDecimal(3, paiement.getMontant());
             stmt.setString(4, paiement.getNotes());
             stmt.setTimestamp(5, Timestamp.valueOf(paiement.getDatePaiement()));
-            
-            int rowsAffected = stmt.executeUpdate();
-            
-            if (rowsAffected > 0) {
-                int paiementId = -1;
-                    try (ResultSet rs = stmt.getGeneratedKeys()) {
-                        if (rs.next()) {
-                            paiementId = rs.getInt(1);
-                        }
-                    }
-                
-                if (paiementId > 0) {
-                    paiement.setId(paiementId);
-                }
-                return true;
+
+            if (stmt.executeUpdate() == 0) {
+                return false;
             }
-        } catch (SQLException e) {
-            LOG.error("Erreur lors de la création de paiement: " + e.getMessage(), e);
+
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    paiement.setId(rs.getInt(1));
+                }
+            }
+            return true;
         }
-        
-        return false;
     }
     
     /**

@@ -69,6 +69,7 @@ class VenteServiceTest {
     @DisplayName("Encaisse le panier et attribue la vente à l'employé connecté")
     void encaisseEtAttribueAlEmploye() {
         panier.ajouter(produit(1, "Café", 10, "2.500", "5.000"), 2);
+        when(venteDAO.create(any())).thenReturn(true);
 
         Vente vente = service.encaisser(panier, 42, Vente.PAIEMENT_ESPECES);
 
@@ -116,6 +117,7 @@ class VenteServiceTest {
     void totalCumuleLesLignes() {
         panier.ajouter(produit(1, "Café", 10, "2.500", "5.000"), 2);   // 10.000
         panier.ajouter(produit(2, "Thé", 10, "1.200", "3.000"), 3);    //  9.000
+        when(venteDAO.create(any())).thenReturn(true);
 
         service.encaisser(panier, 7, Vente.PAIEMENT_CARTE);
 
@@ -157,9 +159,41 @@ class VenteServiceTest {
     }
 
     @Test
+    @DisplayName("Une écriture refusée par la base interrompt l'encaissement")
+    void echecEcritureInterrompLEncaissement() {
+        panier.ajouter(produit(1, "Café", 10, "2.500", "5.000"), 2);
+        // create() renvoie false sans lever d'exception quand la base ne rend
+        // aucun identifiant. Ce retour était ignoré : le contrôleur imprimait
+        // le ticket, affichait « Vente enregistrée » et vidait le panier alors
+        // que rien n'avait été écrit.
+        when(venteDAO.create(any())).thenReturn(false);
+
+        ApplicationException e = assertThrows(ApplicationException.class,
+                () -> service.encaisser(panier, 42, Vente.PAIEMENT_ESPECES));
+
+        assertTrue(e.getMessage().toLowerCase().contains("panier est conservé")
+                        || e.getMessage().toLowerCase().contains("réessayez"),
+                "le caissier doit être invité à réessayer : " + e.getMessage());
+    }
+
+    @Test
+    @DisplayName("Une écriture refusée n'est pas tracée comme une vente réussie")
+    void echecEcritureNeTracePasDAudit() {
+        panier.ajouter(produit(1, "Café", 10, "2.500", "5.000"), 2);
+        when(venteDAO.create(any())).thenReturn(false);
+
+        assertThrows(ApplicationException.class,
+                () -> service.encaisser(panier, 42, Vente.PAIEMENT_ESPECES));
+
+        // Une vente inexistante ne doit pas apparaître dans audit_logs.
+        verify(audit, never()).enregistrer(anyInt(), anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
     @DisplayName("Une vente encaissée est tracée dans le journal d'audit")
     void traceLaVenteDansLAudit() {
         panier.ajouter(produit(1, "Café", 10, "2.500", "5.000"), 2);
+        when(venteDAO.create(any())).thenReturn(true);
 
         service.encaisser(panier, 42, Vente.PAIEMENT_ESPECES);
 

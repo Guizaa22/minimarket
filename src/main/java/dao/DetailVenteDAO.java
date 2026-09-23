@@ -9,12 +9,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import controller.GestionVentesController.ProduitStats;
+import model.ProduitStats;
 import model.DetailVente;
 
 /**
@@ -137,6 +139,54 @@ public class DetailVenteDAO {
             }
         } catch (SQLException e) {
             LOG.error("Erreur lors de la récupération du top produits: " + e.getMessage(), e);
+        }
+
+        return topProduits;
+    }
+
+    /**
+     * Récupère les N produits les plus vendus sur une période.
+     *
+     * Variante de {@link #getTopProduits(int)} bornée dans le temps, pour les
+     * rapports journaliers, hebdomadaires, mensuels et annuels : le classement
+     * global ne dit rien de ce qui s'est vendu la semaine passée.
+     *
+     * @param debut début de la période (inclus)
+     * @param fin   fin de la période (incluse)
+     * @param limit nombre de produits à retourner
+     */
+    public List<ProduitStats> getTopProduitsParPeriode(LocalDateTime debut, LocalDateTime fin, int limit) {
+        List<ProduitStats> topProduits = new ArrayList<>();
+
+        String sql = "SELECT p.nom, " +
+                "       SUM(dv.quantite) as quantite_totale, " +
+                "       SUM(dv.prix_vente_unitaire * dv.quantite) as ca_total " +
+                "FROM detailsvente dv " +
+                "INNER JOIN produits p ON dv.id_produit = p.id " +
+                "INNER JOIN ventes v ON dv.id_vente = v.id " +
+                "WHERE v.date_vente >= ? AND v.date_vente < ? " +
+                "GROUP BY p.id, p.nom " +
+                "ORDER BY quantite_totale DESC " +
+                "LIMIT ?";
+
+        try (Connection conn = DBConnector.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setTimestamp(1, Timestamp.valueOf(debut));
+            stmt.setTimestamp(2, Timestamp.valueOf(fin));
+            stmt.setInt(3, limit);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    BigDecimal caTotal = rs.getBigDecimal("ca_total");
+                    topProduits.add(new ProduitStats(
+                            rs.getString("nom"),
+                            rs.getInt("quantite_totale"),
+                            caTotal != null ? caTotal : BigDecimal.ZERO));
+                }
+            }
+        } catch (SQLException e) {
+            LOG.error("Erreur lors de la récupération du top produits par période: " + e.getMessage(), e);
         }
 
         return topProduits;

@@ -2,6 +2,7 @@ package util;
 
 import dao.*;
 import model.*;
+import model.ProduitStats;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -74,7 +75,9 @@ public class PDFExporter {
             yPosition[0] -= LINE_HEIGHT * 2;
             
             LocalDateTime dateDebut = date.atStartOfDay();
-            LocalDateTime dateFin = date.atTime(23, 59, 59);
+            // Borne de fin exclusive : le début du lendemain, et non
+            // 23:59:59 qui laissait échapper la dernière seconde.
+            LocalDateTime dateFin = date.plusDays(1).atStartOfDay();
             
             // Résumé
             BigDecimal totalVentes = venteDAO.getTotalRecettes(dateDebut, dateFin);
@@ -251,9 +254,10 @@ public class PDFExporter {
                 // Calculer paquets et cigarettes
                 int totalPaquets = 0;
                 int totalCigarettes = 0;
-                List<Vente> ventes = venteDAO.findAll().stream()
-                    .filter(v -> v.getDateVente().toLocalDate().equals(date))
-                    .collect(java.util.stream.Collectors.toList());
+                // Requête bornée à la journée : findAll() chargeait toutes les
+                // ventes jamais enregistrées pour n'en garder qu'un jour, et
+                // l'export ralentissait de mois en mois.
+                List<Vente> ventes = venteDAO.findByDate(dateDebut);
                 
                 for (Vente vente : ventes) {
                     List<DetailVente> details = venteDAO.findDetailsByVente(vente.getId());
@@ -283,9 +287,7 @@ public class PDFExporter {
             List<Vente> ventes;
             if (isAdmin) {
                 // Admin: toutes les ventes de la date, groupées par employé
-                ventes = venteDAO.findAll().stream()
-                    .filter(v -> v.getDateVente().toLocalDate().equals(date))
-                    .collect(java.util.stream.Collectors.toList());
+                ventes = venteDAO.findByDate(dateDebut);
                 
                 // Grouper par employé pour l'admin
                 java.util.Map<Integer, List<Vente>> ventesParEmploye = ventes.stream()
@@ -442,6 +444,110 @@ public class PDFExporter {
         document.close();
     }
     
+    /**
+     * Exporte un rapport de ventes portant sur une période.
+     *
+     * Sert les quatre rapports de l'écran « Gestion des ventes » (journalier,
+     * hebdomadaire, mensuel, annuel) : seules les bornes changent.
+     *
+     * Les montants sont reçus en {@link BigDecimal} et mis en forme ici ; ils
+     * ne transitent jamais par un type flottant.
+     *
+     * @param file        fichier PDF à écrire
+     * @param titre       intitulé du rapport, ex. « RAPPORT HEBDOMADAIRE »
+     * @param debut       début de la période (inclus)
+     * @param fin         fin de la période (incluse)
+     * @param chiffreAffaires chiffre d'affaires de la période
+     * @param benefice    bénéfice de la période
+     * @param nombreVentes nombre de ventes encaissées
+     * @param topProduits produits les plus vendus, déjà classés
+     */
+    public static void exportRapportPeriode(File file, String titre,
+                                            LocalDateTime debut, LocalDateTime fin,
+                                            BigDecimal chiffreAffaires, BigDecimal benefice,
+                                            int nombreVentes, List<ProduitStats> topProduits)
+            throws IOException {
+
+        DateTimeFormatter jour = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        BigDecimal ca = chiffreAffaires != null ? chiffreAffaires : BigDecimal.ZERO;
+        BigDecimal marge = benefice != null ? benefice : BigDecimal.ZERO;
+
+        try (PDDocument document = new PDDocument()) {
+            PDPage page = new PDPage(PDRectangle.A4);
+            document.addPage(page);
+
+            try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+                float y = PDRectangle.A4.getHeight() - MARGIN;
+
+                contentStream.beginText();
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), TITLE_FONT_SIZE);
+                contentStream.newLineAtOffset(MARGIN, y);
+                contentStream.showText(titre + " - 2M MARKET");
+                contentStream.endText();
+                y -= LINE_HEIGHT * 1.5f;
+
+                contentStream.beginText();
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), NORMAL_FONT_SIZE);
+                contentStream.newLineAtOffset(MARGIN, y);
+                contentStream.showText("Période : du " + debut.format(jour) + " au " + fin.format(jour));
+                contentStream.endText();
+                y -= LINE_HEIGHT;
+
+                contentStream.beginText();
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), NORMAL_FONT_SIZE);
+                contentStream.newLineAtOffset(MARGIN, y);
+                contentStream.showText("Édité le " + LocalDateTime.now()
+                        .format(DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm")));
+                contentStream.endText();
+                y -= LINE_HEIGHT;
+
+                // Synthèse
+                y = ajouterSection(contentStream, "SYNTHÈSE", y);
+                y = ajouterLigne(contentStream, "Chiffre d'affaires :", String.format("%.2f DT", ca), y);
+                y = ajouterLigne(contentStream, "Bénéfice :", String.format("%.2f DT", marge), y);
+                y = ajouterLigne(contentStream, "Nombre de ventes :", String.valueOf(nombreVentes), y);
+
+                // Panier moyen : division protégée, une période sans vente est
+                // parfaitement normale (jour de fermeture).
+                String panierMoyen = nombreVentes > 0
+                        ? String.format("%.2f DT", ca.divide(BigDecimal.valueOf(nombreVentes),
+                                3, java.math.RoundingMode.HALF_UP))
+                        : "-";
+                y = ajouterLigne(contentStream, "Panier moyen :", panierMoyen, y);
+
+                String tauxMarge = ca.signum() > 0
+                        ? String.format("%.1f %%", marge.divide(ca, 4, java.math.RoundingMode.HALF_UP)
+                                .multiply(BigDecimal.valueOf(100)))
+                        : "-";
+                y = ajouterLigne(contentStream, "Taux de marge :", tauxMarge, y, true);
+                y -= LINE_HEIGHT;
+
+                // Top produits
+                y = ajouterSection(contentStream, "PRODUITS LES PLUS VENDUS", y);
+                if (topProduits == null || topProduits.isEmpty()) {
+                    ajouterLigne(contentStream, "", "Aucune vente sur la période.", y);
+                } else {
+                    y = ajouterLigne(contentStream, "", String.format("%-4s %-38s %10s %14s",
+                            "Rang", "Produit", "Quantité", "CA"), y, true);
+                    for (ProduitStats stats : topProduits) {
+                        if (y < MARGIN + LINE_HEIGHT * 2) {
+                            break;  // une page suffit : le classement est court
+                        }
+                        String nom = stats.getNomProduit() != null ? stats.getNomProduit() : "";
+                        if (nom.length() > 38) {
+                            nom = nom.substring(0, 35) + "...";
+                        }
+                        y = ajouterLigne(contentStream, "", String.format("%-4d %-38s %10d %14s",
+                                stats.getRang(), nom, stats.getQuantiteVendue(),
+                                String.format("%.2f DT", stats.getChiffreAffaires())), y);
+                    }
+                }
+            }
+
+            document.save(file);
+        }
+    }
+
     private static float ajouterSection(PDPageContentStream contentStream, String titre, float y) throws IOException {
         y -= LINE_HEIGHT;
         contentStream.beginText();

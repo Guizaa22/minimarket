@@ -232,6 +232,18 @@ public final class Config {
         return dir;
     }
 
+    /** Dossier où écrire les rapports de ventes exportés en PDF. */
+    public static Path getRapportsDir() {
+        Path dir = APP_DATA_DIR.resolve("rapports");
+        try {
+            Files.createDirectories(dir);
+        } catch (IOException e) {
+            LOG.error("Impossible de créer le dossier rapports : " + e.getMessage(), e);
+            return APP_DATA_DIR;
+        }
+        return dir;
+    }
+
     public static Path getConfigFilePath() {
         return APP_DATA_DIR.resolve(CONFIG_FILE_NAME);
     }

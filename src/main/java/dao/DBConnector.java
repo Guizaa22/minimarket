@@ -64,10 +64,15 @@ public final class DBConnector {
                 config.setMaxLifetime(1_800_000);
                 config.setPoolName("2M-Market-Pool");
 
-                // Signale toute connexion non rendue au pool au bout de 5 s, avec la
-                // pile d'appel fautive. Sans cela, une fuite se manifeste seulement
+                // Signale toute connexion non rendue au pool, avec la pile
+                // d'appel fautive. Sans cela, une fuite se manifeste seulement
                 // par un blocage de 10 s puis un échec difficile à diagnostiquer.
-                config.setLeakDetectionThreshold(5_000);
+                //
+                // Le seuil dépasse statement_timeout : à 5 s, une requête lente
+                // mais légitime — toujours interrompue au bout de 15 s — était
+                // signalée comme une fuite, et l'avertissement, faux la plupart
+                // du temps, finissait par être ignoré.
+                config.setLeakDetectionThreshold(20_000);
 
                 // Les transactions sont gérées explicitement par les DAO.
                 config.setAutoCommit(true);
@@ -83,6 +88,7 @@ public final class DBConnector {
                 dataSource = new HikariDataSource(config);
 
                 LOG.info("✓ Pool de connexions initialisé : " + Config.describe());
+                avertirSiConnexionNonChiffree();
             } catch (RuntimeException e) {
                 throw new SQLException("Impossible d'initialiser le pool de connexions : "
                         + e.getMessage(), e);
@@ -128,6 +134,31 @@ public final class DBConnector {
     }
 
     /** Vérifie que la base est joignable. */
+    /**
+     * Avertit lorsque la base est jointe à distance sans chiffrement.
+     *
+     * PGSSLMODE est facultatif : une caisse configurée à la main peut donc
+     * dialoguer en clair avec un PostgreSQL situé sur le réseau, mots de passe
+     * et montants compris. Le cas est signalé une fois au démarrage plutôt
+     * qu'imposé, changer la valeur par défaut pouvant empêcher une
+     * installation existante de se connecter.
+     */
+    private static void avertirSiConnexionNonChiffree() {
+        String url = Config.getJdbcUrl();
+        if (url == null || url.contains("sslmode=")) {
+            return;
+        }
+        // Une base locale n'emprunte pas le réseau : l'avertissement n'aurait
+        // aucun sens sur un poste unique, cas le plus courant.
+        boolean locale = url.contains("//localhost") || url.contains("//127.0.0.1")
+                || url.contains("//[::1]");
+        if (!locale) {
+            LOG.warn("Connexion à une base distante sans chiffrement : "
+                    + "renseignez PGSSLMODE (par exemple « require ») pour protéger "
+                    + "les identifiants et les montants en transit.");
+        }
+    }
+
     public static boolean testConnection() {
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {

@@ -11,6 +11,7 @@ import dao.ProduitDAO;
 import dao.StockMovementDAO;
 import exception.ApplicationException;
 import model.Produit;
+import model.Utilisateur;
 import model.StockMovement;
 
 /**
@@ -143,9 +144,26 @@ public class ProduitService {
                 "+" + quantite + (note != null && !note.isBlank() ? " — " + note : ""));
     }
 
-    public void supprimer(Produit produit, int utilisateurId, boolean forcer) {
+    /**
+     * Supprime définitivement un produit jamais vendu ni réapprovisionné.
+     *
+     * Réservé aux administrateurs : retirer un produit du référentiel engage
+     * tout le magasin, et un employé n'a pas à pouvoir le faire depuis le
+     * comptoir.
+     *
+     * @param acteur utilisateur à l'origine de l'action
+     * @throws ApplicationException si l'acteur n'est pas administrateur, si le
+     *         produit est référencé — il doit alors être archivé — ou si
+     *         l'écriture échoue
+     */
+    public void supprimer(Produit produit, Utilisateur acteur) {
+        exigerAdmin(acteur, "supprimer un produit");
+        if (produit == null) {
+            throw new ApplicationException("Produit absent.");
+        }
+
         try {
-            if (!produitDAO.delete(produit.getId(), forcer)) {
+            if (!produitDAO.delete(produit.getId(), false)) {
                 throw new ApplicationException("La suppression du produit a échoué.");
             }
         } catch (java.sql.SQLException e) {
@@ -153,8 +171,81 @@ public class ProduitService {
             throw new ApplicationException(e.getMessage(), e);
         }
 
-        audit.enregistrer(utilisateurId, forcer ? "SUPPRESSION_FORCEE_PRODUIT" : "SUPPRESSION_PRODUIT",
+        audit.enregistrer(acteur.getId(), "SUPPRESSION_PRODUIT",
                 "produits", produit.getId(), produit.getNom() + " (" + produit.getCodeBarre() + ")");
+    }
+
+    /**
+     * Retire un produit de la vente sans toucher à son historique.
+     *
+     * Seule façon d'« enlever » un produit déjà vendu : ses lignes de vente
+     * portent les prix du jour de la transaction, dont dépend le bénéfice des
+     * périodes déjà clôturées. Les effacer faisait varier après coup le
+     * résultat d'un mois clos.
+     *
+     * Réservé aux administrateurs, au même titre que la suppression : c'est la
+     * même décision — retirer un produit de la vente — par un autre moyen.
+     *
+     * @param acteur utilisateur à l'origine de l'action
+     * @throws ApplicationException si l'acteur n'est pas administrateur
+     */
+    public void archiver(Produit produit, Utilisateur acteur) {
+        exigerAdmin(acteur, "archiver un produit");
+        if (produit == null) {
+            throw new ApplicationException("Produit absent.");
+        }
+        if (!produitDAO.definirActif(produit.getId(), false)) {
+            throw new ApplicationException("L'archivage du produit a échoué.");
+        }
+        produit.setActif(false);
+
+        audit.enregistrer(acteur.getId(), "ARCHIVAGE_PRODUIT", "produits", produit.getId(),
+                produit.getNom() + " (" + produit.getCodeBarre() + ") retiré de la vente");
+    }
+
+    /**
+     * Remet en vente un produit archivé.
+     *
+     * Réservé aux administrateurs, comme l'archivage.
+     */
+    public void reactiver(Produit produit, Utilisateur acteur) {
+        exigerAdmin(acteur, "remettre un produit en vente");
+        if (produit == null) {
+            throw new ApplicationException("Produit absent.");
+        }
+        if (!produitDAO.definirActif(produit.getId(), true)) {
+            throw new ApplicationException("La réactivation du produit a échoué.");
+        }
+        produit.setActif(true);
+
+        audit.enregistrer(acteur.getId(), "REACTIVATION_PRODUIT", "produits", produit.getId(),
+                produit.getNom() + " (" + produit.getCodeBarre() + ") remis en vente");
+    }
+
+    /**
+     * Exige un administrateur pour l'action indiquée.
+     *
+     * Contrôlé ici et pas seulement à l'écran : une règle qui ne vit que dans
+     * l'interface est contournée dès qu'un autre écran appelle le service.
+     *
+     * @throws ApplicationException si l'acteur est absent ou n'est pas administrateur
+     */
+    private void exigerAdmin(Utilisateur acteur, String action) {
+        if (acteur == null) {
+            throw new ApplicationException(
+                    "Aucun utilisateur connecté. Reconnectez-vous pour " + action + ".");
+        }
+        if (acteur.getRole() != Utilisateur.Role.Admin) {
+            throw new ApplicationException(
+                    "Seul un administrateur peut " + action + ".");
+        }
+    }
+
+    /** Produits retirés de la vente, pour consultation. */
+    public List<Produit> listerArchives() {
+        return produitDAO.findAll(true).stream()
+                .filter(p -> !p.isActif())
+                .collect(java.util.stream.Collectors.toList());
     }
 
     // ------------------------------------------------------------------

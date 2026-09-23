@@ -7,6 +7,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dao.DetailVenteDAO;
 import dao.VenteDAO;
 import exception.ApplicationException;
 import exception.StockInsuffisantException;
@@ -26,17 +27,25 @@ public class VenteService {
     private static final Logger LOG = LoggerFactory.getLogger(VenteService.class);
 
     private final VenteDAO venteDAO;
+    private final DetailVenteDAO detailVenteDAO;
     private final ProduitService produitService;
     private final AuditService audit;
 
-    public VenteService(VenteDAO venteDAO, ProduitService produitService, AuditService audit) {
+    public VenteService(VenteDAO venteDAO, DetailVenteDAO detailVenteDAO,
+                        ProduitService produitService, AuditService audit) {
         this.venteDAO = venteDAO;
+        this.detailVenteDAO = detailVenteDAO;
         this.produitService = produitService;
         this.audit = audit;
     }
 
+    /** Conservé pour l'encaissement, qui ne consulte pas les statistiques détaillées. */
+    public VenteService(VenteDAO venteDAO, ProduitService produitService, AuditService audit) {
+        this(venteDAO, new DetailVenteDAO(), produitService, audit);
+    }
+
     public VenteService() {
-        this(new VenteDAO(), new ProduitService(), new AuditService());
+        this(new VenteDAO(), new DetailVenteDAO(), new ProduitService(), new AuditService());
     }
 
     // ------------------------------------------------------------------
@@ -75,7 +84,17 @@ public class VenteService {
 
         // Le DAO gère la transaction : insertion de la vente, des lignes et
         // décrémentation atomique du stock, le tout validé ou annulé ensemble.
-        venteDAO.create(vente);
+        //
+        // Le retour est vérifié : create() renvoie false — sans lever
+        // d'exception — quand la base ne rend aucun identifiant. Ce retour était
+        // ignoré, si bien que l'encaissement se poursuivait : ticket imprimé,
+        // « Vente enregistrée » affiché, panier vidé, et rien en base. Le
+        // caissier encaissait sans trace et sans pouvoir ressaisir la vente.
+        if (!venteDAO.create(vente)) {
+            throw new ApplicationException(
+                    "La vente n'a pas pu être enregistrée. Aucun montant n'a été validé, "
+                    + "le panier est conservé : réessayez.");
+        }
 
         LOG.info("Vente {} encaissée par l'utilisateur {} : {} article(s), {} DT",
                 vente.getId(), utilisateurId, panier.getNombreArticles(), vente.getTotalVente());
@@ -150,5 +169,19 @@ public class VenteService {
 
     public int nombreVentes(LocalDateTime debut, LocalDateTime fin) {
         return venteDAO.getNombreVentesParPeriode(debut, fin);
+    }
+
+    /**
+     * Produits les plus vendus sur une période, du plus au moins écoulé.
+     *
+     * Le rang est renseigné ici : il dépend du classement demandé, pas du
+     * produit, et n'a donc pas à être recalculé par chaque écran.
+     */
+    public List<model.ProduitStats> topProduits(LocalDateTime debut, LocalDateTime fin, int limite) {
+        List<model.ProduitStats> stats = detailVenteDAO.getTopProduitsParPeriode(debut, fin, limite);
+        for (int i = 0; i < stats.size(); i++) {
+            stats.get(i).setRang(i + 1);
+        }
+        return stats;
     }
 }

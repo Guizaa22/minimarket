@@ -30,6 +30,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import model.DetailVente;
 import model.Produit;
+import model.ProduitStats;
 import model.Vente;
 import util.FXMLUtils;
 
@@ -37,6 +38,9 @@ import util.FXMLUtils;
  * Contrôleur pour la gestion des ventes
  */
 public class GestionVentesController {
+
+    private static final org.slf4j.Logger LOG =
+            org.slf4j.LoggerFactory.getLogger(GestionVentesController.class);
 
     // ========================================
     // LABELS & DATE
@@ -154,6 +158,8 @@ public class GestionVentesController {
     // ========================================
     private VenteDAO venteDAO;
     private DetailVenteDAO detailVenteDAO;
+    /** Les rapports passent par le service, seul détenteur des règles de calcul. */
+    private service.VenteService venteService;
     private ProduitDAO produitDAO;
     private UtilisateurDAO utilisateurDAO;
 
@@ -169,6 +175,7 @@ public class GestionVentesController {
         // Initialisation des DAOs
         venteDAO = new VenteDAO();
         detailVenteDAO = new DetailVenteDAO();
+        venteService = new service.VenteService();
         produitDAO = new ProduitDAO();
         utilisateurDAO = new UtilisateurDAO();
 
@@ -203,7 +210,7 @@ public class GestionVentesController {
         if (datePickerFilter != null && datePickerFilter.getValue() != null) {
             LocalDate dateSelectionnee = datePickerFilter.getValue();
             LocalDateTime debut = dateSelectionnee.atStartOfDay();
-            LocalDateTime fin = dateSelectionnee.atTime(23, 59, 59);
+            LocalDateTime fin = dateSelectionnee.plusDays(1).atStartOfDay();
             
             // Recharger les statistiques pour cette date
             chargerStatistiquesPourDate(debut, fin);
@@ -485,13 +492,21 @@ public class GestionVentesController {
 
         List<Vente> ventes = venteDAO.findRecent(50); // 50 ventes les plus récentes
 
+        // Les caissiers sont relus une fois chacun : une requête par vente
+        // faisait cinquante allers-retours pour une poignée de comptes.
+        Map<Integer, String> caissiers = new java.util.HashMap<>();
+
         for (Vente vente : ventes) {
             // Récupérer les détails de la vente
             List<DetailVente> details = detailVenteDAO.findByVenteId(vente.getId());
             int nbArticles = details.stream().mapToInt(DetailVente::getQuantite).sum();
 
-            // Récupérer le nom du caissier
-            String caissier = utilisateurDAO.findById(vente.getUtilisateurId()).getUsername();
+            // Un compte supprimé depuis la vente ne doit pas faire échouer
+            // l'affichage de tout l'historique.
+            String caissier = caissiers.computeIfAbsent(vente.getUtilisateurId(), id -> {
+                model.Utilisateur u = utilisateurDAO.findById(id);
+                return u != null ? u.getUsername() : "Compte supprimé (#" + id + ")";
+            });
 
             VenteDisplay display = new VenteDisplay(
                     "#" + vente.getId(),
@@ -634,14 +649,138 @@ public class GestionVentesController {
         }
     }
 
+    // ========================================
+    // GÉNÉRATION DES RAPPORTS
+    // ========================================
+
+    /** Nombre de produits repris dans le classement d'un rapport. */
+    private static final int TOP_PRODUITS_RAPPORT = 10;
+
     /**
-     * Générer un rapport (placeholder)
+     * Périodes couvertes par les rapports.
+     *
+     * Chaque valeur connaît ses propres bornes : le rapport n'a plus qu'à
+     * demander la période voulue, et ajouter un rythme de reporting ne touche
+     * qu'à cette énumération.
      */
+    private enum PeriodeRapport {
+        JOURNALIER("RAPPORT JOURNALIER", "journalier"),
+        HEBDOMADAIRE("RAPPORT HEBDOMADAIRE", "hebdomadaire"),
+        MENSUEL("RAPPORT MENSUEL", "mensuel"),
+        ANNUEL("RAPPORT ANNUEL", "annuel");
+
+        private final String titre;
+        private final String nomFichier;
+
+        PeriodeRapport(String titre, String nomFichier) {
+            this.titre = titre;
+            this.nomFichier = nomFichier;
+        }
+
+        /** Début de la période, à partir d'aujourd'hui. */
+        LocalDateTime debut() {
+            LocalDate aujourdhui = LocalDate.now();
+            switch (this) {
+                case JOURNALIER:   return aujourdhui.atStartOfDay();
+                case HEBDOMADAIRE: return aujourdhui.with(java.time.DayOfWeek.MONDAY).atStartOfDay();
+                case MENSUEL:      return aujourdhui.withDayOfMonth(1).atStartOfDay();
+                case ANNUEL:       return aujourdhui.withDayOfYear(1).atStartOfDay();
+                default:           return aujourdhui.atStartOfDay();
+            }
+        }
+
+        /**
+          * Fin de la période, exclue : le début du lendemain.
+          * Une borne à 23:59:59 écartait les ventes de la dernière seconde.
+          */
+        LocalDateTime fin() {
+            return LocalDate.now().plusDays(1).atStartOfDay();
+        }
+    }
+
     @FXML
-    @SuppressWarnings("unused")
-    private void genererRapport(String typeRapport) {
-        showAlert(Alert.AlertType.INFORMATION, "Rapport",
-                "Génération du rapport " + typeRapport + " en cours...");
+    @SuppressWarnings("unused") // Lié par FXML (onAction="#genererRapportJournalier")
+    private void genererRapportJournalier() {
+        genererRapport(PeriodeRapport.JOURNALIER);
+    }
+
+    @FXML
+    @SuppressWarnings("unused") // Lié par FXML (onAction="#genererRapportHebdomadaire")
+    private void genererRapportHebdomadaire() {
+        genererRapport(PeriodeRapport.HEBDOMADAIRE);
+    }
+
+    @FXML
+    @SuppressWarnings("unused") // Lié par FXML (onAction="#genererRapportMensuel")
+    private void genererRapportMensuel() {
+        genererRapport(PeriodeRapport.MENSUEL);
+    }
+
+    @FXML
+    @SuppressWarnings("unused") // Lié par FXML (onAction="#genererRapportAnnuel")
+    private void genererRapportAnnuel() {
+        genererRapport(PeriodeRapport.ANNUEL);
+    }
+
+    /**
+     * Produit un rapport PDF pour la période demandée.
+     *
+     * Les chiffres viennent de {@code VenteService} : chiffre d'affaires,
+     * bénéfice, nombre de ventes et classement des produits. Le fichier est
+     * écrit dans le dossier de données de l'application, aux côtés des tickets
+     * et des journaux, et son chemin est indiqué à l'utilisateur.
+     */
+    private void genererRapport(PeriodeRapport periode) {
+        LocalDateTime debut = periode.debut();
+        LocalDateTime fin = periode.fin();
+
+        // Quatre requêtes puis l'écriture d'un PDF : exécuté sur le fil
+        // JavaFX, l'écran restait figé le temps de l'export, et d'autant plus
+        // longtemps que la base est sur le réseau.
+        ui.TacheFond.executer(btnRapports,
+                () -> {
+                    BigDecimal ca = venteService.chiffreAffaires(debut, fin);
+                    BigDecimal benefice = venteService.benefice(debut, fin);
+                    int nbVentes = venteService.nombreVentes(debut, fin);
+                    List<model.ProduitStats> topProduits =
+                            venteService.topProduits(debut, fin, TOP_PRODUITS_RAPPORT);
+
+                    String horodatage = LocalDateTime.now()
+                            .format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+                    java.io.File fichier = util.Config.getRapportsDir()
+                            .resolve("rapport-" + periode.nomFichier + "-" + horodatage + ".pdf")
+                            .toFile();
+
+                    try {
+                        util.PDFExporter.exportRapportPeriode(fichier, periode.titre, debut, fin,
+                                ca, benefice, nbVentes, topProduits);
+                    } catch (IOException e) {
+                        // Enveloppée : le traitement de fond ne peut pas
+                        // propager d'exception contrôlée. Le message reste
+                        // celui destiné à l'utilisateur.
+                        throw new exception.ApplicationException(
+                                "Le rapport n'a pas pu être écrit sur le disque : " + e.getMessage(), e);
+                    }
+
+                    return new RapportGenere(fichier, ca, benefice, nbVentes);
+                },
+                rapport -> showAlert(Alert.AlertType.INFORMATION, "Rapport généré",
+                        "Rapport enregistré :\n" + rapport.fichier().getAbsolutePath()
+                        + "\n\nChiffre d'affaires : " + String.format("%.2f DT", rapport.chiffreAffaires())
+                        + "\nBénéfice : " + String.format("%.2f DT", rapport.benefice())
+                        + "\nVentes : " + rapport.nombreVentes()),
+                erreur -> {
+                    LOG.error("Génération du rapport {} impossible", periode.nomFichier, erreur);
+                    showAlert(Alert.AlertType.ERROR, "Erreur",
+                            erreur.getMessage() != null
+                                ? erreur.getMessage()
+                                : "Le rapport n'a pas pu être généré.");
+                });
+    }
+
+    /** Résultat d'un rapport : le fichier écrit et ses chiffres clés. */
+    private record RapportGenere(java.io.File fichier, BigDecimal chiffreAffaires,
+                                 BigDecimal benefice, int nombreVentes) {
     }
 
     /**
@@ -698,25 +837,4 @@ public class GestionVentesController {
         public int getVenteId() { return venteId; }
     }
 
-    /**
-     * Classe pour les statistiques des produits
-     */
-    public static class ProduitStats {
-        private int rang;
-        private final String nomProduit;
-        private final int quantiteVendue;
-        private final String caGenere;
-
-        public ProduitStats(String nomProduit, int quantiteVendue, BigDecimal ca) {
-            this.nomProduit = nomProduit;
-            this.quantiteVendue = quantiteVendue;
-            this.caGenere = String.format("%.2f DT", ca);
-        }
-
-        public int getRang() { return rang; }
-        public void setRang(int rang) { this.rang = rang; }
-        public String getNomProduit() { return nomProduit; }
-        public int getQuantiteVendue() { return quantiteVendue; }
-        public String getCaGenere() { return caGenere; }
-    }
 }

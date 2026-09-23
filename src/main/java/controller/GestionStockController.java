@@ -134,7 +134,9 @@ public class GestionStockController {
     // DONNÉES & DAO
     // ========================================
     private ProduitDAO produitDAO;
+    // Lecture seule ; toute écriture de catégorie passe par le service.
     private CategorieDAO categorieDAO;
+    private service.CategorieService categorieService;
 
     /**
      * Les écritures passent par le service : il applique les validations
@@ -154,6 +156,7 @@ public class GestionStockController {
     private void initialize() {
         produitDAO = new ProduitDAO();
         categorieDAO = new CategorieDAO();
+        categorieService = new service.CategorieService();
         produitService = new service.ProduitService();
         produitsList = FXCollections.observableArrayList();
         categoriesList = FXCollections.observableArrayList();
@@ -327,6 +330,18 @@ public class GestionStockController {
      * Supprimer un produit depuis le tableau
      */
     private void supprimerProduit(Produit produit) {
+        // Retirer un produit du référentiel engage tout le magasin : réservé à
+        // l'administrateur. Vérifié aussi côté service, une règle qui ne vit
+        // que dans l'interface étant contournée par le premier autre écran qui
+        // appelle le service. Le refus est annoncé avant la confirmation :
+        // inutile de faire confirmer une action qui sera rejetée.
+        model.Utilisateur acteur = service.SessionContext.get().getUtilisateurConnecte();
+        if (acteur == null || acteur.getRole() != model.Utilisateur.Role.Admin) {
+            showAlert(Alert.AlertType.WARNING, "Action réservée",
+                    "Seul un administrateur peut supprimer ou archiver un produit.");
+            return;
+        }
+
         Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
         confirmAlert.setTitle("Confirmation de suppression");
         confirmAlert.setHeaderText(null);
@@ -335,34 +350,43 @@ public class GestionStockController {
 
         ui.Dialogues.preparer(confirmAlert.getDialogPane(), null);
         if (confirmAlert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
-            // Vérifier si l'utilisateur est admin
-            boolean isAdmin = service.SessionContext.get().estAdmin();
-            boolean forceDelete = false;
-            
-            // Si le produit est utilisé et que l'utilisateur est admin, demander confirmation pour suppression forcée
-            if (isAdmin && produitDAO.isProduitUtilise(produit.getId())) {
-                Alert forceConfirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
-                forceConfirmAlert.setTitle("Suppression forcée");
-                forceConfirmAlert.setHeaderText("Ce produit est utilisé dans des ventes ou des ajouts de stock");
-                forceConfirmAlert.setContentText("En tant qu'administrateur, vous pouvez forcer la suppression.\n\n" +
-                        "⚠️ ATTENTION: Cela supprimera également toutes les références à ce produit dans les ventes et ajouts de stock.\n\n" +
-                        "Voulez-vous continuer ?");
-                
-                ui.Dialogues.preparer(forceConfirmAlert.getDialogPane(), null);
-                if (forceConfirmAlert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
-                    forceDelete = true;
-                } else {
-                    return; // L'utilisateur a annulé
+            // Un produit déjà vendu n'est pas supprimable : ses lignes de vente
+            // portent les prix du jour de la transaction, dont dépend le
+            // bénéfice des périodes closes. L'ancienne « suppression forcée »
+            // les effaçait et faisait varier après coup le résultat d'un mois
+            // déjà clôturé. On propose l'archivage à la place.
+            if (produitDAO.isProduitUtilise(produit.getId())) {
+                Alert archivage = new Alert(Alert.AlertType.CONFIRMATION);
+                archivage.setTitle("Archiver le produit");
+                archivage.setHeaderText("Ce produit figure dans des ventes ou des ajouts de stock");
+                archivage.setContentText(
+                        "Il ne peut pas être supprimé sans fausser les rapports déjà édités.\n\n"
+                        + "L'archiver le retire de la caisse et de la gestion du stock, "
+                        + "tout en conservant son historique.\n\nArchiver « "
+                        + produit.getNom() + " » ?");
+
+                ui.Dialogues.preparer(archivage.getDialogPane(), null);
+                if (archivage.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
+                    return;
                 }
+
+                try {
+                    produitService.archiver(produit, acteur);
+                    showAlert(Alert.AlertType.INFORMATION, "Produit archivé",
+                            "« " + produit.getNom() + " » a été retiré de la vente.\n"
+                            + "Son historique reste consultable dans les rapports.");
+                    chargerProduits();
+                    produitsTable.setVisible(true);
+                    produitsTable.requestFocus();
+                } catch (exception.ApplicationException e) {
+                    showAlert(Alert.AlertType.ERROR, "Erreur", e.getMessage());
+                }
+                return;
             }
-            
+
             try {
-                produitService.supprimer(produit, service.SessionContext.get().getUtilisateurId(), forceDelete);
-                String message = "Produit supprimé avec succès.";
-                if (forceDelete) {
-                    message += "\n\n⚠️ Les références à ce produit dans les ventes et ajouts de stock ont également été supprimées.";
-                }
-                showAlert(Alert.AlertType.INFORMATION, "Succès", message);
+                produitService.supprimer(produit, acteur);
+                showAlert(Alert.AlertType.INFORMATION, "Succès", "Produit supprimé avec succès.");
                 // Rafraîchir la liste des produits
                 chargerProduits();
                 // S'assurer que la table est visible et mise à jour
@@ -767,43 +791,41 @@ public class GestionStockController {
 
         String nomCategorie = nomField.getText();
         java.util.Optional.ofNullable(nomCategorie).ifPresent(nom -> {
-            if (!nom.trim().isEmpty()) {
-                // Vérifier si la catégorie existe déjà
-                Categorie existante = categorieDAO.findByNom(nom.trim());
-                if (existante != null) {
-                    showAlert(Alert.AlertType.WARNING, "Catégorie existante",
-                            "Cette catégorie existe déjà.");
-                    categorieComboBox.setValue(existante);
-                    return;
-                }
+            if (nom.trim().isEmpty()) {
+                return;
+            }
 
-                // Créer la nouvelle catégorie
-                Categorie nouvelleCategorie = new Categorie(nom.trim(), typeBox.getValue());
-                if (selecteurImage.aUneImage()) {
-                    nouvelleCategorie.setImage(selecteurImage.getDonnees());
-                    nouvelleCategorie.setImageMime(selecteurImage.getMime());
-                }
-                try {
-                    if (categorieDAO.create(nouvelleCategorie)) {
-                        showAlert(Alert.AlertType.INFORMATION, "Succès",
-                                "Catégorie ajoutée avec succès.");
-                        chargerCategories();
-                        categorieComboBox.setValue(nouvelleCategorie);
-                    } else {
-                        showAlert(Alert.AlertType.ERROR, "Erreur",
-                                "Erreur lors de l'ajout de la catégorie.\n\n" +
-                                "Vérifiez:\n" +
-                                "- Que le nom de la catégorie n'existe pas déjà\n" +
-                                "- La console pour plus de détails");
-                    }
-                } catch (Exception e) {
-                    String errorMsg = "Erreur lors de l'ajout de la catégorie:\n\n" + e.getMessage();
-                    if (e.getCause() != null) {
-                        errorMsg += "\n\nCause: " + e.getCause().getMessage();
-                    }
-                    showAlert(Alert.AlertType.ERROR, "Erreur", errorMsg);
-                    LOG.error("Erreur détaillée lors de l'ajout de catégorie:");
-                }
+            // Une catégorie déjà présente est simplement sélectionnée : le cas
+            // est courant et ne mérite pas une erreur.
+            Categorie existante = categorieService.parNom(nom);
+            if (existante != null) {
+                showAlert(Alert.AlertType.WARNING, "Catégorie existante",
+                        "Cette catégorie existe déjà.");
+                categorieComboBox.setValue(existante);
+                return;
+            }
+
+            // La création passe par le service : unicité, type explicite et
+            // trace dans audit_logs y sont centralisés. Le type décide du
+            // comportement du stock, ce choix doit pouvoir être retrouvé.
+            try {
+                Categorie nouvelle = categorieService.creer(
+                        nom,
+                        typeBox.getValue(),
+                        selecteurImage.aUneImage() ? selecteurImage.getDonnees() : null,
+                        selecteurImage.aUneImage() ? selecteurImage.getMime() : null,
+                        service.SessionContext.get().getUtilisateurId());
+
+                showAlert(Alert.AlertType.INFORMATION, "Succès", "Catégorie ajoutée avec succès.");
+                chargerCategories();
+                categorieComboBox.setValue(nouvelle);
+
+            } catch (exception.ApplicationException e) {
+                showAlert(Alert.AlertType.ERROR, "Erreur", e.getMessage());
+            } catch (Exception e) {
+                LOG.error("Ajout de catégorie impossible", e);
+                showAlert(Alert.AlertType.ERROR, "Erreur",
+                        "Erreur lors de l'ajout de la catégorie : " + e.getMessage());
             }
         });
     }

@@ -307,7 +307,9 @@ public class RecetteJourController {
         }
         
         LocalDateTime dateDebut = date.atStartOfDay();
-        LocalDateTime dateFin = date.atTime(23, 59, 59);
+        // Borne de fin exclusive (début du lendemain) : cohérent avec les
+        // statistiques de période, qui travaillent sur [debut, fin[.
+        LocalDateTime dateFin = date.plusDays(1).atStartOfDay();
         
         // La recette affichée est celle de l'employé connecté.
         int idEmploye = service.SessionContext.get().getUtilisateurId();
@@ -421,11 +423,11 @@ public class RecetteJourController {
     @FXML
     private void handleExporterPDF() {
         try {
-            LocalDate date = datePicker.getValue();
-            if (date == null) {
-                date = LocalDate.now();
-            }
-            
+            LocalDate saisie = datePicker.getValue();
+            // Copie effectivement finale : la date est lue par le traitement
+            // exécuté en arrière-plan.
+            final LocalDate date = saisie != null ? saisie : LocalDate.now();
+
             javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
             fileChooser.setTitle("Exporter la Recette du Jour en PDF");
             fileChooser.setInitialFileName("recette_" + date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + ".pdf");
@@ -438,10 +440,28 @@ public class RecetteJourController {
             if (file != null) {
                 boolean isAdmin = service.SessionContext.get().estAdmin();
                 int idEmploye = service.SessionContext.get().getUtilisateurId();
-                util.PDFExporter.exportRecetteJour(file, date, venteDAO, paiementDAO, ajoutStockDAO, 
-                    noteDAO, fournisseurDAO, produitDAO, deplacementDAO, utilisateurDAO, idEmploye, isAdmin);
-                afficherAlerte(Alert.AlertType.INFORMATION, "Succès", 
-                    "Recette du jour exportée en PDF avec succès:\n" + file.getAbsolutePath());
+
+                // L'export enchaîne de nombreuses requêtes puis écrit le PDF :
+                // sur le fil JavaFX, l'écran restait figé pendant toute
+                // l'opération, d'autant plus longtemps que la base est distante.
+                ui.TacheFond.executer(exporterPDFButton,
+                        () -> {
+                            try {
+                                util.PDFExporter.exportRecetteJour(file, date, venteDAO, paiementDAO,
+                                    ajoutStockDAO, noteDAO, fournisseurDAO, produitDAO,
+                                    deplacementDAO, utilisateurDAO, idEmploye, isAdmin);
+                                return file;
+                            } catch (java.io.IOException e) {
+                                // Enveloppée : un traitement de fond ne peut pas
+                                // propager d'exception contrôlée.
+                                throw new exception.ApplicationException(
+                                        "Écriture du PDF impossible : " + e.getMessage(), e);
+                            }
+                        },
+                        ecrit -> afficherAlerte(Alert.AlertType.INFORMATION, "Succès",
+                            "Recette du jour exportée en PDF avec succès:\n" + ecrit.getAbsolutePath()),
+                        erreur -> afficherAlerte(Alert.AlertType.ERROR, "Erreur",
+                            "Erreur lors de l'export PDF: " + erreur.getMessage()));
             }
         } catch (Exception e) {
             afficherAlerte(Alert.AlertType.ERROR, "Erreur", 

@@ -5,8 +5,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 
 import dao.CreditFournisseurDAO;
@@ -415,8 +415,11 @@ public class AdminDashboardController {
         stats.produitsDisponibles = produits.stream().filter(p -> p.getQuantiteStock() > 0).count();
         stats.ruptures = produits.stream().filter(p -> p.getQuantiteStock() == 0).count();
 
-        LocalDateTime debutJour = LocalDateTime.now().with(LocalTime.MIN);
-        LocalDateTime finJour = LocalDateTime.now().with(LocalTime.MAX);
+        // Intervalle semi-ouvert [00:00, lendemain[ : LocalTime.MAX s'arrête à
+        // 23:59:59.999999999 et la comparaison SQL, en microsecondes, écartait
+        // la toute dernière fraction de seconde de la journée.
+        LocalDateTime debutJour = LocalDate.now().atStartOfDay();
+        LocalDateTime finJour = debutJour.plusDays(1);
         stats.ventesJour = venteDAO.getTotalRecettes(debutJour, finJour);
 
         // Une seule lecture des fournisseurs : elle était faite deux fois,

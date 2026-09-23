@@ -203,6 +203,46 @@ CREATE TABLE IF NOT EXISTS ajouts_stock (
     date_ajout        TIMESTAMP      NOT NULL
 );
 
+-- Détail des réapprovisionnements de tabac.
+--   type_ajout_tabac    : 'paquet' ou 'cigarette' selon l'unité saisie au comptoir
+--   quantite_cigarettes : nombre de cigarettes quand l'ajout est fait à l'unité
+-- Ces deux colonnes étaient auparavant créées à chaud par AjoutStockDAO, au
+-- moyen d'un ALTER TABLE non idempotent déclenché à la première écriture : sur
+-- une base partagée par plusieurs caisses, deux postes pouvaient le jouer en
+-- même temps, et une base neuve ne les avait pas tant qu'aucun ajout n'avait
+-- été saisi. Elles font désormais partie du schéma, seule source de vérité.
+--
+-- Exécuté dynamiquement : PostgreSQL analyse tout un lot avant de l'exécuter,
+-- une contrainte citant une colonne ajoutée dans le même lot échouerait à l'analyse.
+DO $$
+BEGIN
+    ALTER TABLE ajouts_stock ADD COLUMN IF NOT EXISTS type_ajout_tabac    TEXT;
+    ALTER TABLE ajouts_stock ADD COLUMN IF NOT EXISTS quantite_cigarettes INTEGER;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ajouts_stock_qte_cigarettes_check') THEN
+        ALTER TABLE ajouts_stock
+            ADD CONSTRAINT ajouts_stock_qte_cigarettes_check
+            CHECK (quantite_cigarettes IS NULL OR quantite_cigarettes >= 0);
+    END IF;
+
+    -- Contrainte posée au mieux : sur une base déjà migrée à chaud par
+    -- l'ancien code, une ligne au libellé inattendu ferait échouer l'ALTER, et
+    -- avec lui tout le démarrage de l'application. Mieux vaut alors s'en
+    -- passer et le signaler que d'empêcher l'ouverture de la caisse.
+    -- La comparaison ignore la casse, comme les lectures côté Java.
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ajouts_stock_type_tabac_check') THEN
+        BEGIN
+            ALTER TABLE ajouts_stock
+                ADD CONSTRAINT ajouts_stock_type_tabac_check
+                CHECK (type_ajout_tabac IS NULL
+                       OR LOWER(type_ajout_tabac) IN ('paquet', 'cigarette'));
+        EXCEPTION WHEN check_violation THEN
+            RAISE NOTICE 'ajouts_stock.type_ajout_tabac contient des valeurs hors ''paquet''/''cigarette'' : contrainte non posée.';
+        END;
+    END IF;
+END
+$$;
+
 CREATE INDEX IF NOT EXISTS idx_ajouts_stock_produit ON ajouts_stock (produit_id);
 CREATE INDEX IF NOT EXISTS idx_ajouts_stock_date    ON ajouts_stock (date_ajout);
 CREATE INDEX IF NOT EXISTS idx_ajouts_stock_emp     ON ajouts_stock (employe_id, date_ajout);
@@ -364,6 +404,51 @@ BEGIN
             ADD CONSTRAINT detailsvente_unite_check
             CHECK (unite_vente IN ('unite', 'paquet', 'cigarette'));
     END IF;
+END
+$$;
+
+-- ------------------------------------------------------------
+-- Reliquat du paquet entamé
+-- ------------------------------------------------------------
+-- Le stock des produits de tabac est tenu en paquets, mais la vente se fait
+-- aussi à la cigarette. Sans mémoire du paquet ouvert, chaque vente au détail
+-- arrondissait au paquet supérieur : vendre 7 cigarettes cinq fois retirait
+-- 5 paquets du stock — 100 cigarettes — pour 35 cigarettes réellement
+-- sorties. Le stock dérivait donc à la baisse à chaque vente partielle.
+--
+-- cigarettes_restantes compte ce qui reste dans le paquet entamé. Une vente
+-- y puise d'abord, et n'ouvre un paquet — donc ne décrémente le stock — que
+-- lorsque le reliquat ne suffit plus.
+DO $$
+BEGIN
+    ALTER TABLE produits
+        ADD COLUMN IF NOT EXISTS cigarettes_restantes INTEGER NOT NULL DEFAULT 0;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'produits_cigarettes_restantes_check') THEN
+        ALTER TABLE produits
+            ADD CONSTRAINT produits_cigarettes_restantes_check
+            CHECK (cigarettes_restantes >= 0);
+    END IF;
+END
+$$;
+
+-- ------------------------------------------------------------
+-- Archivage des produits
+-- ------------------------------------------------------------
+-- Un produit déjà vendu ne peut pas être supprimé sans réécrire le passé :
+-- ses lignes de detailsvente portent le prix d'achat et le prix de vente du
+-- jour de la vente, dont dépend tout calcul de bénéfice. L'ancienne
+-- « suppression forcée » les effaçait, si bien que le chiffre d'affaires
+-- restait inchangé — il vient de ventes.total_vente — pendant que le bénéfice
+-- des mois clos s'effondrait. Un produit retiré de la vente est donc archivé :
+-- il disparaît de la caisse et du stock, mais son historique reste intact.
+DO $$
+BEGIN
+    ALTER TABLE produits ADD COLUMN IF NOT EXISTS actif BOOLEAN NOT NULL DEFAULT TRUE;
+
+    -- Les écrans de vente et de stock ne lisent que les produits actifs :
+    -- l'index évite un parcours complet dès que des archives s'accumulent.
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_produits_actif ON produits (actif)';
 END
 $$;
 

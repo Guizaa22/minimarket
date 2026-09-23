@@ -89,27 +89,96 @@ public class CreditFournisseurDAO {
     }
     
     /**
-     * Ajoute du crédit à un fournisseur
+     * Ajoute du crédit à un fournisseur.
+     *
+     * Écriture atomique : le nouveau montant est calculé par la base, pas en
+     * Java. La forme précédente lisait le solde, l'additionnait puis écrivait
+     * le résultat ; deux caisses créditant le même fournisseur en même temps
+     * lisaient la même valeur de départ et l'une des deux additions était
+     * perdue.
+     *
+     * Le fournisseur peut ne pas encore avoir de ligne de crédit : l'insertion
+     * et la mise à jour sont donc faites en une seule requête (ON CONFLICT sur
+     * fournisseur_id, qui est unique).
      */
     public boolean ajouterCredit(int idFournisseur, BigDecimal montant) {
-        CreditFournisseur credit = findByFournisseurId(idFournisseur);
-        BigDecimal nouveauMontant = credit != null ? 
-            credit.getMontant().add(montant) : montant;
-        return updateCredit(idFournisseur, nouveauMontant);
+        try (Connection conn = DBConnector.getConnection()) {
+            return ajouterCredit(conn, idFournisseur, montant);
+        } catch (SQLException e) {
+            LOG.error("Erreur lors de l'ajout de crédit: " + e.getMessage(), e);
+            return false;
+        }
     }
-    
+
     /**
-     * Utilise du crédit d'un fournisseur
+     * Ajoute du crédit sur une connexion fournie par l'appelant, afin que
+     * l'opération tienne dans la même transaction que l'ajout de stock.
+     *
+     * La connexion n'est ni validée ni fermée ici.
+     *
+     * @throws SQLException pour laisser l'appelant annuler la transaction
+     */
+    public boolean ajouterCredit(Connection conn, int idFournisseur, BigDecimal montant) throws SQLException {
+        String sql = "INSERT INTO credits_fournisseur (fournisseur_id, montant) VALUES (?, ?) "
+                   + "ON CONFLICT (fournisseur_id) DO UPDATE "
+                   + "SET montant = credits_fournisseur.montant + EXCLUDED.montant, "
+                   + "    date_maj = CURRENT_TIMESTAMP";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, idFournisseur);
+            stmt.setBigDecimal(2, montant);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Utilise du crédit d'un fournisseur.
+     *
+     * La condition « montant >= ? » fait partie de l'UPDATE : le solde est
+     * vérifié et débité en une seule instruction, la base refusant d'elle-même
+     * un débit supérieur au disponible. Un contrôle lu séparément puis appliqué
+     * plus tard pouvait être invalidé entre-temps par une autre caisse.
+     *
+     * @return false si le crédit disponible est insuffisant, ou si le
+     *         fournisseur n'a pas de ligne de crédit
      */
     public boolean utiliserCredit(int idFournisseur, BigDecimal montant) {
-        CreditFournisseur credit = findByFournisseurId(idFournisseur);
-        if (credit == null || credit.getMontant().compareTo(montant) < 0) {
-            return false; // Pas assez de crédit
+        try (Connection conn = DBConnector.getConnection()) {
+            return utiliserCredit(conn, idFournisseur, montant);
+        } catch (SQLException e) {
+            LOG.error("Erreur lors de l'utilisation de crédit: " + e.getMessage(), e);
+            return false;
         }
-        BigDecimal nouveauMontant = credit.getMontant().subtract(montant);
-        return updateCredit(idFournisseur, nouveauMontant);
     }
-    
+
+    /**
+     * Utilise du crédit sur une connexion fournie par l'appelant, afin que
+     * l'opération tienne dans la même transaction que l'ajout de stock.
+     *
+     * La connexion n'est ni validée ni fermée ici.
+     *
+     * @return false si le crédit disponible est insuffisant
+     * @throws SQLException pour laisser l'appelant annuler la transaction
+     */
+    public boolean utiliserCredit(Connection conn, int idFournisseur, BigDecimal montant) throws SQLException {
+        String sql = "UPDATE credits_fournisseur SET montant = montant - ?, "
+                   + "date_maj = CURRENT_TIMESTAMP "
+                   + "WHERE fournisseur_id = ? AND montant >= ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setBigDecimal(1, montant);
+            stmt.setInt(2, idFournisseur);
+            stmt.setBigDecimal(3, montant);
+
+            if (stmt.executeUpdate() > 0) {
+                return true;
+            }
+            LOG.warn("Crédit insuffisant ou inexistant pour le fournisseur {} (débit demandé : {})",
+                    idFournisseur, montant);
+            return false;
+        }
+    }
+
     private CreditFournisseur mapResultSetToCredit(ResultSet rs) throws SQLException {
         Timestamp tsCreation = rs.getTimestamp("date_creation");
         // La colonne s'appelle date_maj, comme dans l'UPDATE plus haut : la

@@ -47,6 +47,15 @@ public class Produit {
         this.seuilAlerte = seuilAlerte;
     }
     
+    /**
+     * Produit encore proposé à la vente.
+     *
+     * Un produit déjà vendu ne peut pas être supprimé sans réécrire l'histoire
+     * comptable : il est archivé ({@code actif = false}), ce qui le retire de la
+     * caisse et du stock tout en préservant ses lignes de vente.
+     */
+    private boolean actif = true;
+
     public Produit(int id, String codeBarre, String nom, String categorie, BigDecimal prixAchatActuel, 
                    BigDecimal prixVenteDefaut, int quantiteStock, String unite, int seuilAlerte) {
         this.id = id;
@@ -256,6 +265,14 @@ public class Produit {
                 ", quantiteStock=" + quantiteStock +
                 ", seuilAlerte=" + seuilAlerte +
                 '}';
+    }
+
+    public boolean isActif() {
+        return actif;
+    }
+
+    public void setActif(boolean actif) {
+        this.actif = actif;
     }
 }
 

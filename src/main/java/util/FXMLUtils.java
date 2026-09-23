@@ -148,6 +148,16 @@ public class FXMLUtils {
         stage.setScene(scene);
         stage.setTitle(title);
 
+        // Surveillance de l'inactivité posée ici, sur le seul passage obligé de
+        // tous les changements d'écran : chaque navigation crée une scène neuve,
+        // les filtres de la précédente disparaissent avec elle. L'écran de
+        // connexion en est exempté, il n'a pas de session à fermer.
+        if (fxmlPath.contains("Connexion")) {
+            ui.VerrouInactivite.desactiver();
+        } else {
+            ui.VerrouInactivite.installer(scene);
+        }
+
         // Mémorise l'écran affiché pour que le prochain changement puisse
         // l'empiler dans l'historique de « Retour ».
         if (!fxmlPath.contains("Connexion")) {
@@ -245,6 +255,12 @@ public class FXMLUtils {
         appliquerFeuille(scene, "/styles/global.css");
         appliquerFeuille(scene, "/styles/modern.css");
         ui.ThemeManager.enregistrer(scene);
+
+        // Une saisie dans une boîte de dialogue est une activité comme une
+        // autre : sans cela, remplir un long formulaire modal laisserait le
+        // décompte d'inactivité courir jusqu'à la déconnexion.
+        scene.addEventFilter(javafx.scene.input.InputEvent.ANY,
+                e -> ui.VerrouInactivite.reinitialiser());
     }
 
     /**

@@ -2,7 +2,6 @@ package controller;
 
 import java.time.LocalDateTime;
 
-import dao.DeplacementEmployeDAO;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -28,14 +27,14 @@ public class DeplacementDialogController {
     @FXML
     private Button annulerButton;
     
-    private DeplacementEmployeDAO deplacementDAO;
+    private service.JourneeService journeeService;
     private DeplacementEmploye deplacementActuel;
     private boolean estEnCours = false;
     
     @FXML
     @SuppressWarnings("unused")
     private void initialize() {
-        deplacementDAO = new DeplacementEmployeDAO();
+        journeeService = new service.JourneeService();
     }
     
     @FXML
@@ -57,34 +56,29 @@ public class DeplacementDialogController {
             return;
         }
         
-        if (!estEnCours) {
-            // Démarrer un nouveau déplacement
-            deplacementActuel = new DeplacementEmploye(idEmploye, LocalDateTime.now(), destination, notes);
-            if (deplacementDAO.create(deplacementActuel)) {
+        // L'écriture passe par JourneeService : les heures d'un déplacement
+        // alimentent la paie et doivent laisser une trace dans audit_logs, ce
+        // que l'appel direct au DAO ne faisait pas.
+        try {
+            if (!estEnCours) {
+                deplacementActuel = journeeService.demarrerDeplacement(idEmploye, destination, notes);
                 estEnCours = true;
                 enregistrerButton.setText("Terminer Déplacement");
                 destinationField.setEditable(false);
                 afficherAlerte(Alert.AlertType.INFORMATION, "Succès", "Déplacement démarré.");
-            } else {
-                afficherAlerte(Alert.AlertType.ERROR, "Erreur", "Erreur lors de l'enregistrement.");
-            }
-        } else {
-            // Terminer le déplacement
-            if (deplacementActuel != null) {
-                deplacementActuel.setDateFin(LocalDateTime.now());
+
+            } else if (deplacementActuel != null) {
                 deplacementActuel.setDestination(destination);
                 deplacementActuel.setNotes(notes);
-                deplacementActuel.calculerHeuresTravaillees();
-                
-                if (deplacementDAO.update(deplacementActuel)) {
-                    afficherAlerte(Alert.AlertType.INFORMATION, "Succès", 
-                        "Déplacement terminé. Heures travaillées: " + 
-                        String.format("%.2f h", deplacementActuel.getHeuresTravaillees()));
-                    fermer();
-                } else {
-                    afficherAlerte(Alert.AlertType.ERROR, "Erreur", "Erreur lors de la mise à jour.");
-                }
+                journeeService.terminerDeplacement(deplacementActuel, idEmploye);
+
+                afficherAlerte(Alert.AlertType.INFORMATION, "Succès",
+                    "Déplacement terminé. Heures travaillées: " +
+                    String.format("%.2f h", deplacementActuel.getHeuresTravaillees()));
+                fermer();
             }
+        } catch (exception.ApplicationException e) {
+            afficherAlerte(Alert.AlertType.ERROR, "Erreur", e.getMessage());
         }
     }
     

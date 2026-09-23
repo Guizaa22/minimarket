@@ -129,9 +129,9 @@ public class GestionTabacController {
     private void calculerStatistiques() {
         LocalDateTime maintenant = LocalDateTime.now();
         
-        // Total aujourd'hui (00:00:00 à 23:59:59)
-        LocalDateTime debutJour = maintenant.withHour(0).withMinute(0).withSecond(0).withNano(0);
-        LocalDateTime finJour = maintenant.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+        // Total d'aujourd'hui, sur l'intervalle semi-ouvert [00:00, lendemain[.
+        LocalDateTime debutJour = maintenant.toLocalDate().atStartOfDay();
+        LocalDateTime finJour = debutJour.plusDays(1);
         BigDecimal recetteAujourdhui = venteDAO.getTotalVentesTabac(debutJour, finJour);
         recetteAujourdhuiLabel.setText(String.format("%.2f DT", recetteAujourdhui));
         

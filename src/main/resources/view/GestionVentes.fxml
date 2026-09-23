@@ -180,28 +180,28 @@
                             <Label text="📅" styleClass="report-icon"/>
                             <Label text="Rapport Journalier" styleClass="report-title"/>
                             <Label text="Ventes du jour avec détails" styleClass="report-desc"/>
-                            <Button text="📥 Télécharger PDF" styleClass="btn-download, btn-green"/>
+                            <Button text="📥 Télécharger PDF" styleClass="btn-download, btn-green" onAction="#genererRapportJournalier"/>
                         </VBox>
 
                         <VBox styleClass="report-card, report-blue" GridPane.columnIndex="1" GridPane.rowIndex="0">
                             <Label text="📊" styleClass="report-icon"/>
                             <Label text="Rapport Hebdomadaire" styleClass="report-title"/>
                             <Label text="Résumé de la semaine" styleClass="report-desc"/>
-                            <Button text="📥 Télécharger PDF" styleClass="btn-download, btn-blue"/>
+                            <Button text="📥 Télécharger PDF" styleClass="btn-download, btn-blue" onAction="#genererRapportHebdomadaire"/>
                         </VBox>
 
                         <VBox styleClass="report-card, report-purple" GridPane.columnIndex="0" GridPane.rowIndex="1">
                             <Label text="📈" styleClass="report-icon"/>
                             <Label text="Rapport Mensuel" styleClass="report-title"/>
                             <Label text="Statistiques du mois" styleClass="report-desc"/>
-                            <Button text="📥 Télécharger PDF" styleClass="btn-download, btn-purple"/>
+                            <Button text="📥 Télécharger PDF" styleClass="btn-download, btn-purple" onAction="#genererRapportMensuel"/>
                         </VBox>
 
                         <VBox styleClass="report-card, report-orange" GridPane.columnIndex="1" GridPane.rowIndex="1">
                             <Label text="📋" styleClass="report-icon"/>
                             <Label text="Rapport Annuel" styleClass="report-title"/>
                             <Label text="Bilan de l'année" styleClass="report-desc"/>
-                            <Button text="📥 Télécharger PDF" styleClass="btn-download, btn-orange"/>
+                            <Button text="📥 Télécharger PDF" styleClass="btn-download, btn-orange" onAction="#genererRapportAnnuel"/>
                         </VBox>
                     </GridPane>
                 </VBox>
