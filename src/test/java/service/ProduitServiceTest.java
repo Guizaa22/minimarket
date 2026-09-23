@@ -5,8 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,6 +27,7 @@ import dao.ProduitDAO;
 import dao.StockMovementDAO;
 import exception.ApplicationException;
 import model.Produit;
+import model.Utilisateur;
 import model.StockMovement;
 
 /**
@@ -164,5 +167,114 @@ class ProduitServiceTest {
         service.ajouterStock(1, 5, 42, StockMovement.Type.DESKTOP_ADD, null);
 
         verify(produitDAO).augmenterStock(1, 5);
+    }
+
+    // ------------------------------------------------------------------
+    // Suppression et archivage : réservés à l'administrateur
+    // ------------------------------------------------------------------
+
+    private Utilisateur admin() {
+        return new Utilisateur(1, "patron", "empreinte", Utilisateur.Role.Admin);
+    }
+
+    private Utilisateur employe() {
+        return new Utilisateur(9, "caissier", "empreinte", Utilisateur.Role.Employé);
+    }
+
+    @Test
+    @DisplayName("un administrateur peut supprimer un produit jamais vendu")
+    void adminPeutSupprimer() throws java.sql.SQLException {
+        when(produitDAO.delete(anyInt(), eq(false))).thenReturn(true);
+
+        service.supprimer(produit("2.000", "5.000"), admin());
+
+        verify(produitDAO).delete(anyInt(), eq(false));
+        verify(audit).enregistrer(eq(1), eq("SUPPRESSION_PRODUIT"), eq("produits"),
+                any(), anyString());
+    }
+
+    @Test
+    @DisplayName("un employé ne peut pas supprimer un produit")
+    void employeNePeutPasSupprimer() throws java.sql.SQLException {
+        ApplicationException e = assertThrows(ApplicationException.class,
+                () -> service.supprimer(produit("2.000", "5.000"), employe()));
+
+        assertTrue(e.getMessage().toLowerCase().contains("administrateur"),
+                "le refus doit être explicite : " + e.getMessage());
+        // Le contrôle précède l'écriture : rien ne doit partir en base.
+        verify(produitDAO, never()).delete(anyInt(), anyBoolean());
+        verify(audit, never()).enregistrer(anyInt(), anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    @DisplayName("sans session ouverte, la suppression est refusée")
+    void suppressionSansSessionRefusee() throws java.sql.SQLException {
+        assertThrows(ApplicationException.class,
+                () -> service.supprimer(produit("2.000", "5.000"), null));
+
+        verify(produitDAO, never()).delete(anyInt(), anyBoolean());
+    }
+
+    @Test
+    @DisplayName("un administrateur peut archiver un produit")
+    void adminPeutArchiver() {
+        when(produitDAO.definirActif(anyInt(), eq(false))).thenReturn(true);
+        Produit p = produit("2.000", "5.000");
+
+        service.archiver(p, admin());
+
+        assertFalse(p.isActif(), "l'objet affiché doit refléter l'archivage");
+        verify(audit).enregistrer(eq(1), eq("ARCHIVAGE_PRODUIT"), eq("produits"),
+                any(), anyString());
+    }
+
+    @Test
+    @DisplayName("un employé ne peut pas archiver un produit")
+    void employeNePeutPasArchiver() {
+        Produit p = produit("2.000", "5.000");
+
+        ApplicationException e = assertThrows(ApplicationException.class,
+                () -> service.archiver(p, employe()));
+
+        assertTrue(e.getMessage().toLowerCase().contains("administrateur"));
+        assertTrue(p.isActif(), "le produit doit rester en vente");
+        verify(produitDAO, never()).definirActif(anyInt(), anyBoolean());
+    }
+
+    @Test
+    @DisplayName("un employé ne peut pas remettre un produit en vente")
+    void employeNePeutPasReactiver() {
+        assertThrows(ApplicationException.class,
+                () -> service.reactiver(produit("2.000", "5.000"), employe()));
+
+        verify(produitDAO, never()).definirActif(anyInt(), anyBoolean());
+    }
+
+    @Test
+    @DisplayName("un administrateur peut remettre un produit en vente")
+    void adminPeutReactiver() {
+        when(produitDAO.definirActif(anyInt(), eq(true))).thenReturn(true);
+        Produit p = produit("2.000", "5.000");
+        p.setActif(false);
+
+        service.reactiver(p, admin());
+
+        assertTrue(p.isActif());
+        verify(audit).enregistrer(eq(1), eq("REACTIVATION_PRODUIT"), eq("produits"),
+                any(), anyString());
+    }
+
+    @Test
+    @DisplayName("un produit référencé remonte le message du DAO, qui oriente vers l'archivage")
+    void produitReferenceOrienteVersLArchivage() throws java.sql.SQLException {
+        when(produitDAO.delete(anyInt(), eq(false))).thenThrow(new java.sql.SQLException(
+                "Ce produit figure dans des ventes ou des ajouts de stock : "
+                + "il ne peut pas être supprimé sans fausser l'historique. "
+                + "Archivez-le pour le retirer de la vente."));
+
+        ApplicationException e = assertThrows(ApplicationException.class,
+                () -> service.supprimer(produit("2.000", "5.000"), admin()));
+
+        assertTrue(e.getMessage().toLowerCase().contains("archivez"));
     }
 }

@@ -182,6 +182,74 @@ class VenteTabacIT {
     }
 
     @Test
+    @DisplayName("20 cigarettes épuisent exactement un paquet, sans reliquat")
+    void vingtCigarettesEpuisentUnPaquet() {
+        assumeTrue(dbAvailable);
+
+        ProduitDAO dao = new ProduitDAO();
+        int avant = dao.findById(produitId).getQuantiteStock();
+
+        new VenteDAO().create(venteDe(ligne(20, "cigarette", "0.600"), new BigDecimal("12.000")));
+
+        assertEquals(avant - 1, dao.findById(produitId).getQuantiteStock(),
+                "un paquet plein vendu à l'unité retire exactement un paquet du stock");
+        assertEquals(0, reliquat(),
+                "le paquet est épuisé : il ne reste aucune cigarette à vendre");
+    }
+
+    @Test
+    @DisplayName("40 cigarettes épuisent exactement deux paquets")
+    void quaranteCigarettesEpuisentDeuxPaquets() {
+        assumeTrue(dbAvailable);
+
+        ProduitDAO dao = new ProduitDAO();
+        int avant = dao.findById(produitId).getQuantiteStock();
+
+        new VenteDAO().create(venteDe(ligne(40, "cigarette", "0.600"), new BigDecimal("24.000")));
+
+        assertEquals(avant - 2, dao.findById(produitId).getQuantiteStock());
+        assertEquals(0, reliquat(), "aucun paquet n'est laissé entamé");
+    }
+
+    @Test
+    @DisplayName("Le reliquat épuisé, la vente suivante ouvre un paquet neuf")
+    void reliquatEpuisePuisNouveauPaquet() {
+        assumeTrue(dbAvailable);
+
+        ProduitDAO dao = new ProduitDAO();
+        VenteDAO venteDAO = new VenteDAO();
+
+        // 20 cigarettes : un paquet consommé, reliquat nul.
+        venteDAO.create(venteDe(ligne(20, "cigarette", "0.600"), new BigDecimal("12.000")));
+        int apresPaquetEpuise = dao.findById(produitId).getQuantiteStock();
+        assertEquals(0, reliquat());
+
+        // La vente suivante ne peut plus puiser nulle part : elle ouvre un paquet.
+        venteDAO.create(venteDe(ligne(1, "cigarette", "0.600"), new BigDecimal("0.600")));
+
+        assertEquals(apresPaquetEpuise - 1, dao.findById(produitId).getQuantiteStock(),
+                "reliquat nul : une seule cigarette entame un paquet neuf");
+        assertEquals(19, reliquat(), "20 - 1");
+    }
+
+    @Test
+    @DisplayName("Treize cigarettes puis sept épuisent le paquet ouvert sans en ouvrir d'autre")
+    void reliquatConsommeJusquAEpuisement() {
+        assumeTrue(dbAvailable);
+
+        ProduitDAO dao = new ProduitDAO();
+        VenteDAO venteDAO = new VenteDAO();
+        int avant = dao.findById(produitId).getQuantiteStock();
+
+        venteDAO.create(venteDe(ligne(13, "cigarette", "0.600"), new BigDecimal("7.800")));
+        venteDAO.create(venteDe(ligne(7, "cigarette", "0.600"), new BigDecimal("4.200")));
+
+        // 13 + 7 = 20 : un seul paquet, épuisé au terme des deux ventes.
+        assertEquals(avant - 1, dao.findById(produitId).getQuantiteStock());
+        assertEquals(0, reliquat());
+    }
+
+    @Test
     @DisplayName("Le paquet entamé est mémorisé après une vente au détail")
     void reliquatMemorise() {
         assumeTrue(dbAvailable);

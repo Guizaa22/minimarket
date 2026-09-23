@@ -330,6 +330,18 @@ public class GestionStockController {
      * Supprimer un produit depuis le tableau
      */
     private void supprimerProduit(Produit produit) {
+        // Retirer un produit du référentiel engage tout le magasin : réservé à
+        // l'administrateur. Vérifié aussi côté service, une règle qui ne vit
+        // que dans l'interface étant contournée par le premier autre écran qui
+        // appelle le service. Le refus est annoncé avant la confirmation :
+        // inutile de faire confirmer une action qui sera rejetée.
+        model.Utilisateur acteur = service.SessionContext.get().getUtilisateurConnecte();
+        if (acteur == null || acteur.getRole() != model.Utilisateur.Role.Admin) {
+            showAlert(Alert.AlertType.WARNING, "Action réservée",
+                    "Seul un administrateur peut supprimer ou archiver un produit.");
+            return;
+        }
+
         Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
         confirmAlert.setTitle("Confirmation de suppression");
         confirmAlert.setHeaderText(null);
@@ -338,8 +350,6 @@ public class GestionStockController {
 
         ui.Dialogues.preparer(confirmAlert.getDialogPane(), null);
         if (confirmAlert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
-            int utilisateurId = service.SessionContext.get().getUtilisateurId();
-
             // Un produit déjà vendu n'est pas supprimable : ses lignes de vente
             // portent les prix du jour de la transaction, dont dépend le
             // bénéfice des périodes closes. L'ancienne « suppression forcée »
@@ -361,7 +371,7 @@ public class GestionStockController {
                 }
 
                 try {
-                    produitService.archiver(produit, utilisateurId);
+                    produitService.archiver(produit, acteur);
                     showAlert(Alert.AlertType.INFORMATION, "Produit archivé",
                             "« " + produit.getNom() + " » a été retiré de la vente.\n"
                             + "Son historique reste consultable dans les rapports.");
@@ -375,7 +385,7 @@ public class GestionStockController {
             }
 
             try {
-                produitService.supprimer(produit, utilisateurId, false);
+                produitService.supprimer(produit, acteur);
                 showAlert(Alert.AlertType.INFORMATION, "Succès", "Produit supprimé avec succès.");
                 // Rafraîchir la liste des produits
                 chargerProduits();
