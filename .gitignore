@@ -81,3 +81,12 @@ FIX_SQLiteDatabaseSetup.java
 # Export de donnees reelles (hachages de mots de passe, chiffre d'affaires)
 tools/data_postgres.sql
 data_postgres.sql
+
+# Reprise du catalogue depuis l'ancien logiciel (Onemag Solution).
+# Ces fichiers portent les 859 produits du magasin avec leurs prix de vente,
+# et l'etat reel des stocks. Le depot etant public, les versionner
+# publierait toute la grille tarifaire, de facon irreversible : l'historique
+# Git la conserve et GitHub l'indexe meme apres suppression.
+# Ils restent disponibles en local, et sont regeneres a la demande.
+tools/import/
+IMPORT_PRODUITS_2M_MARKET.pdf
