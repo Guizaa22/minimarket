@@ -86,7 +86,9 @@ $jpackageArgs = @(
     "--description", "Gestion de stock et ventes",
     "--input", $staging,
     "--main-jar", $jar.Name,
-    "--main-class", "app.MainApp",
+    # app.Launcher, et non app.MainApp : la JVM refuse de lancer une classe qui
+    # etend Application quand JavaFX vient du classpath (voir app\Launcher.java).
+    "--main-class", "app.Launcher",
     "--dest", $dest
 )
 
