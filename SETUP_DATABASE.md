@@ -117,9 +117,41 @@ dans la même base. Ils ne peuvent pas écrire dans le schéma `public` : un
 garde-fou les fait s'arrêter si on tente de les y exécuter. Aucune base
 supplémentaire n'est nécessaire.
 
-9 tests couvrent les défauts corrigés : requêtes du jour, attribution des ventes,
-historisation des ajouts de stock, précision monétaire, incrément atomique du
-stock, présence des index, et non-fermeture du pool.
+163 tests couvrent les défauts corrigés : requêtes du jour, attribution des
+ventes, historisation des ajouts de stock, précision monétaire, incrément
+atomique du stock, bornes des périodes statistiques, atomicité du crédit
+fournisseur et du réapprovisionnement, blocage après échecs de connexion,
+archivage des produits et reliquat du paquet de cigarettes entamé.
+
+### Étape 6 — reprendre le catalogue de l'ancien logiciel (facultatif)
+
+Si le magasin tournait sous Onemag Solution, l'export « Liste Produit » se
+reprend en une fois. Le script n'est **pas versionné** : il porte le catalogue
+et les prix de vente du magasin, et le dépôt est public. Il est regénéré à la
+demande depuis le PDF d'export.
+
+```powershell
+$env:PGPASSWORD = "votre_mot_de_passe_market_app"
+& "C:\Program Files\PostgreSQL\16\bin\psql.exe" `
+    -h localhost -p 5432 -U market_app -d market2m `
+    -v ON_ERROR_STOP=1 -f tools\import\import-produits-onemag.sql
+Remove-Item Env:\PGPASSWORD
+```
+
+Le script est **transactionnel** — il passe en entier ou pas du tout — et
+**rejouable** : un produit dont le code-barres existe déjà est ignoré, rien
+n'est écrasé. Il crée les catégories avec leur type, les fournisseurs nommés,
+puis les produits, et refuse de valider si un stock négatif subsistait.
+
+Trois points à connaître après un import :
+
+- Les stocks négatifs de l'ancien logiciel sont ramenés à 0 : la quantité
+  réelle est inconnue, **un inventaire est nécessaire**.
+- Le prix d'achat, absent de l'export, reprend le prix de vente. Le bénéfice
+  affiché reste donc nul jusqu'à la saisie des vrais prix d'achat, au fil des
+  réapprovisionnements.
+- Les articles sans code-barres reçoivent un code interne `INT-xxxx`,
+  utilisable en caisse par recherche sur le nom.
 
 ---
 
